@@ -12,7 +12,7 @@
     header { border-bottom: 1px solid var(--line); background: #ffffff; }
     .bar, main { max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
     .bar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-block: 14px; }
-    .brand { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+    .brand, .brand:visited { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
     .mark { display: block; flex: 0 0 auto; }
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
@@ -43,7 +43,7 @@
 </head>
 <body>
   <header>
-    <div class="bar">
+    <div class="bar shell">
       <a class="brand" href="index.html" aria-label="OmniCommand home">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
       </a>
@@ -66,7 +66,7 @@
       </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
-      <div class="section-nav-inner">
+      <div class="section-nav-inner shell">
         <a href="tickets.html">Tickets</a>
         <a href="tasks.html">Tasks</a>
         <a href="alerts.html">Alerts</a>
