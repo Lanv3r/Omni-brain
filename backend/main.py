@@ -207,6 +207,31 @@ def offline_devices():
     return {"total": len(items), "devices": items}
 
 
+@app.get("/devices")
+def devices(
+    page: int = 0,
+    device_class: str | None = None,
+    online: bool | None = None,
+    q: str | None = None,
+):
+    if page < 0:
+        raise HTTPException(422, "page must be 0 or greater")
+
+    filters = {"pageNumber": page + 1, "pageSize": 10}
+    if device_class:
+        device_class = device_class.lower().strip()
+        if device_class not in {"workstation", "laptop", "server", "firewall", "switch", "printer"}:
+            raise HTTPException(422, "Invalid device class")
+        filters["device_class"] = device_class
+    if online is not None:
+        filters["online"] = str(online).lower()
+    if q and q.strip():
+        filters["q"] = q.strip()
+
+    data = read_json(f"{devices_url}?{urlencode(filters)}")
+    return {"page": page, "page_size": 10, "total": data["totalItems"], "devices": data["data"]}
+
+
 @app.get("/overdue-tasks")
 def overdue_tasks():
     items = fetch_pages(tasks_url, 50, {"overdue": "true"})
