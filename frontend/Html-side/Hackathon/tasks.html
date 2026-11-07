@@ -13,9 +13,9 @@
     .bar, main { max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
     .bar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-block: 14px; }
     .brand { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
-    .mark { display: block; overflow: hidden; border-radius: 8px; width: 36px; height: 36px; background: #ffffff; }
-    .mark img { display: block; width: 100%; height: 100%; object-fit: cover; }
-    .partner-brand { color: var(--muted); font-size: 13px; font-weight: 650; letter-spacing: .02em; white-space: nowrap; }
+    .mark { display: block; flex: 0 0 auto; }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
     .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
     .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
@@ -43,9 +43,9 @@
   <header>
     <div class="bar">
       <a class="brand" href="index.html" aria-label="OmniCommand home">
-        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-icon.png" alt=""></span>OmniCommand
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
       </a>
-      <span class="partner-brand">OmniTechPro</span>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner">
