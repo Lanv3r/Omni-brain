@@ -1,54 +1,213 @@
-<!DOCTYPE HTML>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Omnicommand IT Operations Workspace">
+  <meta name="description" content="Review and filter devices in OmniCommand">
   <title>Device monitoring | OmniCommand</title>
   <style>
-    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f6;
+      --panel: #ffffff;
+      --panel-raised: #f5f5f5;
+      --line: #dedede;
+      --text: #333333;
+      --muted: #666666;
+      --accent: #ffa500;
+    }
+
     * { box-sizing: border-box; }
-    body { margin: 0; font: 16px/1.55 system-ui, sans-serif; background: var(--bg); color: var(--text); }
-    header { border-bottom: 1px solid var(--line); background: #ffffff; }
-    .bar, main { max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
-    .bar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-block: 14px; }
-    .brand { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
-    .mark { display: block; flex: 0 0 auto; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    a { color: inherit; }
+    a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 75px;
+      padding-block: 14px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+      text-decoration: none;
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -.04em;
+    }
+
+    .mark {
+      display: block;
+      flex: 0 0 auto;
+    }
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
-    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
-    .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
-    main { padding-block: clamp(36px, 7vw, 78px); }
-    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
-    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 12px 0; }
-    h2 { font-size: 20px; margin: 0 0 12px; }
-    h3 { font-size: 16px; margin: 0; }
-    p { color: var(--muted); margin: 0; }
-    .intro { margin-bottom: 36px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr)); gap: 14px; }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-    .metric { display: block; margin: 10px 0 6px; font-size: 29px; font-weight: 700; }
-    .panel p { font-size: 14px; }
-    .workspace { margin-top: 34px; }
-    .workspace .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); }
-    .workspace h3 { margin-bottom: 6px; }
-    @media (max-width: 520px) { .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; } }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
+    .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .device-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 170px; }
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    input::placeholder { color: #777777; }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+
+    th {
+      background: #f5f5f5;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+
+    .subject { color: var(--text); font-weight: 600; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .pill::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    .status-online { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
+    .status-offline { border-color: #e8a39f; background: #fff0ef; color: #a32922; }
+
+    .empty-state {
+      padding: 32px 16px;
+      color: var(--muted);
+      text-align: center;
+      white-space: normal;
+    }
+
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+    .pagination button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; }
+    .pagination button:disabled { opacity: .5; cursor: default; }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .toolbar { align-items: stretch; }
+      .search-field, .filter-field { flex-basis: 100%; }
+      th, td { padding-inline: 12px; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="bar">
+    <div class="bar shell">
       <a class="brand" href="index.html" aria-label="OmniCommand home">
-        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
+        <span>OmniCommand</span>
       </a>
       <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
     </div>
     <nav class="section-nav" aria-label="Main navigation">
-      <div class="section-nav-inner">
+      <div class="section-nav-inner shell">
         <a href="tickets.html">Tickets</a>
         <a href="tasks.html">Tasks</a>
         <a href="alerts.html">Alerts</a>
@@ -56,5 +215,197 @@
       </div>
     </nav>
   </header>
+
+  <main class="shell">
+    <section aria-labelledby="page-title">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">N-central</p>
+          <h1 id="page-title">Device monitoring</h1>
+        </div>
+        <p class="result-count" id="result-count" aria-live="polite">Loading devices...</p>
+      </div>
+      <div class="device-panel">
+        <form class="toolbar" role="search" onsubmit="return false">
+          <div class="field search-field">
+            <label for="device-search">Search devices</label>
+            <input id="device-search" type="search" placeholder="Search hostname or serial number">
+          </div>
+          <div class="field filter-field">
+            <label for="device-class-filter">Device type</label>
+            <select id="device-class-filter">
+              <option value="all">All types</option>
+              <option value="workstation">Workstation</option>
+              <option value="laptop">Laptop</option>
+              <option value="server">Server</option>
+              <option value="firewall">Firewall</option>
+              <option value="switch">Switch</option>
+              <option value="printer">Printer</option>
+            </select>
+          </div>
+          <div class="field filter-field">
+            <label for="online-filter">Status</label>
+            <select id="online-filter">
+              <option value="all">All</option>
+              <option value="true">Online</option>
+              <option value="false">Offline</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Device</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Type</th>
+                <th scope="col">Status</th>
+                <th scope="col">OS</th>
+                <th scope="col">IP address</th>
+                <th scope="col">Last seen</th>
+              </tr>
+            </thead>
+            <tbody id="device-rows">
+              <tr><td class="empty-state" colspan="7">Loading devices...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <nav class="pagination" aria-label="Device pages">
+        <button type="button" id="previous-page" disabled>Previous</button>
+        <span id="page-label" aria-live="polite">Page 1</span>
+        <button type="button" id="next-page" disabled>Next</button>
+      </nav>
+    </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("device-search");
+    const deviceClassFilter = document.getElementById("device-class-filter");
+    const onlineFilter = document.getElementById("online-filter");
+    const deviceRowsContainer = document.getElementById("device-rows");
+    const resultCount = document.getElementById("result-count");
+    const previousPage = document.getElementById("previous-page");
+    const nextPage = document.getElementById("next-page");
+    const pageLabel = document.getElementById("page-label");
+    const searchParams = new URLSearchParams(window.location.search);
+    let currentPage = 0;
+    let requestId = 0;
+    let searchTimer;
+
+    function element(tag, value, className) {
+      const item = document.createElement(tag);
+      item.textContent = value == null || value === "" ? "—" : String(value);
+      if (className) item.className = className;
+      return item;
+    }
+
+    function cell(...children) {
+      const item = document.createElement("td");
+      item.append(...children);
+      return item;
+    }
+
+    function showMessage(message) {
+      const row = document.createElement("tr");
+      const item = element("td", message, "empty-state");
+      item.colSpan = 7;
+      row.append(item);
+      deviceRowsContainer.replaceChildren(row);
+    }
+
+    function renderDevices(devices) {
+      if (!devices.length) {
+        showMessage("No matching devices");
+        return;
+      }
+
+      const rows = devices.map(device => {
+        const lastSeen = device.lastSeen ? new Date(device.lastSeen) : null;
+        const lastSeenText = lastSeen && !Number.isNaN(lastSeen.getTime()) ? lastSeen.toLocaleString() : "—";
+        const type = device.deviceClass || "";
+        const row = document.createElement("tr");
+        row.append(
+          cell(element("span", device.hostname, "subject"), element("span", device.serialNumber, "secondary")),
+          cell(element("span", device.customerName), element("span", device.siteName, "secondary")),
+          cell(element("span", type ? type[0].toUpperCase() + type.slice(1) : "")),
+          cell(element("span", device.online ? "Online" : "Offline", "pill status-" + (device.online ? "online" : "offline"))),
+          cell(element("span", device.os)),
+          cell(element("span", device.ipAddress)),
+          cell(element("span", lastSeenText))
+        );
+        return row;
+      });
+      deviceRowsContainer.replaceChildren(...rows);
+    }
+
+    async function loadDevices() {
+      const thisRequest = ++requestId;
+      const params = new URLSearchParams({ page: String(currentPage) });
+      if (deviceClassFilter.value !== "all") params.set("device_class", deviceClassFilter.value);
+      if (onlineFilter.value !== "all") params.set("online", onlineFilter.value);
+      if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
+
+      resultCount.textContent = "Loading devices...";
+      showMessage("Loading devices...");
+      previousPage.disabled = true;
+      nextPage.disabled = true;
+      pageLabel.textContent = "Page " + (currentPage + 1);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/devices?" + params);
+        if (!response.ok) throw new Error("Could not load devices (HTTP " + response.status + ")");
+        const data = await response.json();
+        if (thisRequest !== requestId) return;
+        renderDevices(data.devices);
+        const totalPages = Math.max(1, Math.ceil(data.total / 10));
+        const first = data.total ? currentPage * 10 + 1 : 0;
+        const last = data.total ? Math.min(currentPage * 10 + data.devices.length, data.total) : 0;
+        resultCount.textContent = "Showing " + first + "–" + last + " of " + data.total + " devices";
+        pageLabel.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+        previousPage.disabled = currentPage === 0;
+        nextPage.disabled = currentPage + 1 >= totalPages;
+      } catch (error) {
+        if (thisRequest !== requestId) return;
+        showMessage(error.message);
+        resultCount.textContent = "Could not load devices";
+        previousPage.disabled = currentPage === 0;
+      }
+    }
+
+    const requestedType = (searchParams.get("device_class") || "").toLowerCase();
+    if ([...deviceClassFilter.options].some(option => option.value === requestedType)) {
+      deviceClassFilter.value = requestedType;
+    }
+    const requestedOnline = (searchParams.get("online") || "").toLowerCase();
+    if (requestedOnline === "true" || requestedOnline === "false") {
+      onlineFilter.value = requestedOnline;
+    }
+
+    loadDevices();
+
+    function filtersChanged() {
+      currentPage = 0;
+      loadDevices();
+    }
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(filtersChanged, 300);
+    });
+    deviceClassFilter.addEventListener("change", filtersChanged);
+    onlineFilter.addEventListener("change", filtersChanged);
+    previousPage.addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage -= 1;
+        loadDevices();
+      }
+    });
+    nextPage.addEventListener("click", () => {
+      currentPage += 1;
+      loadDevices();
+    });
+  </script>
 </body>
 </html>
