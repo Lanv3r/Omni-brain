@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Omnicommand IT operations workspace">
+  <title>OmniCommand | Command Center</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.55 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { border-bottom: 1px solid var(--line); background: #ffffff; }
+    .bar, main { max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .bar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-block: 14px; }
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+    .mark { display: block; flex: 0 0 auto; }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
+    main { padding-block: clamp(36px, 7vw, 78px); }
+    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
+    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 12px 0; }
+    h2 { font-size: 20px; margin: 0 0 12px; }
+    h3 { font-size: 16px; margin: 0; }
+    p { color: var(--muted); margin: 0; }
+    .intro { margin-bottom: 36px; text-align: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr)); gap: 14px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+    .metric { display: block; margin: 10px 0 6px; font-size: 29px; font-weight: 700; }
+    .panel p { font-size: 14px; }
+    .overview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .summary-heading { display: flex; align-items: baseline; justify-content: center; gap: 12px; text-align: center; }
+    .summary-heading a, .workspace h3 a { color: var(--accent); text-decoration: none; }
+    .summary-heading h3 { font-size: 19px; }
+    .summary-heading p { font-size: 12px; }
+    .summary-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
+    .summary-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; }
+    .summary-item:hover { border-color: var(--accent); }
+    .summary-item strong { font-size: 21px; }
+    .summary-item span { font-size: 14px; }
+    .summary-item.urgent, .summary-item.warning { border-color: #e2bd65; background: #fff9e9; color: #765000; }
+    .summary-item.urgent:hover, .summary-item.warning:hover { border-color: #bd8100; }
+    .summary-item.new-ticket { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
+    .summary-item.new-ticket:hover { border-color: #43885b; }
+    .summary-item.ticket-urgent, .summary-item.critical { border-color: #e5a5a1; background: #fff1f0; color: #a32922; }
+    .summary-item.ticket-urgent:hover, .summary-item.critical:hover { border-color: #c43b33; }
+    .summary-item.info { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .summary-item.info:hover { border-color: #4d83bb; }
+    .workspace { margin-top: 34px; }
+    .workspace .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); }
+    .workspace h3 { margin-bottom: 6px; }
+    @media (max-width: 760px) {
+      .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .overview-grid { grid-template-columns: 1fr; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="brand" href="index.html" aria-label="OmniCommand home">
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
+      </a>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner">
+        <a href="tickets.html">Tickets</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="device_monitoring.html">Device monitoring</a>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <div class="intro">
+      <p class="eyebrow">IT Operations Workspace</p>
+      <h1>Command Center</h1>
+    </div>
+    <section aria-label="Operations summary">
+      <div class="grid overview-grid">
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="tickets.html">Tickets</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item new-ticket" href="tickets.html?status=New"><span>New</span><strong>2</strong></a>
+            <a class="summary-item" href="tickets.html?status=In%20progress"><span>Open</span><strong>2</strong></a>
+            <a class="summary-item ticket-urgent" href="tickets.html?priority=High&amp;priority=Urgent&amp;openOnly=true"><span>High Priority / Urgent</span><strong>2</strong></a>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="tasks.html">Tasks</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item" href="tasks.html?status=Overdue"><span>Overdue</span><strong>3</strong></a>
+            <a class="summary-item" href="tasks.html?status=Pending"><span>Pending</span><strong>8</strong></a>
+            <a class="summary-item" href="tasks.html?status=In%20progress"><span>In progress</span><strong>4</strong></a>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="alerts.html">Alerts</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item critical" href="alerts.html?severity=Critical"><span>Critical</span><strong>2</strong></a>
+            <a class="summary-item warning" href="alerts.html?severity=Warning"><span>Warning</span><strong>3</strong></a>
+            <a class="summary-item info" href="alerts.html?severity=Info"><span>Info</span><strong>1</strong></a>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="device_monitoring.html">Device monitoring</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item" href="device_monitoring.html?status=Online"><span>Online</span><strong>24</strong></a>
+            <a class="summary-item" href="device_monitoring.html?status=Offline"><span>Offline</span><strong>3</strong></a>
+          </div>
+        </article>
+      </div>
+    </section>
+    <section class="workspace" aria-labelledby="workspace">
+      <h2 id="workspace">Coming to this workspace</h2>
+      <div class="grid">
+        <article class="panel"><h3><a href="knowledge_base.html">Knowledge base</a></h3><p>Ask a question and open the guide behind the answer.</p></article>
+        <article class="panel"><h3><a href="process_plans.html">Process plans</a></h3><p>Start an onboarding checklist, assign steps, and track completion.</p></article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Review and filter open support tickets in OmniCommand">
+  <title>Tickets | OmniCommand</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f6;
+      --panel: #ffffff;
+      --panel-raised: #f5f5f5;
+      --line: #dedede;
+      --text: #333333;
+      --muted: #666666;
+      --accent: #ffa500;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    a { color: inherit; }
+    a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 75px;
+      padding-block: 14px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+      text-decoration: none;
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -.04em;
+    }
+
+    .mark {
+      display: block;
+      flex: 0 0 auto;
+    }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .page-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 48px);
+      line-height: 1.08;
+      letter-spacing: -.05em;
+    }
+
+    .description { margin: 10px 0 0; color: var(--muted); }
+
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border: 1px solid #e2bd65;
+      border-radius: 999px;
+      background: #fff9e9;
+      color: #765000;
+      font-size: 12px;
+    }
+
+    .demo-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .queue-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .queue-summary h2 { margin: 0; font-size: 18px; }
+    .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .ticket-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 170px; }
+    .priority-dropdown { position: relative; flex: 0 1 190px; }
+    .priority-dropdown summary {
+      display: flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      list-style: none;
+    }
+    .priority-dropdown summary::-webkit-details-marker { display: none; }
+    .priority-dropdown summary::after { color: var(--muted); content: "▾"; }
+    .priority-dropdown[open] summary { border-color: var(--accent); }
+    .priority-options {
+      position: absolute;
+      z-index: 2;
+      top: calc(100% + 6px);
+      left: 0;
+      display: grid;
+      min-width: 100%;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-raised);
+      box-shadow: 0 12px 28px rgb(0 0 0 / 28%);
+    }
+    .priority-option { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
+    .priority-option input[type="checkbox"] { width: 15px; min-height: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--accent); }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    input::placeholder { color: #777777; }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+
+    th {
+      background: #f5f5f5;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+
+    .ticket-id { color: var(--accent); font-weight: 650; }
+    .subject { color: var(--text); font-weight: 600; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .pill::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    .status-open { border-color: #e2bd65; background: #fff9e9; color: #765000; }
+    .status-progress { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .status-waiting { border-color: #c8b7e5; background: #f5f0fb; color: #65438f; }
+    .priority-high { color: #a32922; }
+    .priority-urgent { color: #a32922; }
+    .priority-medium { color: #765000; }
+    .priority-low { color: #666666; }
+
+    .empty-state {
+      padding: 32px 16px;
+      color: var(--muted);
+      text-align: center;
+      white-space: normal;
+    }
+
+    .empty-state strong { display: block; margin-bottom: 5px; color: var(--text); }
+
+    .table-note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 820px) {
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .toolbar { align-items: stretch; }
+      .search-field, .filter-field, .priority-dropdown { flex-basis: 100%; }
+      .queue-summary { align-items: flex-start; flex-direction: column; gap: 4px; }
+      th, td { padding-inline: 12px; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html" aria-label="OmniCommand home">
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
+        <span>OmniCommand</span>
+      </a>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="tickets.html" aria-current="page">Tickets</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="device_monitoring.html">Device monitoring</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="page-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Accelo · Service desk</p>
+        <h1 id="page-title">Tickets</h1>
+        <p class="description">Review new, in-progress, and resolved requests.</p>
+      </div>
+      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
+    </section>
+
+    <section aria-labelledby="queue-title">
+      <div class="queue-summary">
+        <h2 id="queue-title">Ticket queue</h2>
+        <p class="result-count" id="result-count" aria-live="polite">Showing 5 example tickets</p>
+      </div>
+      <div class="ticket-panel">
+        <form class="toolbar" role="search" onsubmit="return false">
+          <div class="field search-field">
+            <label for="ticket-search">Search tickets</label>
+            <input id="ticket-search" type="search" placeholder="Search subject, requester, or ID">
+          </div>
+          <div class="field filter-field">
+            <label for="company-filter">Company</label>
+            <select id="company-filter">
+              <option value="all">All companies</option>
+            </select>
+          </div>
+          <div class="field filter-field">
+            <label for="status-filter">Status</label>
+            <select id="status-filter">
+              <option value="all">All statuses</option>
+              <option value="New">New</option>
+              <option value="In progress">In progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+          <details class="priority-dropdown">
+            <summary><span>Priority</span><span id="priority-selection">All</span></summary>
+            <div class="priority-options">
+              <label class="priority-option"><input type="checkbox" name="priority" value="Urgent"> Urgent</label>
+              <label class="priority-option"><input type="checkbox" name="priority" value="High"> High</label>
+              <label class="priority-option"><input type="checkbox" name="priority" value="Medium"> Medium</label>
+              <label class="priority-option"><input type="checkbox" name="priority" value="Low"> Low</label>
+            </div>
+          </details>
+        </form>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Ticket</th>
+                <th scope="col">Requester</th>
+                <th scope="col">Status</th>
+                <th scope="col">Priority</th>
+                <th scope="col">Assignee</th>
+                <th scope="col">Last updated</th>
+              </tr>
+            </thead>
+            <tbody id="ticket-rows">
+              <tr data-company="Brightside Studio" data-status="New" data-priority="High">
+                <td><span class="ticket-id">DEMO-1048</span><span class="secondary subject">New starter can't access email</span></td>
+                <td>Jordan Lee<span class="secondary">Brightside Studio</span></td>
+                <td><span class="pill status-open">New</span></td>
+                <td><span class="pill priority-high">High</span></td>
+                <td>Morgan Chen</td>
+                <td>18 min ago</td>
+              </tr>
+              <tr data-company="Harbor &amp; Pine" data-status="In progress" data-priority="Medium">
+                <td><span class="ticket-id">DEMO-1047</span><span class="secondary subject">VPN disconnects during calls</span></td>
+                <td>Sam Rivera<span class="secondary">Harbor &amp; Pine</span></td>
+                <td><span class="pill status-progress">In progress</span></td>
+                <td><span class="pill priority-medium">Medium</span></td>
+                <td>Taylor Brooks</td>
+                <td>46 min ago</td>
+              </tr>
+              <tr data-company="Cedar Works" data-status="Resolved" data-priority="Low">
+                <td><span class="ticket-id">DEMO-1046</span><span class="secondary subject">Request for a shared project folder</span></td>
+                <td>Casey Patel<span class="secondary">Cedar Works</span></td>
+                <td><span class="pill status-resolved">Resolved</span></td>
+                <td><span class="pill priority-low">Low</span></td>
+                <td>Unassigned</td>
+                <td>2 hr ago</td>
+              </tr>
+              <tr data-company="Northstar Design" data-status="New" data-priority="Medium">
+                <td><span class="ticket-id">DEMO-1045</span><span class="secondary subject">Laptop running out of disk space</span></td>
+                <td>Alex Morgan<span class="secondary">Northstar Design</span></td>
+                <td><span class="pill status-open">New</span></td>
+                <td><span class="pill priority-medium">Medium</span></td>
+                <td>Jamie Park</td>
+                <td>3 hr ago</td>
+              </tr>
+              <tr data-company="Willow Accounting" data-status="In progress" data-priority="Urgent">
+                <td><span class="ticket-id">DEMO-1044</span><span class="secondary subject">Unable to print from finance workstation</span></td>
+                <td>Riley Thompson<span class="secondary">Willow Accounting</span></td>
+                <td><span class="pill status-progress">In progress</span></td>
+                <td><span class="pill priority-urgent">Urgent</span></td>
+                <td>Morgan Chen</td>
+                <td>Yesterday</td>
+              </tr>
+              <tr id="empty-state" hidden>
+                <td class="empty-state" colspan="6">
+                  <strong>No matching tickets</strong>
+                  Try another search or change the selected filters.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="table-note">These fictional tickets are for layout preview only; live ticket data will appear when the Accelo connection is added.</p>
+    </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("ticket-search");
+    const companyFilter = document.getElementById("company-filter");
+    const statusFilter = document.getElementById("status-filter");
+    const priorityDropdown = document.querySelector(".priority-dropdown");
+    const priorityFilters = [...document.querySelectorAll('input[name="priority"]')];
+    const prioritySelection = document.getElementById("priority-selection");
+    const ticketRowsContainer = document.getElementById("ticket-rows");
+    const resultCount = document.getElementById("result-count");
+    const emptyState = document.getElementById("empty-state");
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedStatus = searchParams.get("status");
+    const requestedPriorities = searchParams.getAll("priority");
+    const openOnly = searchParams.get("openOnly") === "true";
+
+    function getTicketRows() {
+      return [...ticketRowsContainer.querySelectorAll("tr[data-status]")];
+    }
+
+    function updateCompanyOptions() {
+      const selectedCompany = companyFilter.value;
+      const companies = [...new Set(
+        getTicketRows()
+          .map(row => row.dataset.company?.trim())
+          .filter(Boolean)
+      )].sort((a, b) => a.localeCompare(b));
+
+      companyFilter.replaceChildren(
+        new Option("All companies", "all"),
+        ...companies.map(company => new Option(company, company))
+      );
+      companyFilter.value = companies.includes(selectedCompany) ? selectedCompany : "all";
+    }
+
+    function filterTickets() {
+      const query = searchInput.value.trim().toLocaleLowerCase();
+      const company = companyFilter.value;
+      const status = statusFilter.value;
+      const selectedPriorities = priorityFilters
+        .filter(filter => filter.checked)
+        .map(filter => filter.value);
+      prioritySelection.textContent = selectedPriorities.length
+        ? `${selectedPriorities.length} selected`
+        : "All";
+      const ticketRows = getTicketRows();
+      let visibleCount = 0;
+
+      for (const row of ticketRows) {
+        const matchesQuery = row.textContent.toLocaleLowerCase().includes(query);
+        const matchesCompany = company === "all" || row.dataset.company === company;
+        const matchesStatus = status === "all" || row.dataset.status === status;
+        const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(row.dataset.priority);
+        const isOpen = row.dataset.status !== "Resolved";
+        const isVisible = matchesQuery && matchesCompany && matchesStatus && matchesPriority && (!openOnly || isOpen);
+
+        row.hidden = !isVisible;
+        if (isVisible) visibleCount += 1;
+      }
+
+      emptyState.hidden = visibleCount > 0;
+      resultCount.textContent = `Showing ${visibleCount} of ${ticketRows.length} example tickets`;
+    }
+
+    if ([...statusFilter.options].some(option => option.value === requestedStatus)) {
+      statusFilter.value = requestedStatus;
+    }
+
+    priorityFilters.forEach(filter => {
+      filter.checked = requestedPriorities.includes(filter.value);
+    });
+
+    updateCompanyOptions();
+    filterTickets();
+
+    new MutationObserver(() => {
+      updateCompanyOptions();
+      filterTickets();
+    }).observe(ticketRowsContainer, {
+      attributes: true,
+      attributeFilter: ["data-company"],
+      childList: true,
+      subtree: true
+    });
+
+    searchInput.addEventListener("input", filterTickets);
+    companyFilter.addEventListener("change", filterTickets);
+    statusFilter.addEventListener("change", filterTickets);
+    priorityFilters.forEach(filter => filter.addEventListener("change", filterTickets));
+
+    document.addEventListener("click", event => {
+      if (!priorityDropdown.contains(event.target)) {
+        priorityDropdown.open = false;
+      }
+    });
+
+    priorityDropdown.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        priorityDropdown.open = false;
+        priorityDropdown.querySelector("summary").focus();
+      }
+    });
+  </script>
+</body>
+</html>

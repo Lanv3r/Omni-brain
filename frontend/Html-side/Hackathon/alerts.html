@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Review and filter device alerts in OmniCommand">
+  <title>Alerts | OmniCommand</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f6;
+      --panel: #ffffff;
+      --panel-raised: #f5f5f5;
+      --line: #dedede;
+      --text: #333333;
+      --muted: #666666;
+      --accent: #ffa500;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    a { color: inherit; }
+    a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 75px;
+      padding-block: 14px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+      text-decoration: none;
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -.04em;
+    }
+
+    .mark {
+      display: block;
+      flex: 0 0 auto;
+    }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .page-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 48px);
+      line-height: 1.08;
+      letter-spacing: -.05em;
+    }
+
+    .description { margin: 10px 0 0; color: var(--muted); }
+
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border: 1px solid #e2bd65;
+      border-radius: 999px;
+      background: #fff9e9;
+      color: #765000;
+      font-size: 12px;
+    }
+
+    .demo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+    .queue-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .queue-summary h2 { margin: 0; font-size: 18px; }
+    .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .alert-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 190px; }
+
+    label { color: var(--muted); font-size: 12px; font-weight: 650; }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    input::placeholder { color: #777777; }
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+
+    th {
+      background: #f5f5f5;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+
+    .alert-id { color: var(--accent); font-weight: 650; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .severity {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .severity::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .severity-critical { background: #fff1f0; color: #a32922; }
+    .severity-warning { background: #fff9e9; color: #765000; }
+    .severity-info { background: #eff6fd; color: #245b8e; }
+    .alert-state { color: #65438f; }
+
+    .empty-state {
+      padding: 32px 16px;
+      color: var(--muted);
+      text-align: center;
+      white-space: normal;
+    }
+
+    .empty-state strong { display: block; margin-bottom: 5px; color: var(--text); }
+
+    .table-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 820px) {
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .toolbar { align-items: stretch; }
+      .search-field, .filter-field { flex-basis: 100%; }
+      .queue-summary { align-items: flex-start; flex-direction: column; gap: 4px; }
+      th, td { padding-inline: 12px; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html" aria-label="OmniCommand home">
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
+        <span>OmniCommand</span>
+      </a>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="tickets.html">Tickets</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="alerts.html" aria-current="page">Alerts</a>
+        <a href="device_monitoring.html">Device monitoring</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="page-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">N-central · Monitoring</p>
+        <h1 id="page-title">Alerts</h1>
+        <p class="description">Review active alerts by severity and affected device.</p>
+      </div>
+      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
+    </section>
+
+    <section aria-labelledby="alerts-title">
+      <div class="queue-summary">
+        <h2 id="alerts-title">Alert queue</h2>
+        <p class="result-count" id="result-count" aria-live="polite">Showing 6 example alerts</p>
+      </div>
+      <div class="alert-panel">
+        <form class="toolbar" role="search" onsubmit="return false">
+          <div class="field search-field">
+            <label for="alert-search">Search alerts</label>
+            <input id="alert-search" type="search" placeholder="Search alert, device, or company">
+          </div>
+          <div class="field filter-field">
+            <label for="severity-filter">Severity</label>
+            <select id="severity-filter">
+              <option value="all">All severities</option>
+              <option value="Critical">Critical</option>
+              <option value="Warning">Warning</option>
+              <option value="Info">Info</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Alert</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Device</th>
+                <th scope="col">Company</th>
+                <th scope="col">State</th>
+                <th scope="col">Last detected</th>
+              </tr>
+            </thead>
+            <tbody id="alert-rows">
+              <tr data-severity="Critical">
+                <td><span class="alert-id">DEMO-A203</span><span class="secondary">Server not responding</span></td>
+                <td><span class="severity severity-critical">Critical</span></td>
+                <td>HQ-FILE-01</td>
+                <td>Brightside Studio</td>
+                <td><span class="alert-state">Active</span></td>
+                <td>4 min ago</td>
+              </tr>
+              <tr data-severity="Critical">
+                <td><span class="alert-id">DEMO-A202</span><span class="secondary">Backup job failed</span></td>
+                <td><span class="severity severity-critical">Critical</span></td>
+                <td>BACKUP-02</td>
+                <td>Willow Accounting</td>
+                <td><span class="alert-state">Active</span></td>
+                <td>12 min ago</td>
+              </tr>
+              <tr data-severity="Warning">
+                <td><span class="alert-id">DEMO-A201</span><span class="secondary">Disk space below 15%</span></td>
+                <td><span class="severity severity-warning">Warning</span></td>
+                <td>DESIGN-WS-14</td>
+                <td>Northstar Design</td>
+                <td><span class="alert-state">Active</span></td>
+                <td>19 min ago</td>
+              </tr>
+              <tr data-severity="Warning">
+                <td><span class="alert-id">DEMO-A200</span><span class="secondary">Endpoint protection needs attention</span></td>
+                <td><span class="severity severity-warning">Warning</span></td>
+                <td>CEDAR-LT-08</td>
+                <td>Cedar Works</td>
+                <td><span class="alert-state">Active</span></td>
+                <td>31 min ago</td>
+              </tr>
+              <tr data-severity="Warning">
+                <td><span class="alert-id">DEMO-A199</span><span class="secondary">Device has pending updates</span></td>
+                <td><span class="severity severity-warning">Warning</span></td>
+                <td>HARBOR-WS-03</td>
+                <td>Harbor &amp; Pine</td>
+                <td><span class="alert-state">Active</span></td>
+                <td>52 min ago</td>
+              </tr>
+              <tr data-severity="Info">
+                <td><span class="alert-id">DEMO-A198</span><span class="secondary">Scheduled maintenance completed</span></td>
+                <td><span class="severity severity-info">Info</span></td>
+                <td>WILLOW-SQL-01</td>
+                <td>Willow Accounting</td>
+                <td><span class="alert-state">Active</span></td>
+                <td>1 hr ago</td>
+              </tr>
+              <tr id="empty-state" hidden>
+                <td class="empty-state" colspan="6">
+                  <strong>No matching alerts</strong>
+                  Try another search or severity.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="table-note">These fictional alerts are for layout preview only; live monitoring data will appear when the N-central connection is added.</p>
+    </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("alert-search");
+    const severityFilter = document.getElementById("severity-filter");
+    const alertRowsContainer = document.getElementById("alert-rows");
+    const resultCount = document.getElementById("result-count");
+    const emptyState = document.getElementById("empty-state");
+    const requestedSeverity = new URLSearchParams(window.location.search).get("severity");
+    const alertRows = [...alertRowsContainer.querySelectorAll("tr[data-severity]")];
+
+    if ([...severityFilter.options].some(option => option.value === requestedSeverity)) {
+      severityFilter.value = requestedSeverity;
+    }
+
+    function filterAlerts() {
+      const query = searchInput.value.trim().toLocaleLowerCase();
+      const severity = severityFilter.value;
+      let visibleCount = 0;
+
+      for (const row of alertRows) {
+        const matchesQuery = row.textContent.toLocaleLowerCase().includes(query);
+        const matchesSeverity = severity === "all" || row.dataset.severity === severity;
+        const isVisible = matchesQuery && matchesSeverity;
+        row.hidden = !isVisible;
+        if (isVisible) visibleCount += 1;
+      }
+
+      emptyState.hidden = visibleCount > 0;
+      resultCount.textContent = `Showing ${visibleCount} of ${alertRows.length} example alerts`;
+    }
+
+    filterAlerts();
+    searchInput.addEventListener("input", filterAlerts);
+    severityFilter.addEventListener("change", filterAlerts);
+  </script>
+</body>
+</html>
