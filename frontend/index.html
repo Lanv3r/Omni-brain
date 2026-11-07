@@ -43,18 +43,20 @@
       <p class="eyebrow">IT operations workspace</p>
       <h1>Operations dashboard</h1>
       <p>See what needs attention across tickets, devices, and onboarding.</p>
+      <!--
       <label for="company-filter">Company</label>
       <select id="company-filter">
         <option value="">All companies</option>
       </select>
+      -->
     </div>
     <section aria-labelledby="overview">
       <h2 id="overview">At a glance</h2>
       <div class="grid">
         <article class="panel"><h3>Open tickets</h3><span class="metric" id="open-ticket-count" aria-live="polite">—</span><p>Open issues</p></article>
-        <article class="panel"><h3>Overdue tasks</h3><span class="metric" aria-label="Data unavailable">—</span><p>Accelo · waiting for API</p></article>
-        <article class="panel"><h3>Active alerts</h3><span class="metric" aria-label="Data unavailable">—</span><p>N-central · waiting for API</p></article>
-        <article class="panel"><h3>Offline devices</h3><span class="metric" aria-label="Data unavailable">—</span><p>N-central · waiting for API</p></article>
+        <article class="panel"><h3>Overdue tasks</h3><span class="metric" id="overdue-task-count" aria-live="polite">—</span><p>Accelo · overdue tasks</p></article>
+        <article class="panel"><h3>Active alerts</h3><span class="metric" id="active-alert-count" aria-live="polite">—</span><p>N-central · active alerts</p></article>
+        <article class="panel"><h3>Offline devices</h3><span class="metric" id="offline-device-count" aria-live="polite">—</span><p>N-central · offline devices</p></article>
       </div>
     </section>
     <section class="workspace" aria-labelledby="workspace">
@@ -64,50 +66,60 @@
         <article class="panel"><h3>Process plans</h3><p>Start an onboarding checklist, assign steps, and track completion.</p></article>
       </div>
     </section>
-    <section>
-      <h2>Open tickets response</h2>
-      <pre id="issues-response">Loading...</pre>
-    </section>
   </main>
   <script>
     const companyFilter = document.getElementById("company-filter");
-    const output = document.getElementById("issues-response");
     const count = document.getElementById("open-ticket-count");
     let allIssues = [];
 
     function renderIssues() {
-      const selected = companyFilter.value;
+      const selected = companyFilter?.value;
       const issues = selected
         ? allIssues.filter(issue => String(issue.company_id) === selected)
         : allIssues;
       count.textContent = issues.length;
-      output.textContent = JSON.stringify({ total: issues.length, issues }, null, 2);
     }
 
     async function loadDashboard() {
       try {
-        const [companiesResponse, issuesResponse] = await Promise.all([
-          fetch("http://127.0.0.1:8000/companies"),
-          fetch("http://127.0.0.1:8000/issues"),
-        ]);
-        if (!companiesResponse.ok) throw new Error(await companiesResponse.text());
+        const issuesResponse = await fetch("http://127.0.0.1:8000/issues");
         if (!issuesResponse.ok) throw new Error(await issuesResponse.text());
-        const companies = await companiesResponse.json();
         const data = await issuesResponse.json();
-        for (const company of companies) {
-          const option = document.createElement("option");
-          option.value = company.id;
-          option.textContent = company.name;
-          companyFilter.appendChild(option);
+        if (companyFilter) {
+          const companiesResponse = await fetch("http://127.0.0.1:8000/companies");
+          if (!companiesResponse.ok) throw new Error(await companiesResponse.text());
+          const companies = await companiesResponse.json();
+          for (const company of companies) {
+            const option = document.createElement("option");
+            option.value = company.id;
+            option.textContent = company.name;
+            companyFilter.appendChild(option);
+          }
+          companyFilter.addEventListener("change", renderIssues);
         }
         allIssues = data.issues;
         renderIssues();
       } catch (error) {
-        output.textContent = error.message;
+        count.textContent = "Error";
+        count.title = error.message;
       }
     }
-    companyFilter.addEventListener("change", renderIssues);
+    async function loadMetric(path, countId) {
+      const metric = document.getElementById(countId);
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/${path}`);
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        metric.textContent = data.total;
+      } catch (error) {
+        metric.textContent = "Error";
+        metric.title = error.message;
+      }
+    }
     loadDashboard();
+    loadMetric("alerts", "active-alert-count");
+    loadMetric("overdue-tasks", "overdue-task-count");
+    loadMetric("offline-devices", "offline-device-count");
   </script>
 </body>
 </html>
