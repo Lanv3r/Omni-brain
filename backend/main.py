@@ -8,7 +8,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:3000"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+)
 issues_url = os.getenv(
     "ISSUES_URL",
     "http://127.0.0.1:8080/api/v0/issues",
@@ -67,6 +70,16 @@ def fetch_ncentral_pages(url, filters):
         page += 1
 
 
+def count_accelo(url, limit, filters):
+    query = urlencode({**filters, "_limit": limit, "_page": 0})
+    return read_json(f"{url}?{query}")["meta"]["total"]
+
+
+def count_ncentral(url, filters):
+    query = urlencode({**filters, "pageNumber": 1, "pageSize": 50})
+    return read_json(f"{url}?{query}")["totalItems"]
+
+
 @app.get("/issues")
 def issues():
     tickets = fetch_pages(issues_url, 100, {"status": "open"})
@@ -98,3 +111,66 @@ def offline_devices():
 def overdue_tasks():
     items = fetch_pages(tasks_url, 50, {"overdue": "true"})
     return {"total": len(items), "tasks": items}
+
+
+@app.get("/in-progress-tickets")
+def in_progress_tickets():
+    return {"total": count_accelo(issues_url, 100, {"status": "inprogress"})}
+
+
+@app.get("/open-tickets")
+def open_tickets():
+    return {"total": count_accelo(issues_url, 100, {"status": "open"})}
+
+
+@app.get("/high-priority-tickets")
+def high_priority_tickets():
+    return {"total": count_accelo(issues_url, 100, {"status": "open", "priority": "high"})}
+
+
+@app.get("/urgent-tickets")
+def urgent_tickets():
+    return {"total": count_accelo(issues_url, 100, {"status": "open", "priority": "urgent"})}
+
+
+@app.get("/new-tickets")
+def new_tickets():
+    return {"total": 0}
+
+
+@app.get("/pending-tasks")
+def pending_tasks():
+    total = sum(
+        count_accelo(tasks_url, 50, {"status": "pending", "overdue": overdue})
+        for overdue in ("true", "false")
+    )
+    return {"total": total}
+
+
+@app.get("/in-progress-tasks")
+def in_progress_tasks():
+    total = sum(
+        count_accelo(tasks_url, 50, {"status": "inprogress", "overdue": overdue})
+        for overdue in ("true", "false")
+    )
+    return {"total": total}
+
+
+@app.get("/critical-alerts")
+def critical_alerts():
+    return {"total": count_ncentral(alerts_url, {"active": "true", "severity": "critical"})}
+
+
+@app.get("/warning-alerts")
+def warning_alerts():
+    return {"total": count_ncentral(alerts_url, {"active": "true", "severity": "warning"})}
+
+
+@app.get("/info-alerts")
+def info_alerts():
+    return {"total": count_ncentral(alerts_url, {"active": "true", "severity": "info"})}
+
+
+@app.get("/online-devices")
+def online_devices():
+    return {"total": count_ncentral(devices_url, {"online": "true"})}
