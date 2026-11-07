@@ -92,9 +92,11 @@
             <h3><a href="tickets.html">Tickets</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item new-ticket" href="tickets.html?status=New"><span>New</span><strong>2</strong></a>
-            <a class="summary-item" href="tickets.html?status=In%20progress"><span>Open</span><strong>2</strong></a>
-            <a class="summary-item ticket-urgent" href="tickets.html?priority=High&amp;priority=Urgent&amp;openOnly=true"><span>High Priority / Urgent</span><strong>2</strong></a>
+            <a class="summary-item new-ticket" href="tickets.html?status=New"><span>New</span><strong data-endpoint="new-tickets">—</strong></a>
+            <a class="summary-item ticket-urgent" href="tickets.html?priority=Urgent&amp;openOnly=true"><span>Urgent</span><strong data-endpoint="urgent-tickets">—</strong></a>
+            <a class="summary-item urgent" href="tickets.html?priority=High&amp;openOnly=true"><span>High priority</span><strong data-endpoint="high-priority-tickets">—</strong></a>
+            <a class="summary-item" href="tickets.html"><span>Open</span><strong data-endpoint="open-tickets">—</strong></a>
+            <a class="summary-item" href="tickets.html?status=In%20progress"><span>In progress</span><strong data-endpoint="in-progress-tickets">—</strong></a>
           </div>
         </article>
         <article class="panel">
@@ -102,9 +104,9 @@
             <h3><a href="tasks.html">Tasks</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item" href="tasks.html?status=Overdue"><span>Overdue</span><strong>3</strong></a>
-            <a class="summary-item" href="tasks.html?status=Pending"><span>Pending</span><strong>8</strong></a>
-            <a class="summary-item" href="tasks.html?status=In%20progress"><span>In progress</span><strong>4</strong></a>
+            <a class="summary-item" href="tasks.html?status=Overdue"><span>Overdue</span><strong data-endpoint="overdue-tasks">—</strong></a>
+            <a class="summary-item" href="tasks.html?status=Pending"><span>Pending</span><strong data-endpoint="pending-tasks">—</strong></a>
+            <a class="summary-item" href="tasks.html?status=In%20progress"><span>In progress</span><strong data-endpoint="in-progress-tasks">—</strong></a>
           </div>
         </article>
         <article class="panel">
@@ -112,9 +114,9 @@
             <h3><a href="alerts.html">Alerts</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item critical" href="alerts.html?severity=Critical"><span>Critical</span><strong>2</strong></a>
-            <a class="summary-item warning" href="alerts.html?severity=Warning"><span>Warning</span><strong>3</strong></a>
-            <a class="summary-item info" href="alerts.html?severity=Info"><span>Info</span><strong>1</strong></a>
+            <a class="summary-item critical" href="alerts.html?severity=Critical"><span>Critical</span><strong data-endpoint="critical-alerts">—</strong></a>
+            <a class="summary-item warning" href="alerts.html?severity=Warning"><span>Warning</span><strong data-endpoint="warning-alerts">—</strong></a>
+            <a class="summary-item info" href="alerts.html?severity=Info"><span>Info</span><strong data-endpoint="info-alerts">—</strong></a>
           </div>
         </article>
         <article class="panel">
@@ -122,8 +124,8 @@
             <h3><a href="device_monitoring.html">Device monitoring</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item" href="device_monitoring.html?status=Online"><span>Online</span><strong>24</strong></a>
-            <a class="summary-item" href="device_monitoring.html?status=Offline"><span>Offline</span><strong>3</strong></a>
+            <a class="summary-item" href="device_monitoring.html?status=Online"><span>Online</span><strong data-endpoint="online-devices">—</strong></a>
+            <a class="summary-item" href="device_monitoring.html?status=Offline"><span>Offline</span><strong data-endpoint="offline-devices">—</strong></a>
           </div>
         </article>
       </div>
@@ -136,5 +138,19 @@
       </div>
     </section>
   </main>
+  <script>
+    async function loadMetric(metric) {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/${metric.dataset.endpoint}`);
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        metric.textContent = data.total;
+      } catch (error) {
+        metric.textContent = "Error";
+        metric.title = error.message;
+      }
+    }
+    document.querySelectorAll("[data-endpoint]").forEach(loadMetric);
+  </script>
 </body>
 </html>
