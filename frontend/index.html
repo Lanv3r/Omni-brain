@@ -43,11 +43,15 @@
       <p class="eyebrow">IT operations workspace</p>
       <h1>Operations dashboard</h1>
       <p>See what needs attention across tickets, devices, and onboarding.</p>
+      <label for="company-filter">Company</label>
+      <select id="company-filter">
+        <option value="">All companies</option>
+      </select>
     </div>
     <section aria-labelledby="overview">
       <h2 id="overview">At a glance</h2>
       <div class="grid">
-        <article class="panel"><h3>Open tickets</h3><span class="metric" aria-label="Data unavailable">—</span><p>Accelo · waiting for API</p></article>
+        <article class="panel"><h3>Open tickets</h3><span class="metric" id="open-ticket-count" aria-live="polite">—</span><p>Open issues</p></article>
         <article class="panel"><h3>Overdue tasks</h3><span class="metric" aria-label="Data unavailable">—</span><p>Accelo · waiting for API</p></article>
         <article class="panel"><h3>Active alerts</h3><span class="metric" aria-label="Data unavailable">—</span><p>N-central · waiting for API</p></article>
         <article class="panel"><h3>Offline devices</h3><span class="metric" aria-label="Data unavailable">—</span><p>N-central · waiting for API</p></article>
@@ -61,15 +65,49 @@
       </div>
     </section>
     <section>
-      <h2>Network issues response</h2>
+      <h2>Open tickets response</h2>
       <pre id="issues-response">Loading...</pre>
     </section>
   </main>
   <script>
-    fetch("http://127.0.0.1:8000/issues")
-      .then(response => response.text())
-      .then(text => document.getElementById("issues-response").textContent = text)
-      .catch(error => document.getElementById("issues-response").textContent = error);
+    const companyFilter = document.getElementById("company-filter");
+    const output = document.getElementById("issues-response");
+    const count = document.getElementById("open-ticket-count");
+    let allIssues = [];
+
+    function renderIssues() {
+      const selected = companyFilter.value;
+      const issues = selected
+        ? allIssues.filter(issue => String(issue.company_id) === selected)
+        : allIssues;
+      count.textContent = issues.length;
+      output.textContent = JSON.stringify({ total: issues.length, issues }, null, 2);
+    }
+
+    async function loadDashboard() {
+      try {
+        const [companiesResponse, issuesResponse] = await Promise.all([
+          fetch("http://127.0.0.1:8000/companies"),
+          fetch("http://127.0.0.1:8000/issues"),
+        ]);
+        if (!companiesResponse.ok) throw new Error(await companiesResponse.text());
+        if (!issuesResponse.ok) throw new Error(await issuesResponse.text());
+        const companies = await companiesResponse.json();
+        const data = await issuesResponse.json();
+        for (const company of companies) {
+          const option = document.createElement("option");
+          option.value = company.id;
+          option.textContent = company.name;
+          companyFilter.appendChild(option);
+        }
+        allIssues = data.issues;
+        renderIssues();
+      } catch (error) {
+        output.textContent = error.message;
+      }
+    }
+    companyFilter.addEventListener("change", renderIssues);
+    loadDashboard();
   </script>
 </body>
 </html>
