@@ -83,6 +83,7 @@ html[data-theme="dark"] .device-panel { background: var(--panel); border-color: 
 html[data-theme="dark"] .toolbar { background: #141d2e; border-color: var(--line); }
 html[data-theme="dark"] input,
 html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
 html[data-theme="dark"] .priority-dropdown summary { background: #11192a; border-color: var(--line); color: var(--text); }
 html[data-theme="dark"] input::placeholder { color: #aab8cf; }
 html[data-theme="dark"] th { background: #1c273a; color: var(--muted); }
