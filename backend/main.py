@@ -86,6 +86,106 @@ def issues():
     return {"total": len(tickets), "issues": tickets}
 
 
+def ticket_request(filters, limit, page):
+    query = urlencode({**filters, "_limit": limit, "_page": page})
+    return read_json(f"{issues_url}?{query}")
+
+
+@app.get("/tickets")
+def tickets(
+    page: int = 0,
+    company_id: int | None = None,
+    status: str | None = None,
+    priority: str | None = None,
+    q: str | None = None,
+):
+    if page < 0:
+        raise HTTPException(422, "page must be 0 or greater")
+
+    filters = {}
+    if company_id is not None:
+        filters["company_id"] = company_id
+    if status:
+        status = status.lower().replace(" ", "")
+        if status not in {"open", "inprogress", "resolved", "closed"}:
+            raise HTTPException(422, "Invalid status")
+        filters["status"] = status
+    if q and q.strip():
+        filters["q"] = q.strip()
+
+    priorities = {value.strip().lower() for value in priority.split(",")} if priority else set()
+    priority_order = ("urgent", "high", "normal", "low")
+    if priorities - set(priority_order):
+        raise HTTPException(422, "Invalid priority")
+    selected_priorities = [value for value in priority_order if value in priorities]
+
+    if len(selected_priorities) <= 1:
+        if selected_priorities:
+            filters["priority"] = selected_priorities[0]
+        data = ticket_request(filters, 10, page)
+        return {"page": page, "page_size": 10, "total": data["meta"]["total"], "tickets": data["response"]}
+
+    groups = []
+    for value in selected_priorities:
+        group_filters = {**filters, "priority": value}
+        total = ticket_request(group_filters, 1, 0)["meta"]["total"]
+        groups.append((group_filters, total))
+
+    total = sum(group_total for _, group_total in groups)
+    offset = page * 10
+    results = []
+    for group_filters, group_total in groups:
+        if offset >= group_total:
+            offset -= group_total
+            continue
+        while offset < group_total and len(results) < 10:
+            data = ticket_request(group_filters, 10, offset // 10)
+            batch = data["response"][offset % 10 : offset % 10 + 10 - len(results)]
+            if not batch:
+                break
+            results.extend(batch)
+            offset += len(batch)
+        offset = 0
+        if len(results) == 10:
+            break
+    return {"page": page, "page_size": 10, "total": total, "tickets": results}
+
+
+@app.get("/tasks")
+def tasks(
+    page: int = 0,
+    company_id: int | None = None,
+    status: str | None = None,
+    overdue: bool | None = None,
+    q: str | None = None,
+):
+    if page < 0:
+        raise HTTPException(422, "page must be 0 or greater")
+
+    filters = {}
+    if company_id is not None:
+        filters["company_id"] = company_id
+    if status:
+        status = status.lower().replace(" ", "")
+        if status not in {"pending", "inprogress", "complete"}:
+            raise HTTPException(422, "Invalid status")
+        filters["status"] = status
+    if overdue is not None:
+        filters["overdue"] = str(overdue).lower()
+
+    if q and q.strip():
+        query = q.strip().casefold()
+        matches = [
+            task for task in fetch_pages(tasks_url, 100, filters)
+            if query in (task.get("title") or "").casefold()
+            or query in (task.get("description") or "").casefold()
+        ]
+        return {"page": page, "page_size": 10, "total": len(matches), "tasks": matches[page * 10 : (page + 1) * 10]}
+
+    data = read_json(f"{tasks_url}?{urlencode({**filters, '_limit': 10, '_page': page})}")
+    return {"page": page, "page_size": 10, "total": data["meta"]["total"], "tasks": data["response"]}
+
+
 @app.get("/companies")
 def companies():
     items = fetch_pages(companies_url, 50, {})
