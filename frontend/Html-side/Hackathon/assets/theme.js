@@ -1,17 +1,35 @@
 (() => {
   const root = document.documentElement;
-  const savedTheme = localStorage.getItem("omni-theme");
+  const fileTheme = window.location.protocol === "file:"
+    ? new URLSearchParams(window.location.search).get("omni-theme")
+    : null;
+  const savedTheme = fileTheme === "dark" || fileTheme === "light"
+    ? fileTheme
+    : localStorage.getItem("omni-theme");
 
-  if (savedTheme === "dark") {
-    root.dataset.theme = "dark";
+  if (savedTheme === "dark" || savedTheme === "light") {
+    root.dataset.theme = savedTheme;
   }
 
-  function applyTheme(theme) {
+  function syncFileNavigationLinks(theme) {
+    if (window.location.protocol !== "file:") return;
+
+    const currentDirectory = window.location.pathname.slice(0, window.location.pathname.lastIndexOf("/") + 1);
+    for (const link of document.querySelectorAll("a[href]")) {
+      const target = new URL(link.href);
+      if (target.protocol !== "file:" || !target.pathname.startsWith(currentDirectory)) continue;
+      target.searchParams.set("omni-theme", theme);
+      link.href = target.href;
+    }
+  }
+
+  function applyTheme(theme, persist = true) {
     const isDark = theme === "dark";
     const currentTheme = isDark ? "dark" : "light";
     const nextTheme = isDark ? "light" : "dark";
     root.dataset.theme = currentTheme;
-    localStorage.setItem("omni-theme", currentTheme);
+    if (persist) localStorage.setItem("omni-theme", currentTheme);
+    syncFileNavigationLinks(currentTheme);
 
     for (const menu of document.querySelectorAll(".theme-menu")) {
       const toggle = menu.querySelector(".theme-toggle");
@@ -91,5 +109,11 @@
     });
 
     applyTheme(root.dataset.theme === "dark" ? "dark" : "light");
+  });
+
+  window.addEventListener("storage", event => {
+    if (event.key === "omni-theme") {
+      applyTheme(event.newValue === "dark" ? "dark" : "light", false);
+    }
   });
 })();
