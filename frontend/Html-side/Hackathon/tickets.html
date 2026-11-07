@@ -254,7 +254,7 @@
       content: "";
     }
 
-    .status-open { border-color: #e2bd65; background: #fff9e9; color: #765000; }
+    .status-open, .status-resolved { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
     .status-progress { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
     .status-waiting { border-color: #c8b7e5; background: #f5f0fb; color: #65438f; }
     .priority-high { color: #a32922; }
@@ -290,6 +290,8 @@
       .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
 </head>
 <body>
   <header>
@@ -298,7 +300,23 @@
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
         <span>OmniCommand</span>
       </a>
-      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+      <div class="header-tools">
+        <div class="theme-menu">
+          <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
+            <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+            <svg class="theme-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg>
+          </button>
+          <div class="theme-options" role="menu" hidden>
+            <button class="theme-option" type="button" role="menuitem" data-theme-option="dark">
+              <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+              <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+              <span>Dark mode</span>
+            </button>
+          </div>
+        </div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+      </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">

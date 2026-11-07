@@ -38,6 +38,8 @@
     .workspace h3 { margin-bottom: 6px; }
     @media (max-width: 520px) { .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; } }
   </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
 </head>
 <body>
   <header>
@@ -45,7 +47,23 @@
       <a class="brand" href="index.html" aria-label="OmniCommand home">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
       </a>
-      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+      <div class="header-tools">
+        <div class="theme-menu">
+          <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
+            <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+            <svg class="theme-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg>
+          </button>
+          <div class="theme-options" role="menu" hidden>
+            <button class="theme-option" type="button" role="menuitem" data-theme-option="dark">
+              <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+              <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+              <span>Dark mode</span>
+            </button>
+          </div>
+        </div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+      </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner">

@@ -43,12 +43,14 @@
     .summary-item:hover { border-color: var(--accent); }
     .summary-item strong { font-size: 21px; }
     .summary-item span { font-size: 14px; }
-    .summary-item.urgent, .summary-item.warning { border-color: #e2bd65; background: #fff9e9; color: #765000; }
-    .summary-item.urgent:hover, .summary-item.warning:hover { border-color: #bd8100; }
-    .summary-item.new-ticket { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
-    .summary-item.new-ticket:hover { border-color: #43885b; }
-    .summary-item.ticket-urgent, .summary-item.critical { border-color: #e5a5a1; background: #fff1f0; color: #a32922; }
-    .summary-item.ticket-urgent:hover, .summary-item.critical:hover { border-color: #c43b33; }
+    .summary-item.urgent, .summary-item.warning, .summary-item.pending { border-color: #e2bd65; background: #fff9e9; color: #765000; }
+    .summary-item.urgent:hover, .summary-item.warning:hover, .summary-item.pending:hover { border-color: #bd8100; }
+    .summary-item.new-ticket, .summary-item.online { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
+    .summary-item.new-ticket:hover, .summary-item.online:hover { border-color: #43885b; }
+    .summary-item.ticket-urgent, .summary-item.critical, .summary-item.overdue, .summary-item.offline { border-color: #e5a5a1; background: #fff1f0; color: #a32922; }
+    .summary-item.ticket-urgent:hover, .summary-item.critical:hover, .summary-item.overdue:hover, .summary-item.offline:hover { border-color: #c43b33; }
+    .summary-item.open-ticket, .summary-item.in-progress { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .summary-item.open-ticket:hover, .summary-item.in-progress:hover { border-color: #4d83bb; }
     .summary-item.info { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
     .summary-item.info:hover { border-color: #4d83bb; }
     .workspace { margin-top: 34px; }
@@ -62,6 +64,8 @@
       .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; }
     }
   </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
 </head>
 <body>
   <header>
@@ -69,7 +73,23 @@
       <a class="brand" href="index.html" aria-label="OmniCommand home">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
       </a>
-      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+      <div class="header-tools">
+        <div class="theme-menu">
+          <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
+            <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+            <svg class="theme-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg>
+          </button>
+          <div class="theme-options" role="menu" hidden>
+            <button class="theme-option" type="button" role="menuitem" data-theme-option="dark">
+              <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+              <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+              <span>Dark mode</span>
+            </button>
+          </div>
+        </div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+      </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner">
@@ -93,7 +113,7 @@
           </div>
           <div class="summary-list">
             <a class="summary-item new-ticket" href="tickets.html?status=New"><span>New</span><strong>2</strong></a>
-            <a class="summary-item" href="tickets.html?status=In%20progress"><span>Open</span><strong>2</strong></a>
+            <a class="summary-item open-ticket" href="tickets.html?status=In%20progress"><span>Open</span><strong>2</strong></a>
             <a class="summary-item ticket-urgent" href="tickets.html?priority=High&amp;priority=Urgent&amp;openOnly=true"><span>High Priority / Urgent</span><strong>2</strong></a>
           </div>
         </article>
@@ -102,9 +122,9 @@
             <h3><a href="tasks.html">Tasks</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item" href="tasks.html?status=Overdue"><span>Overdue</span><strong>3</strong></a>
-            <a class="summary-item" href="tasks.html?status=Pending"><span>Pending</span><strong>8</strong></a>
-            <a class="summary-item" href="tasks.html?status=In%20progress"><span>In progress</span><strong>4</strong></a>
+            <a class="summary-item overdue" href="tasks.html?status=Overdue"><span>Overdue</span><strong>3</strong></a>
+            <a class="summary-item pending" href="tasks.html?status=Pending"><span>Pending</span><strong>2</strong></a>
+            <a class="summary-item in-progress" href="tasks.html?status=In%20progress"><span>In progress</span><strong>2</strong></a>
           </div>
         </article>
         <article class="panel">
@@ -122,8 +142,8 @@
             <h3><a href="device_monitoring.html">Device monitoring</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item" href="device_monitoring.html?status=Online"><span>Online</span><strong>24</strong></a>
-            <a class="summary-item" href="device_monitoring.html?status=Offline"><span>Offline</span><strong>3</strong></a>
+            <a class="summary-item online" href="device_monitoring.html?status=Online"><span>Online</span><strong>5</strong></a>
+            <a class="summary-item offline" href="device_monitoring.html?status=Offline"><span>Offline</span><strong>2</strong></a>
           </div>
         </article>
       </div>

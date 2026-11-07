@@ -1,54 +1,112 @@
-<!DOCTYPE HTML>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Omnicommand IT Operations Workspace">
+  <meta name="description" content="Review and filter tasks in OmniCommand">
   <title>Tasks | OmniCommand</title>
   <style>
-    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f6;
+      --panel: #ffffff;
+      --line: #dedede;
+      --text: #333333;
+      --muted: #666666;
+      --accent: #ffa500;
+    }
+
     * { box-sizing: border-box; }
-    body { margin: 0; font: 16px/1.55 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    a { color: inherit; }
+    a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
     header { border-bottom: 1px solid var(--line); background: #ffffff; }
-    .bar, main { max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
-    .bar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-block: 14px; }
-    .brand { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; flex: 0 0 auto; color: var(--text); font-size: 19px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
     .mark { display: block; flex: 0 0 auto; }
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
-    .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
-    main { padding-block: clamp(36px, 7vw, 78px); }
-    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
-    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 12px 0; }
-    h2 { font-size: 20px; margin: 0 0 12px; }
-    h3 { font-size: 16px; margin: 0; }
-    p { color: var(--muted); margin: 0; }
-    .intro { margin-bottom: 36px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr)); gap: 14px; }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-    .metric { display: block; margin: 10px 0 6px; font-size: 29px; font-weight: 700; }
-    .panel p { font-size: 14px; }
-    .workspace { margin-top: 34px; }
-    .workspace .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); }
-    .workspace h3 { margin-bottom: 6px; }
-    @media (max-width: 520px) { .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; } }
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
+    .description { margin: 10px 0 0; color: var(--muted); }
+    .demo-badge { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 7px 11px; border: 1px solid #e2bd65; border-radius: 999px; background: #fff9e9; color: #765000; font-size: 12px; }
+    .demo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .queue-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .queue-summary h2 { margin: 0; font-size: 18px; }
+    .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+    .task-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; padding: 16px; border-bottom: 1px solid var(--line); background: #fafafa; }
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 190px; }
+    label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    input, select { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; color: var(--text); font: inherit; }
+    input::placeholder { color: #777777; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+    th { background: #f5f5f5; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+    .task-id { color: #9a6200; font-weight: 650; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 650; }
+    .pill::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .status-overdue { background: #fff1f0; color: #a32922; }
+    .status-pending { background: #fff9e9; color: #765000; }
+    .status-progress { background: #eff6fd; color: #245b8e; }
+    .empty-state { padding: 32px 16px; color: var(--muted); text-align: center; white-space: normal; }
+    .empty-state strong { display: block; margin-bottom: 5px; color: var(--text); }
+    .table-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+    @media (max-width: 820px) { .page-heading { align-items: flex-start; flex-direction: column; gap: 14px; } }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .toolbar { align-items: stretch; }
+      .search-field, .filter-field { flex-basis: 100%; }
+      .queue-summary { align-items: flex-start; flex-direction: column; gap: 4px; }
+      th, td { padding-inline: 12px; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
 </head>
 <body>
   <header>
-    <div class="bar">
+    <div class="bar shell">
       <a class="brand" href="index.html" aria-label="OmniCommand home">
-        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
+        <span>OmniCommand</span>
       </a>
-      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+      <div class="header-tools">
+        <div class="theme-menu">
+          <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
+            <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+            <svg class="theme-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg>
+          </button>
+          <div class="theme-options" role="menu" hidden>
+            <button class="theme-option" type="button" role="menuitem" data-theme-option="dark">
+              <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+              <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+              <span>Dark mode</span>
+            </button>
+          </div>
+        </div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+      </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
-      <div class="section-nav-inner">
+      <div class="section-nav-inner shell">
         <a href="tickets.html">Tickets</a>
         <a href="tasks.html" aria-current="page">Tasks</a>
         <a href="alerts.html">Alerts</a>
@@ -56,5 +114,159 @@
       </div>
     </nav>
   </header>
+
+  <main class="shell">
+    <section class="page-heading" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Accelo · Work management</p>
+        <h1 id="page-title">Tasks</h1>
+        <p class="description">Review task deadlines, owners, and progress.</p>
+      </div>
+      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
+    </section>
+
+    <section aria-labelledby="queue-title">
+      <div class="queue-summary">
+        <h2 id="queue-title">Task queue</h2>
+        <p class="result-count" id="result-count" aria-live="polite">Showing 7 example tasks</p>
+      </div>
+      <div class="task-panel">
+        <form class="toolbar" role="search" onsubmit="return false">
+          <div class="field search-field">
+            <label for="task-search">Search tasks</label>
+            <input id="task-search" type="search" placeholder="Search task, company, or assignee">
+          </div>
+          <div class="field filter-field">
+            <label for="company-filter">Company</label>
+            <select id="company-filter">
+              <option value="all">All companies</option>
+              <option value="Brightside Studio">Brightside Studio</option>
+              <option value="Cedar Works">Cedar Works</option>
+              <option value="Harbor &amp; Pine">Harbor &amp; Pine</option>
+              <option value="Northstar Design">Northstar Design</option>
+              <option value="Willow Accounting">Willow Accounting</option>
+            </select>
+          </div>
+          <div class="field filter-field">
+            <label for="status-filter">Status</label>
+            <select id="status-filter">
+              <option value="all">All statuses</option>
+              <option value="Overdue">Overdue</option>
+              <option value="Pending">Pending</option>
+              <option value="In progress">In progress</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Task</th>
+                <th scope="col">Company</th>
+                <th scope="col">Status</th>
+                <th scope="col">Due date</th>
+                <th scope="col">Assignee</th>
+              </tr>
+            </thead>
+            <tbody id="task-rows">
+              <tr data-company="Brightside Studio" data-status="Overdue">
+                <td><span class="task-id">DEMO-T312</span><span class="secondary">Review failed nightly backup</span></td>
+                <td>Brightside Studio</td>
+                <td><span class="pill status-overdue">Overdue</span></td>
+                <td>Nov 5, 2026</td>
+                <td>Morgan Chen</td>
+              </tr>
+              <tr data-company="Willow Accounting" data-status="Overdue">
+                <td><span class="task-id">DEMO-T311</span><span class="secondary">Replace finance workstation</span></td>
+                <td>Willow Accounting</td>
+                <td><span class="pill status-overdue">Overdue</span></td>
+                <td>Nov 6, 2026</td>
+                <td>Jamie Park</td>
+              </tr>
+              <tr data-company="Cedar Works" data-status="Overdue">
+                <td><span class="task-id">DEMO-T310</span><span class="secondary">Restore shared folder permissions</span></td>
+                <td>Cedar Works</td>
+                <td><span class="pill status-overdue">Overdue</span></td>
+                <td>Nov 6, 2026</td>
+                <td>Taylor Brooks</td>
+              </tr>
+              <tr data-company="Northstar Design" data-status="Pending">
+                <td><span class="task-id">DEMO-T309</span><span class="secondary">Prepare new employee laptop</span></td>
+                <td>Northstar Design</td>
+                <td><span class="pill status-pending">Pending</span></td>
+                <td>Nov 8, 2026</td>
+                <td>Alex Morgan</td>
+              </tr>
+              <tr data-company="Harbor &amp; Pine" data-status="Pending">
+                <td><span class="task-id">DEMO-T308</span><span class="secondary">Schedule network maintenance</span></td>
+                <td>Harbor &amp; Pine</td>
+                <td><span class="pill status-pending">Pending</span></td>
+                <td>Nov 9, 2026</td>
+                <td>Sam Rivera</td>
+              </tr>
+              <tr data-company="Willow Accounting" data-status="In progress">
+                <td><span class="task-id">DEMO-T307</span><span class="secondary">Configure secure remote access</span></td>
+                <td>Willow Accounting</td>
+                <td><span class="pill status-progress">In progress</span></td>
+                <td>Nov 10, 2026</td>
+                <td>Morgan Chen</td>
+              </tr>
+              <tr data-company="Brightside Studio" data-status="In progress">
+                <td><span class="task-id">DEMO-T306</span><span class="secondary">Apply workstation security updates</span></td>
+                <td>Brightside Studio</td>
+                <td><span class="pill status-progress">In progress</span></td>
+                <td>Nov 11, 2026</td>
+                <td>Jamie Park</td>
+              </tr>
+              <tr id="empty-state" hidden>
+                <td class="empty-state" colspan="5"><strong>No matching tasks</strong>Try another search or change the selected filters.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="table-note">These fictional tasks are for layout preview only; live task data will appear when the Accelo connection is added.</p>
+    </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("task-search");
+    const companyFilter = document.getElementById("company-filter");
+    const statusFilter = document.getElementById("status-filter");
+    const taskRowsContainer = document.getElementById("task-rows");
+    const resultCount = document.getElementById("result-count");
+    const emptyState = document.getElementById("empty-state");
+    const requestedStatus = new URLSearchParams(window.location.search).get("status");
+    const taskRows = [...taskRowsContainer.querySelectorAll("tr[data-status]")];
+
+    if ([...statusFilter.options].some(option => option.value === requestedStatus)) {
+      statusFilter.value = requestedStatus;
+    }
+
+    function filterTasks() {
+      const query = searchInput.value.trim().toLocaleLowerCase();
+      const company = companyFilter.value;
+      const status = statusFilter.value;
+      let visibleCount = 0;
+
+      for (const row of taskRows) {
+        const matchesQuery = row.textContent.toLocaleLowerCase().includes(query);
+        const matchesCompany = company === "all" || row.dataset.company === company;
+        const matchesStatus = status === "all" || row.dataset.status === status;
+        const isVisible = matchesQuery && matchesCompany && matchesStatus;
+        row.hidden = !isVisible;
+        if (isVisible) visibleCount += 1;
+      }
+
+      emptyState.hidden = visibleCount > 0;
+      resultCount.textContent = `Showing ${visibleCount} of ${taskRows.length} example tasks`;
+    }
+
+    filterTasks();
+    searchInput.addEventListener("input", filterTasks);
+    companyFilter.addEventListener("change", filterTasks);
+    statusFilter.addEventListener("change", filterTasks);
+  </script>
 </body>
 </html>
