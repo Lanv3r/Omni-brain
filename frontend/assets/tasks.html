@@ -1,54 +1,217 @@
-<!DOCTYPE HTML>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Omnicommand IT Operations Workspace">
+  <meta name="description" content="Review and filter tasks in OmniCommand">
   <title>Tasks | OmniCommand</title>
   <style>
-    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f6;
+      --panel: #ffffff;
+      --panel-raised: #f5f5f5;
+      --line: #dedede;
+      --text: #333333;
+      --muted: #666666;
+      --accent: #ffa500;
+    }
+
     * { box-sizing: border-box; }
-    body { margin: 0; font: 16px/1.55 system-ui, sans-serif; background: var(--bg); color: var(--text); }
-    header { border-bottom: 1px solid var(--line); background: #ffffff; }
-    .bar, main { max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
-    .bar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-block: 14px; }
-    .brand { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
-    .mark { display: block; flex: 0 0 auto; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    a { color: inherit; }
+    a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 75px;
+      padding-block: 14px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+      text-decoration: none;
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -.04em;
+    }
+
+    .mark {
+      display: block;
+      flex: 0 0 auto;
+    }
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
-    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
-    .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
-    main { padding-block: clamp(36px, 7vw, 78px); }
-    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
-    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 12px 0; }
-    h2 { font-size: 20px; margin: 0 0 12px; }
-    h3 { font-size: 16px; margin: 0; }
-    p { color: var(--muted); margin: 0; }
-    .intro { margin-bottom: 36px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr)); gap: 14px; }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-    .metric { display: block; margin: 10px 0 6px; font-size: 29px; font-weight: 700; }
-    .panel p { font-size: 14px; }
-    .workspace { margin-top: 34px; }
-    .workspace .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); }
-    .workspace h3 { margin-bottom: 6px; }
-    @media (max-width: 520px) { .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; } }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
+    .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .task-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 170px; }
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    input::placeholder { color: #777777; }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+
+    th {
+      background: #f5f5f5;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+
+    .task-id { color: var(--accent); font-weight: 650; }
+    .subject { color: var(--text); font-weight: 600; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .pill::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    .status-pending { border-color: #e2bd65; background: #fff9e9; color: #765000; }
+    .status-progress { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .status-complete { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
+    .overdue-true { color: #a32922; }
+    .overdue-false { color: #666666; }
+
+    .empty-state {
+      padding: 32px 16px;
+      color: var(--muted);
+      text-align: center;
+      white-space: normal;
+    }
+
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+    .pagination button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; }
+    .pagination button:disabled { opacity: .5; cursor: default; }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .toolbar { align-items: stretch; }
+      .search-field, .filter-field { flex-basis: 100%; }
+      th, td { padding-inline: 12px; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="bar">
+    <div class="bar shell">
       <a class="brand" href="index.html" aria-label="OmniCommand home">
-        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
+        <span>OmniCommand</span>
       </a>
       <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
     </div>
     <nav class="section-nav" aria-label="Main navigation">
-      <div class="section-nav-inner">
+      <div class="section-nav-inner shell">
         <a href="tickets.html">Tickets</a>
         <a href="tasks.html" aria-current="page">Tasks</a>
         <a href="alerts.html">Alerts</a>
@@ -56,5 +219,236 @@
       </div>
     </nav>
   </header>
+
+  <main class="shell">
+    <section aria-labelledby="page-title">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Accelo</p>
+          <h1 id="page-title">Tasks</h1>
+        </div>
+        <p class="result-count" id="result-count" aria-live="polite">Loading tasks...</p>
+      </div>
+      <div class="task-panel">
+        <form class="toolbar" role="search" onsubmit="return false">
+          <div class="field search-field">
+            <label for="task-search">Search tasks</label>
+            <input id="task-search" type="search" placeholder="Search title or description">
+          </div>
+          <div class="field filter-field">
+            <label for="company-filter">Company</label>
+            <select id="company-filter">
+              <option value="all">All</option>
+            </select>
+          </div>
+          <div class="field filter-field">
+            <label for="status-filter">Status</label>
+            <select id="status-filter">
+              <option value="all">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="inprogress">In progress</option>
+              <option value="complete">Complete</option>
+            </select>
+          </div>
+          <div class="field filter-field">
+            <label for="overdue-filter">Overdue</label>
+            <select id="overdue-filter">
+              <option value="all">All</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Task</th>
+                <th scope="col">Company</th>
+                <th scope="col">Status</th>
+                <th scope="col">Overdue</th>
+                <th scope="col">Assignee</th>
+                <th scope="col">Due date</th>
+              </tr>
+            </thead>
+            <tbody id="task-rows">
+              <tr><td class="empty-state" colspan="6">Loading tasks...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <nav class="pagination" aria-label="Task pages">
+        <button type="button" id="previous-page" disabled>Previous</button>
+        <span id="page-label" aria-live="polite">Page 1</span>
+        <button type="button" id="next-page" disabled>Next</button>
+      </nav>
+    </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("task-search");
+    const companyFilter = document.getElementById("company-filter");
+    const statusFilter = document.getElementById("status-filter");
+    const overdueFilter = document.getElementById("overdue-filter");
+    const taskRowsContainer = document.getElementById("task-rows");
+    const resultCount = document.getElementById("result-count");
+    const previousPage = document.getElementById("previous-page");
+    const nextPage = document.getElementById("next-page");
+    const pageLabel = document.getElementById("page-label");
+    const searchParams = new URLSearchParams(window.location.search);
+    const companyNames = new Map();
+    const statusLabels = { pending: "Pending", inprogress: "In progress", complete: "Complete" };
+    const statusClasses = { pending: "status-pending", inprogress: "status-progress", complete: "status-complete" };
+    let currentPage = 0;
+    let requestId = 0;
+    let searchTimer;
+
+    function element(tag, value, className) {
+      const item = document.createElement(tag);
+      item.textContent = value == null || value === "" ? "—" : String(value);
+      if (className) item.className = className;
+      return item;
+    }
+
+    function cell(...children) {
+      const item = document.createElement("td");
+      item.append(...children);
+      return item;
+    }
+
+    function showMessage(message) {
+      const row = document.createElement("tr");
+      const item = element("td", message, "empty-state");
+      item.colSpan = 6;
+      row.append(item);
+      taskRowsContainer.replaceChildren(row);
+    }
+
+    function renderTasks(tasks) {
+      if (!tasks.length) {
+        showMessage("No matching tasks");
+        return;
+      }
+
+      const rows = tasks.map(task => {
+        const status = String(task.status || "").toLowerCase();
+        const due = task.date_due ? new Date(task.date_due + "T00:00:00") : null;
+        const dueText = due && !Number.isNaN(due.getTime()) ? due.toLocaleDateString() : "—";
+        const row = document.createElement("tr");
+        row.dataset.companyId = task.company_id;
+        row.append(
+          cell(element("span", "#" + task.id, "task-id"), element("span", task.title, "secondary subject")),
+          cell(element("span", companyNames.get(Number(task.company_id)), "company-name")),
+          cell(element("span", statusLabels[status] || task.status, "pill " + (statusClasses[status] || ""))),
+          cell(element("span", task.overdue ? "Yes" : "No", "pill overdue-" + Boolean(task.overdue))),
+          cell(element("span", task.assignee_name || "Unassigned")),
+          cell(element("span", dueText))
+        );
+        return row;
+      });
+      taskRowsContainer.replaceChildren(...rows);
+    }
+
+    async function loadTasks() {
+      const thisRequest = ++requestId;
+      const params = new URLSearchParams({ page: String(currentPage) });
+      if (companyFilter.value !== "all") params.set("company_id", companyFilter.value);
+      if (statusFilter.value !== "all") params.set("status", statusFilter.value);
+      if (overdueFilter.value !== "all") params.set("overdue", overdueFilter.value);
+      if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
+
+      resultCount.textContent = "Loading tasks...";
+      showMessage("Loading tasks...");
+      previousPage.disabled = true;
+      nextPage.disabled = true;
+      pageLabel.textContent = "Page " + (currentPage + 1);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/tasks?" + params);
+        if (!response.ok) throw new Error("Could not load tasks (HTTP " + response.status + ")");
+        const data = await response.json();
+        if (thisRequest !== requestId) return;
+        renderTasks(data.tasks);
+        const totalPages = Math.max(1, Math.ceil(data.total / 10));
+        const first = data.total ? currentPage * 10 + 1 : 0;
+        const last = data.total ? Math.min(currentPage * 10 + data.tasks.length, data.total) : 0;
+        resultCount.textContent = "Showing " + first + "–" + last + " of " + data.total + " tasks";
+        pageLabel.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+        previousPage.disabled = currentPage === 0;
+        nextPage.disabled = currentPage + 1 >= totalPages;
+      } catch (error) {
+        if (thisRequest !== requestId) return;
+        showMessage(error.message);
+        resultCount.textContent = "Could not load tasks";
+        previousPage.disabled = currentPage === 0;
+      }
+    }
+
+    async function loadCompanyOptions() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/companies");
+        if (!response.ok) throw new Error(await response.text());
+        const companies = await response.json();
+        for (const company of companies) companyNames.set(Number(company.id), company.name);
+        companyFilter.replaceChildren(
+          new Option("All", "all"),
+          ...companies.map(company => new Option(company.name, String(company.id)))
+        );
+        const requestedCompany = searchParams.get("company_id");
+        if (requestedCompany && [...companyFilter.options].some(option => option.value === requestedCompany)) {
+          companyFilter.value = requestedCompany;
+          loadTasks();
+        } else {
+          renderCompanyNames();
+        }
+      } catch (error) {
+        companyFilter.title = error.message;
+      }
+    }
+
+    function renderCompanyNames() {
+      for (const row of taskRowsContainer.querySelectorAll("tr")) {
+        const companyCell = row.children[1];
+        const name = companyCell?.querySelector(".company-name");
+        if (name && row.dataset.companyId) name.textContent = companyNames.get(Number(row.dataset.companyId)) || "—";
+      }
+    }
+
+    const requestedStatus = (searchParams.get("status") || "").toLowerCase().replace(" ", "");
+    if ([...statusFilter.options].some(option => option.value === requestedStatus)) {
+      statusFilter.value = requestedStatus;
+    }
+    const requestedOverdue = (searchParams.get("overdue") || "").toLowerCase();
+    if (requestedOverdue === "true" || requestedOverdue === "false") {
+      overdueFilter.value = requestedOverdue;
+    }
+
+    loadCompanyOptions();
+    loadTasks();
+
+    function filtersChanged() {
+      currentPage = 0;
+      loadTasks();
+    }
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(filtersChanged, 300);
+    });
+    companyFilter.addEventListener("change", filtersChanged);
+    statusFilter.addEventListener("change", filtersChanged);
+    overdueFilter.addEventListener("change", filtersChanged);
+    previousPage.addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage -= 1;
+        loadTasks();
+      }
+    });
+    nextPage.addEventListener("click", () => {
+      currentPage += 1;
+      loadTasks();
+    });
+  </script>
 </body>
 </html>

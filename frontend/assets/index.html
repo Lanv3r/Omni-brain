@@ -92,11 +92,11 @@
             <h3><a href="tickets.html">Tickets</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item new-ticket" href="tickets.html?status=New"><span>New</span><strong data-endpoint="new-tickets">—</strong></a>
-            <a class="summary-item ticket-urgent" href="tickets.html?priority=Urgent&amp;openOnly=true"><span>Urgent</span><strong data-endpoint="urgent-tickets">—</strong></a>
-            <a class="summary-item urgent" href="tickets.html?priority=High&amp;openOnly=true"><span>High priority</span><strong data-endpoint="high-priority-tickets">—</strong></a>
-            <a class="summary-item" href="tickets.html"><span>Open</span><strong data-endpoint="open-tickets">—</strong></a>
-            <a class="summary-item" href="tickets.html?status=In%20progress"><span>In progress</span><strong data-endpoint="in-progress-tickets">—</strong></a>
+            <a class="summary-item new-ticket" href="tickets.html"><span>New</span><strong data-endpoint="new-tickets">—</strong></a>
+            <a class="summary-item ticket-urgent" href="tickets.html?status=open&amp;priority=urgent"><span>Urgent</span><strong data-endpoint="urgent-tickets">—</strong></a>
+            <a class="summary-item urgent" href="tickets.html?status=open&amp;priority=high"><span>High priority</span><strong data-endpoint="high-priority-tickets">—</strong></a>
+            <a class="summary-item" href="tickets.html?status=open"><span>Open</span><strong data-endpoint="open-tickets">—</strong></a>
+            <a class="summary-item" href="tickets.html?status=inprogress"><span>In progress</span><strong data-endpoint="in-progress-tickets">—</strong></a>
           </div>
         </article>
         <article class="panel">
@@ -104,9 +104,9 @@
             <h3><a href="tasks.html">Tasks</a></h3>
           </div>
           <div class="summary-list">
-            <a class="summary-item" href="tasks.html?status=Overdue"><span>Overdue</span><strong data-endpoint="overdue-tasks">—</strong></a>
-            <a class="summary-item" href="tasks.html?status=Pending"><span>Pending</span><strong data-endpoint="pending-tasks">—</strong></a>
-            <a class="summary-item" href="tasks.html?status=In%20progress"><span>In progress</span><strong data-endpoint="in-progress-tasks">—</strong></a>
+            <a class="summary-item" href="tasks.html?overdue=true"><span>Overdue</span><strong data-endpoint="overdue-tasks">—</strong></a>
+            <a class="summary-item" href="tasks.html?status=pending"><span>Pending</span><strong data-endpoint="pending-tasks">—</strong></a>
+            <a class="summary-item" href="tasks.html?status=inprogress"><span>In progress</span><strong data-endpoint="in-progress-tasks">—</strong></a>
           </div>
         </article>
         <article class="panel">

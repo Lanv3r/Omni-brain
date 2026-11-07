@@ -84,52 +84,8 @@
       text-transform: uppercase;
     }
 
-    .page-heading {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 24px;
-      margin-bottom: 30px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(34px, 5vw, 48px);
-      line-height: 1.08;
-      letter-spacing: -.05em;
-    }
-
-    .description { margin: 10px 0 0; color: var(--muted); }
-
-    .demo-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      flex: 0 0 auto;
-      padding: 7px 11px;
-      border: 1px solid #e2bd65;
-      border-radius: 999px;
-      background: #fff9e9;
-      color: #765000;
-      font-size: 12px;
-    }
-
-    .demo-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
-
-    .queue-summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .queue-summary h2 { margin: 0; font-size: 18px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
     .result-count { margin: 0; color: var(--muted); font-size: 13px; }
 
     .ticket-panel {
@@ -152,7 +108,7 @@
     .field { display: grid; gap: 6px; }
     .search-field { flex: 1 1 250px; }
     .filter-field { flex: 0 1 170px; }
-    .priority-dropdown { position: relative; flex: 0 1 190px; }
+    .priority-dropdown { position: relative; width: 100%; }
     .priority-dropdown summary {
       display: flex;
       min-height: 42px;
@@ -256,10 +212,11 @@
 
     .status-open { border-color: #e2bd65; background: #fff9e9; color: #765000; }
     .status-progress { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
-    .status-waiting { border-color: #c8b7e5; background: #f5f0fb; color: #65438f; }
-    .priority-high { color: #a32922; }
-    .priority-urgent { color: #a32922; }
-    .priority-medium { color: #765000; }
+    .status-resolved { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
+    .status-closed { border-color: var(--line); background: #f5f5f5; color: var(--muted); }
+    .priority-high { border-color: #e8c47e; background: #fff5df; color: #875000; }
+    .priority-urgent { border-color: #e8a39f; background: #fff0ef; color: #a32922; }
+    .priority-normal { color: #765000; }
     .priority-low { color: #666666; }
 
     .empty-state {
@@ -269,23 +226,15 @@
       white-space: normal;
     }
 
-    .empty-state strong { display: block; margin-bottom: 5px; color: var(--text); }
-
-    .table-note {
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    @media (max-width: 820px) {
-      .page-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
-    }
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+    .pagination button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; }
+    .pagination button:disabled { opacity: .5; cursor: default; }
 
     @media (max-width: 560px) {
       .shell { width: min(100% - 32px, 1160px); }
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
       .toolbar { align-items: stretch; }
-      .search-field, .filter-field, .priority-dropdown { flex-basis: 100%; }
-      .queue-summary { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .search-field, .filter-field { flex-basis: 100%; }
       th, td { padding-inline: 12px; }
       .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -311,50 +260,48 @@
   </header>
 
   <main class="shell">
-    <section class="page-heading" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow">Accelo · Service desk</p>
-        <h1 id="page-title">Tickets</h1>
-        <p class="description">Review new, in-progress, and resolved requests.</p>
-      </div>
-      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
-    </section>
-
-    <section aria-labelledby="queue-title">
-      <div class="queue-summary">
-        <h2 id="queue-title">Ticket queue</h2>
-        <p class="result-count" id="result-count" aria-live="polite">Showing 5 example tickets</p>
+    <section aria-labelledby="page-title">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Accelo</p>
+          <h1 id="page-title">Tickets</h1>
+        </div>
+        <p class="result-count" id="result-count" aria-live="polite">Loading tickets...</p>
       </div>
       <div class="ticket-panel">
         <form class="toolbar" role="search" onsubmit="return false">
           <div class="field search-field">
             <label for="ticket-search">Search tickets</label>
-            <input id="ticket-search" type="search" placeholder="Search subject, requester, or ID">
+            <input id="ticket-search" type="search" placeholder="Search title or description">
           </div>
           <div class="field filter-field">
             <label for="company-filter">Company</label>
             <select id="company-filter">
-              <option value="all">All companies</option>
+              <option value="all">All</option>
             </select>
           </div>
           <div class="field filter-field">
             <label for="status-filter">Status</label>
             <select id="status-filter">
               <option value="all">All statuses</option>
-              <option value="New">New</option>
-              <option value="In progress">In progress</option>
-              <option value="Resolved">Resolved</option>
+              <option value="open">Open</option>
+              <option value="inprogress">In progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
             </select>
           </div>
-          <details class="priority-dropdown">
-            <summary><span>Priority</span><span id="priority-selection">All</span></summary>
-            <div class="priority-options">
-              <label class="priority-option"><input type="checkbox" name="priority" value="Urgent"> Urgent</label>
-              <label class="priority-option"><input type="checkbox" name="priority" value="High"> High</label>
-              <label class="priority-option"><input type="checkbox" name="priority" value="Medium"> Medium</label>
-              <label class="priority-option"><input type="checkbox" name="priority" value="Low"> Low</label>
-            </div>
-          </details>
+          <div class="field filter-field">
+            <label id="priority-label">Priority</label>
+            <details class="priority-dropdown">
+              <summary aria-labelledby="priority-label priority-selection"><span id="priority-selection">All</span></summary>
+              <div class="priority-options">
+                <label class="priority-option"><input type="checkbox" name="priority" value="urgent"> Urgent</label>
+                <label class="priority-option"><input type="checkbox" name="priority" value="high"> High</label>
+                <label class="priority-option"><input type="checkbox" name="priority" value="normal"> Normal</label>
+                <label class="priority-option"><input type="checkbox" name="priority" value="low"> Low</label>
+              </div>
+            </details>
+          </div>
         </form>
 
         <div class="table-scroll">
@@ -366,61 +313,20 @@
                 <th scope="col">Status</th>
                 <th scope="col">Priority</th>
                 <th scope="col">Assignee</th>
-                <th scope="col">Last updated</th>
+                <th scope="col">Submitted</th>
               </tr>
             </thead>
             <tbody id="ticket-rows">
-              <tr data-company="Brightside Studio" data-status="New" data-priority="High">
-                <td><span class="ticket-id">DEMO-1048</span><span class="secondary subject">New starter can't access email</span></td>
-                <td>Jordan Lee<span class="secondary">Brightside Studio</span></td>
-                <td><span class="pill status-open">New</span></td>
-                <td><span class="pill priority-high">High</span></td>
-                <td>Morgan Chen</td>
-                <td>18 min ago</td>
-              </tr>
-              <tr data-company="Harbor &amp; Pine" data-status="In progress" data-priority="Medium">
-                <td><span class="ticket-id">DEMO-1047</span><span class="secondary subject">VPN disconnects during calls</span></td>
-                <td>Sam Rivera<span class="secondary">Harbor &amp; Pine</span></td>
-                <td><span class="pill status-progress">In progress</span></td>
-                <td><span class="pill priority-medium">Medium</span></td>
-                <td>Taylor Brooks</td>
-                <td>46 min ago</td>
-              </tr>
-              <tr data-company="Cedar Works" data-status="Resolved" data-priority="Low">
-                <td><span class="ticket-id">DEMO-1046</span><span class="secondary subject">Request for a shared project folder</span></td>
-                <td>Casey Patel<span class="secondary">Cedar Works</span></td>
-                <td><span class="pill status-resolved">Resolved</span></td>
-                <td><span class="pill priority-low">Low</span></td>
-                <td>Unassigned</td>
-                <td>2 hr ago</td>
-              </tr>
-              <tr data-company="Northstar Design" data-status="New" data-priority="Medium">
-                <td><span class="ticket-id">DEMO-1045</span><span class="secondary subject">Laptop running out of disk space</span></td>
-                <td>Alex Morgan<span class="secondary">Northstar Design</span></td>
-                <td><span class="pill status-open">New</span></td>
-                <td><span class="pill priority-medium">Medium</span></td>
-                <td>Jamie Park</td>
-                <td>3 hr ago</td>
-              </tr>
-              <tr data-company="Willow Accounting" data-status="In progress" data-priority="Urgent">
-                <td><span class="ticket-id">DEMO-1044</span><span class="secondary subject">Unable to print from finance workstation</span></td>
-                <td>Riley Thompson<span class="secondary">Willow Accounting</span></td>
-                <td><span class="pill status-progress">In progress</span></td>
-                <td><span class="pill priority-urgent">Urgent</span></td>
-                <td>Morgan Chen</td>
-                <td>Yesterday</td>
-              </tr>
-              <tr id="empty-state" hidden>
-                <td class="empty-state" colspan="6">
-                  <strong>No matching tickets</strong>
-                  Try another search or change the selected filters.
-                </td>
-              </tr>
+              <tr><td class="empty-state" colspan="6">Loading tickets...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-      <p class="table-note">These fictional tickets are for layout preview only; live ticket data will appear when the Accelo connection is added.</p>
+      <nav class="pagination" aria-label="Ticket pages">
+        <button type="button" id="previous-page" disabled>Previous</button>
+        <span id="page-label" aria-live="polite">Page 1</span>
+        <button type="button" id="next-page" disabled>Next</button>
+      </nav>
     </section>
   </main>
 
@@ -433,85 +339,173 @@
     const prioritySelection = document.getElementById("priority-selection");
     const ticketRowsContainer = document.getElementById("ticket-rows");
     const resultCount = document.getElementById("result-count");
-    const emptyState = document.getElementById("empty-state");
+    const previousPage = document.getElementById("previous-page");
+    const nextPage = document.getElementById("next-page");
+    const pageLabel = document.getElementById("page-label");
     const searchParams = new URLSearchParams(window.location.search);
-    const requestedStatus = searchParams.get("status");
-    const requestedPriorities = searchParams.getAll("priority");
-    const openOnly = searchParams.get("openOnly") === "true";
+    const companyNames = new Map();
+    const statusLabels = { open: "Open", inprogress: "In progress", resolved: "Resolved", closed: "Closed" };
+    const statusClasses = { open: "status-open", inprogress: "status-progress", resolved: "status-resolved", closed: "status-closed" };
+    let currentPage = 0;
+    let requestId = 0;
+    let searchTimer;
 
-    function getTicketRows() {
-      return [...ticketRowsContainer.querySelectorAll("tr[data-status]")];
+    function element(tag, value, className) {
+      const item = document.createElement(tag);
+      item.textContent = value == null || value === "" ? "—" : String(value);
+      if (className) item.className = className;
+      return item;
     }
 
-    function updateCompanyOptions() {
-      const selectedCompany = companyFilter.value;
-      const companies = [...new Set(
-        getTicketRows()
-          .map(row => row.dataset.company?.trim())
-          .filter(Boolean)
-      )].sort((a, b) => a.localeCompare(b));
-
-      companyFilter.replaceChildren(
-        new Option("All companies", "all"),
-        ...companies.map(company => new Option(company, company))
-      );
-      companyFilter.value = companies.includes(selectedCompany) ? selectedCompany : "all";
+    function cell(...children) {
+      const item = document.createElement("td");
+      item.append(...children);
+      return item;
     }
 
-    function filterTickets() {
-      const query = searchInput.value.trim().toLocaleLowerCase();
-      const company = companyFilter.value;
-      const status = statusFilter.value;
-      const selectedPriorities = priorityFilters
-        .filter(filter => filter.checked)
-        .map(filter => filter.value);
-      prioritySelection.textContent = selectedPriorities.length
-        ? `${selectedPriorities.length} selected`
-        : "All";
-      const ticketRows = getTicketRows();
-      let visibleCount = 0;
+    function showMessage(message) {
+      const row = document.createElement("tr");
+      const item = element("td", message, "empty-state");
+      item.colSpan = 6;
+      row.append(item);
+      ticketRowsContainer.replaceChildren(row);
+    }
 
-      for (const row of ticketRows) {
-        const matchesQuery = row.textContent.toLocaleLowerCase().includes(query);
-        const matchesCompany = company === "all" || row.dataset.company === company;
-        const matchesStatus = status === "all" || row.dataset.status === status;
-        const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(row.dataset.priority);
-        const isOpen = row.dataset.status !== "Resolved";
-        const isVisible = matchesQuery && matchesCompany && matchesStatus && matchesPriority && (!openOnly || isOpen);
-
-        row.hidden = !isVisible;
-        if (isVisible) visibleCount += 1;
+    function renderTickets(tickets) {
+      if (!tickets.length) {
+        showMessage("No matching tickets");
+        return;
       }
 
-      emptyState.hidden = visibleCount > 0;
-      resultCount.textContent = `Showing ${visibleCount} of ${ticketRows.length} example tickets`;
+      const rows = tickets.map(ticket => {
+        const status = String(ticket.status || "").toLowerCase();
+        const priority = String(ticket.priority || "").toLowerCase();
+        const submitted = ticket.date_submitted ? new Date(ticket.date_submitted) : null;
+        const submittedText = submitted && !Number.isNaN(submitted.getTime())
+          ? submitted.toLocaleString()
+          : "—";
+        const row = document.createElement("tr");
+        row.dataset.companyId = ticket.company_id;
+        row.append(
+          cell(element("span", "#" + ticket.id, "ticket-id"), element("span", ticket.title, "secondary subject")),
+          cell(element("span", ticket.contact_name), element("span", companyNames.get(Number(ticket.company_id)), "secondary")),
+          cell(element("span", statusLabels[status] || ticket.status, "pill " + (statusClasses[status] || ""))),
+          cell(element("span", priority ? priority[0].toUpperCase() + priority.slice(1) : "—", "pill priority-" + priority)),
+          cell(element("span", ticket.assignee_name || "Unassigned")),
+          cell(element("span", submittedText))
+        );
+        return row;
+      });
+      ticketRowsContainer.replaceChildren(...rows);
     }
 
+    function updatePrioritySelection() {
+      const count = priorityFilters.filter(filter => filter.checked).length;
+      prioritySelection.textContent = count ? count + " selected" : "All";
+    }
+
+    async function loadTickets() {
+      const thisRequest = ++requestId;
+      const params = new URLSearchParams({ page: String(currentPage) });
+      if (companyFilter.value !== "all") params.set("company_id", companyFilter.value);
+      if (statusFilter.value !== "all") params.set("status", statusFilter.value);
+      const priorities = priorityFilters.filter(filter => filter.checked).map(filter => filter.value);
+      if (priorities.length) params.set("priority", priorities.join(","));
+      if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
+
+      resultCount.textContent = "Loading tickets...";
+      showMessage("Loading tickets...");
+      previousPage.disabled = true;
+      nextPage.disabled = true;
+      pageLabel.textContent = "Page " + (currentPage + 1);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/tickets?" + params);
+        if (!response.ok) throw new Error("Could not load tickets (HTTP " + response.status + ")");
+        const data = await response.json();
+        if (thisRequest !== requestId) return;
+        renderTickets(data.tickets);
+        const totalPages = Math.max(1, Math.ceil(data.total / 10));
+        const first = data.total ? currentPage * 10 + 1 : 0;
+        const last = data.total ? Math.min(currentPage * 10 + data.tickets.length, data.total) : 0;
+        resultCount.textContent = "Showing " + first + "–" + last + " of " + data.total + " tickets";
+        pageLabel.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+        previousPage.disabled = currentPage === 0;
+        nextPage.disabled = currentPage + 1 >= totalPages;
+      } catch (error) {
+        if (thisRequest !== requestId) return;
+        showMessage(error.message);
+        resultCount.textContent = "Could not load tickets";
+        previousPage.disabled = currentPage === 0;
+      }
+    }
+
+    async function loadCompanyOptions() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/companies");
+        if (!response.ok) throw new Error(await response.text());
+        const companies = await response.json();
+        for (const company of companies) companyNames.set(Number(company.id), company.name);
+        companyFilter.replaceChildren(
+          new Option("All", "all"),
+          ...companies.map(company => new Option(company.name, String(company.id)))
+        );
+        const requestedCompany = searchParams.get("company_id");
+        if (requestedCompany && [...companyFilter.options].some(option => option.value === requestedCompany)) {
+          companyFilter.value = requestedCompany;
+          loadTickets();
+        } else {
+          renderCompanyNames();
+        }
+      } catch (error) {
+        companyFilter.title = error.message;
+      }
+    }
+
+    function renderCompanyNames() {
+      for (const row of ticketRowsContainer.querySelectorAll("tr")) {
+        const companyCell = row.children[1];
+        const name = companyCell?.querySelector(".secondary");
+        if (name && row.dataset.companyId) name.textContent = companyNames.get(Number(row.dataset.companyId)) || "—";
+      }
+    }
+
+    const requestedStatus = (searchParams.get("status") || "").toLowerCase().replace(" ", "");
     if ([...statusFilter.options].some(option => option.value === requestedStatus)) {
       statusFilter.value = requestedStatus;
     }
-
+    const requestedPriorities = searchParams.getAll("priority").flatMap(value => value.toLowerCase().split(","));
     priorityFilters.forEach(filter => {
       filter.checked = requestedPriorities.includes(filter.value);
     });
+    updatePrioritySelection();
 
-    updateCompanyOptions();
-    filterTickets();
+    loadCompanyOptions();
+    loadTickets();
 
-    new MutationObserver(() => {
-      updateCompanyOptions();
-      filterTickets();
-    }).observe(ticketRowsContainer, {
-      attributes: true,
-      attributeFilter: ["data-company"],
-      childList: true,
-      subtree: true
+    function filtersChanged() {
+      currentPage = 0;
+      updatePrioritySelection();
+      loadTickets();
+    }
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(filtersChanged, 300);
     });
-
-    searchInput.addEventListener("input", filterTickets);
-    companyFilter.addEventListener("change", filterTickets);
-    statusFilter.addEventListener("change", filterTickets);
-    priorityFilters.forEach(filter => filter.addEventListener("change", filterTickets));
+    companyFilter.addEventListener("change", filtersChanged);
+    statusFilter.addEventListener("change", filtersChanged);
+    priorityFilters.forEach(filter => filter.addEventListener("change", filtersChanged));
+    previousPage.addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage -= 1;
+        loadTickets();
+      }
+    });
+    nextPage.addEventListener("click", () => {
+      currentPage += 1;
+      loadTickets();
+    });
 
     document.addEventListener("click", event => {
       if (!priorityDropdown.contains(event.target)) {
