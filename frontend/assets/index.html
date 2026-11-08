@@ -141,8 +141,8 @@
       .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; }
     }
   </style>
-  <link rel="stylesheet" href="theme.css?v=2">
-  <script src="theme.js?v=2"></script>
+  <link rel="stylesheet" href="theme.css?v=4">
+  <script src="theme.js?v=3"></script>
 </head>
 <body>
   <header>
@@ -150,7 +150,7 @@
       <a class="brand" href="index.html" aria-label="OmniCommand home">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
       </a>
-      <div class="current-employee" style="display:grid;gap:4px;margin-left:auto;min-width:180px"><label for="current-employee" style="font-size:12px">Current employee</label><select id="current-employee" style="min-height:36px;width:100%"><option value="">Loading employees...</option></select></div>
+      <div class="current-employee"><select id="current-employee" aria-label="Current employee"><option value="">Loading employees...</option></select></div>
       <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
     </div>
     <nav class="section-nav" aria-label="Main navigation">
@@ -249,7 +249,7 @@
       </div>
     </section>
   </main>
-  <script src="assets/current_user.js?v=2"></script>
+  <script src="assets/current_user.js?v=3"></script>
   <script>
     async function loadMetric(metric) {
       try {
