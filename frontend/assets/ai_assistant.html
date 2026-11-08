@@ -26,6 +26,11 @@
     .chat-entry { max-width: 85%; padding: 12px 14px; border-radius: 10px; background: var(--bg); white-space: pre-wrap; overflow-wrap: anywhere; }
     .chat-entry.user { align-self: flex-end; background: var(--panel-raised, #fff3dc); }
     .chat-entry.assistant { align-self: flex-start; }
+    .chat-entry.assistant p, .chat-entry.assistant ol { margin: 0; }
+    .chat-entry.assistant p + p, .chat-entry.assistant p + ol, .chat-entry.assistant ol + p { margin-top: 12px; }
+    .chat-entry.assistant ol { padding-left: 26px; }
+    .chat-entry.assistant li { padding-left: 4px; }
+    .chat-entry.assistant li + li { margin-top: 10px; }
     .chat-entry.error { color: #b32727; }
     .plan-action { display: block; margin-top: 14px; padding: 9px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #222; font: inherit; font-weight: 700; cursor: pointer; }
     .chat-composer { display: flex; align-items: flex-end; gap: 12px; padding: 16px; border-top: 1px solid var(--line); }
@@ -99,6 +104,53 @@
       return message;
     }
 
+    function appendParagraphs(message, text) {
+      for (const paragraph of text.trim().split(/\n\s*\n/)) {
+        if (!paragraph.trim()) continue;
+        const element = document.createElement("p");
+        element.textContent = paragraph.trim();
+        message.append(element);
+      }
+    }
+
+    function appendAnswer(message, answer) {
+      const markers = [...answer.matchAll(/(^|\s)(\d{1,2})[.)]\s+/gm)].map(match => ({
+        number: Number(match[2]),
+        start: match.index + match[1].length,
+        end: match.index + match[0].length,
+      }));
+      const first = markers.findIndex((marker, index) => marker.number === 1 && markers[index + 1]?.number === 2);
+      if (first === -1) {
+        appendParagraphs(message, answer);
+        return;
+      }
+
+      appendParagraphs(message, answer.slice(0, markers[first].start));
+      const list = document.createElement("ol");
+      let next = first;
+      while (next < markers.length && markers[next].number === next - first + 1) {
+        const marker = markers[next];
+        const end = markers[next + 1]?.start ?? answer.length;
+        let step = answer.slice(marker.end, end);
+        if (markers[next + 1]?.number !== marker.number + 1) {
+          const paragraphBreak = step.search(/\n\s*\n/);
+          if (paragraphBreak !== -1) step = step.slice(0, paragraphBreak);
+        }
+        const item = document.createElement("li");
+        item.textContent = step.trim();
+        list.append(item);
+        next += 1;
+      }
+      message.append(list);
+
+      const last = markers[next - 1];
+      const end = markers[next]?.start ?? answer.length;
+      const remaining = answer.slice(last.end, end);
+      const paragraphBreak = remaining.search(/\n\s*\n/);
+      const tail = (paragraphBreak === -1 ? "" : remaining.slice(paragraphBreak)) + answer.slice(end);
+      if (tail.trim()) appendAnswer(message, tail);
+    }
+
     chatForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const question = chatInput.value.trim();
@@ -120,12 +172,13 @@
         });
         if (!response.ok) throw new Error("The AI service could not answer. Please try again.");
         const result = await response.json();
-        pending.textContent = result.answer;
+        pending.replaceChildren();
+        appendAnswer(pending, result.answer);
         const citedSources = (result.sources || []).filter(source => result.answer.includes(source.citation));
         if (citedSources.length) {
-          pending.textContent += "\n\nSources:\n" + citedSources
+          appendParagraphs(pending, "Sources:\n" + citedSources
             .map(source => `${source.citation} ${source.document_title} (section ${source.chunk_index + 1})`)
-            .join("\n");
+            .join("\n"));
         }
         if (result.process_plan) {
           const action = document.createElement("button");
@@ -137,7 +190,7 @@
               sessionStorage.setItem("omni-ai-process-plan-draft", JSON.stringify(result.process_plan));
               window.location.href = "process_plans.html?ai_draft=1";
             } catch {
-              pending.textContent += "\n\nCould not open the plan draft in this browser.";
+              appendParagraphs(pending, "Could not open the plan draft in this browser.");
             }
           });
           pending.append(action);

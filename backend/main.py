@@ -70,6 +70,21 @@ def plan_db():
             task_id INTEGER PRIMARY KEY, job_id INTEGER NOT NULL,
             milestone_id TEXT NOT NULL, legacy_local_id TEXT UNIQUE
         )""")
+        db.execute("""CREATE TABLE IF NOT EXISTS local_companies (
+            id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE COLLATE NOCASE
+        )""")
+        db.execute("""CREATE TABLE IF NOT EXISTS local_plans (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL,
+            company_id INTEGER NOT NULL, company_name TEXT NOT NULL
+        )""")
+        db.execute("""CREATE TABLE IF NOT EXISTS local_plan_milestones (
+            id TEXT PRIMARY KEY, plan_id TEXT NOT NULL, title TEXT NOT NULL
+        )""")
+        db.execute("""CREATE TABLE IF NOT EXISTS local_plan_tasks (
+            id INTEGER PRIMARY KEY, plan_id TEXT NOT NULL, milestone_id TEXT NOT NULL,
+            title TEXT NOT NULL, assignee INTEGER, assignee_name TEXT,
+            date_due TEXT, status TEXT NOT NULL
+        )""")
         yield db
         db.commit()
     except Exception:
@@ -109,12 +124,19 @@ def numbered_task(task, job_id, milestone_id):
 def local_table_tasks(company_id, statuses, overdue, query, assignees=None):
     with plan_db() as db:
         rows = [dict(row) for row in db.execute(
+            """SELECT t.id, t.plan_id AS job_id, t.milestone_id, t.title, t.assignee,
+                      t.assignee_name, t.date_due, t.status, p.company_id
+               FROM local_plan_tasks AS t
+               JOIN local_plans AS p ON p.id = t.plan_id
+               ORDER BY t.id DESC"""
+        )]
+        rows.extend(dict(row) for row in db.execute(
             """SELECT t.id, t.job_id, t.milestone_id, t.title, t.assignee,
                       t.assignee_name, t.date_due, t.status, m.company_id
                FROM local_tasks AS t
                JOIN local_milestones AS m ON m.id = t.milestone_id
                ORDER BY t.rowid DESC"""
-        )]
+        ))
         job_companies = {}
         for task in rows:
             if task["company_id"] is None:
@@ -405,8 +427,10 @@ def tasks(
 @app.get("/companies")
 def companies():
     items = fetch_pages(companies_url, 50, {})
+    with plan_db() as db:
+        local = [dict(row) for row in db.execute("SELECT id, name FROM local_companies")]
     return sorted(
-        ({"id": company["id"], "name": company["name"]} for company in items),
+        [{"id": company["id"], "name": company["name"]} for company in items] + local,
         key=lambda company: company["name"].casefold(),
     )
 
@@ -435,6 +459,29 @@ class LocalTaskCreate(BaseModel):
     date_due: date | None = None
 
 
+class NewPlanTask(BaseModel):
+    title: str = Field(min_length=1)
+    assignee: int | None = None
+    assignee_name: str | None = None
+    date_due: date | None = None
+
+
+class NewPlanMilestone(BaseModel):
+    title: str = Field(min_length=1)
+    tasks: list[NewPlanTask] = Field(default_factory=list)
+
+
+class NewPlanCreate(BaseModel):
+    title: str = Field(min_length=1)
+    company_id: int | None = None
+    company_name: str | None = None
+    milestones: list[NewPlanMilestone] = Field(default_factory=list)
+
+
+class NewPlanTaskCreate(NewPlanTask):
+    milestone_id: str
+
+
 class TaskCompletion(BaseModel):
     complete: bool
 
@@ -443,12 +490,65 @@ def plan_company_names():
     return {company["id"]: company["name"] for company in companies()}
 
 
+def next_local_id(db, table):
+    return db.execute(f"SELECT COALESCE(MAX(id), 999999999) + 1 FROM {table}").fetchone()[0]
+
+
+def local_plan_summary(row):
+    plan = dict(row)
+    total = plan.pop("task_count")
+    completed = plan.pop("completed") or 0
+    plan["status"] = "completed" if total and completed == total else "active"
+    plan["percent_complete"] = round(completed * 100 / total) if total else 0
+    plan["local"] = True
+    return plan
+
+
+def local_plan_detail(plan_id):
+    with plan_db() as db:
+        row = db.execute(
+            """SELECT p.id, p.title, p.company_id, p.company_name,
+                      COUNT(t.id) AS task_count,
+                      SUM(CASE WHEN t.status = 'complete' THEN 1 ELSE 0 END) AS completed
+               FROM local_plans AS p
+               LEFT JOIN local_plan_tasks AS t ON t.plan_id = p.id
+               WHERE p.id = ? GROUP BY p.id""", (plan_id,)
+        ).fetchone()
+        if row is None:
+            raise HTTPException(404, "Plan not found")
+        milestones = [dict(item) for item in db.execute(
+            "SELECT id, title FROM local_plan_milestones WHERE plan_id = ? ORDER BY rowid", (plan_id,)
+        )]
+        tasks = [dict(item) for item in db.execute(
+            """SELECT id, milestone_id, title, assignee, assignee_name, date_due, status
+               FROM local_plan_tasks WHERE plan_id = ? ORDER BY id""", (plan_id,)
+        )]
+    job = local_plan_summary(row)
+    tasks = [{**task, "job_id": plan_id, "company_id": job["company_id"]} for task in tasks]
+    completed = sum(task["status"] == "complete" for task in tasks)
+    return {
+        "job": job,
+        "milestones": milestones,
+        "tasks": tasks,
+        "progress": {"completed": completed, "total": len(tasks), "percent": job["percent_complete"]},
+    }
+
+
 @app.get("/process-plans")
 def process_plans():
     names = plan_company_names()
     jobs = fetch_pages(jobs_url, 100, {})
+    with plan_db() as db:
+        local = [local_plan_summary(row) for row in db.execute(
+            """SELECT p.id, p.title, p.company_id, p.company_name,
+                      COUNT(t.id) AS task_count,
+                      SUM(CASE WHEN t.status = 'complete' THEN 1 ELSE 0 END) AS completed
+               FROM local_plans AS p
+               LEFT JOIN local_plan_tasks AS t ON t.plan_id = p.id
+               GROUP BY p.id"""
+        )]
     return {"plans": sorted(
-        ({**job, "company_name": names.get(job["company_id"], "Unknown company")} for job in jobs),
+        [*({**job, "company_name": names.get(job["company_id"], "Unknown company")} for job in jobs), *local],
         key=lambda job: (job["company_name"].casefold(), job["title"].casefold()),
     )}
 
@@ -456,6 +556,116 @@ def process_plans():
 @app.get("/process-plans/staff")
 def process_plan_staff():
     return staff()
+
+
+@app.post("/process-plans/local")
+def create_local_plan(plan: NewPlanCreate):
+    title = plan.title.strip()
+    if not title:
+        raise HTTPException(422, "Plan name is required")
+    known_companies = companies()
+    company = next((item for item in known_companies if item["id"] == plan.company_id), None)
+    company_name = (plan.company_name or "").strip()
+    if plan.company_id is not None and company is None:
+        raise HTTPException(422, "Company not found")
+    if company is None and not company_name:
+        raise HTTPException(422, "Company is required")
+    if company is None:
+        company = next((item for item in known_companies if item["name"].casefold() == company_name.casefold()), None)
+
+    plan_id = "local-plan-" + uuid4().hex
+    with plan_db() as db:
+        db.execute("BEGIN IMMEDIATE")
+        if company is None:
+            existing = db.execute(
+                "SELECT id, name FROM local_companies WHERE name = ? COLLATE NOCASE", (company_name,)
+            ).fetchone()
+            company = dict(existing) if existing else {"id": next_local_id(db, "local_companies"), "name": company_name}
+            if existing is None:
+                db.execute("INSERT INTO local_companies (id, name) VALUES (?, ?)", (company["id"], company["name"]))
+        db.execute(
+            "INSERT INTO local_plans (id, title, company_id, company_name) VALUES (?, ?, ?, ?)",
+            (plan_id, title, company["id"], company["name"]),
+        )
+        for milestone in plan.milestones:
+            milestone_title = milestone.title.strip()
+            if not milestone_title:
+                continue
+            milestone_id = "local-milestone-" + uuid4().hex
+            db.execute(
+                "INSERT INTO local_plan_milestones (id, plan_id, title) VALUES (?, ?, ?)",
+                (milestone_id, plan_id, milestone_title),
+            )
+            for task in milestone.tasks:
+                task_title = task.title.strip()
+                if task_title:
+                    db.execute(
+                        """INSERT INTO local_plan_tasks
+                           (id, plan_id, milestone_id, title, assignee, assignee_name, date_due, status)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')""",
+                        (next_local_id(db, "local_plan_tasks"), plan_id, milestone_id, task_title,
+                         task.assignee, task.assignee_name, task.date_due.isoformat() if task.date_due else None),
+                    )
+    return local_plan_detail(plan_id)
+
+
+@app.get("/process-plans/local/{plan_id}")
+def get_local_plan(plan_id: str):
+    return local_plan_detail(plan_id)
+
+
+@app.post("/process-plans/local/{plan_id}/milestones")
+def create_local_plan_milestone(plan_id: str, milestone: LocalMilestoneCreate):
+    title = milestone.title.strip()
+    if not title:
+        raise HTTPException(422, "Milestone title is required")
+    item = {"id": "local-milestone-" + uuid4().hex, "title": title}
+    with plan_db() as db:
+        if db.execute("SELECT 1 FROM local_plans WHERE id = ?", (plan_id,)).fetchone() is None:
+            raise HTTPException(404, "Plan not found")
+        db.execute(
+            "INSERT INTO local_plan_milestones (id, plan_id, title) VALUES (?, ?, ?)",
+            (item["id"], plan_id, title),
+        )
+    return item
+
+
+@app.post("/process-plans/local/{plan_id}/tasks")
+def create_local_plan_task(plan_id: str, task: NewPlanTaskCreate):
+    title = task.title.strip()
+    if not title:
+        raise HTTPException(422, "Task title is required")
+    with plan_db() as db:
+        db.execute("BEGIN IMMEDIATE")
+        if db.execute(
+            "SELECT 1 FROM local_plan_milestones WHERE id = ? AND plan_id = ?",
+            (task.milestone_id, plan_id),
+        ).fetchone() is None:
+            raise HTTPException(422, "Milestone does not belong to this plan")
+        task_id = next_local_id(db, "local_plan_tasks")
+        db.execute(
+            """INSERT INTO local_plan_tasks
+               (id, plan_id, milestone_id, title, assignee, assignee_name, date_due, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')""",
+            (task_id, plan_id, task.milestone_id, title, task.assignee,
+             task.assignee_name, task.date_due.isoformat() if task.date_due else None),
+        )
+    return {"id": task_id, "job_id": plan_id, "milestone_id": task.milestone_id,
+            "title": title, "assignee": task.assignee, "assignee_name": task.assignee_name,
+            "date_due": task.date_due.isoformat() if task.date_due else None, "status": "pending"}
+
+
+@app.put("/process-plans/local/{plan_id}/tasks/{task_id}")
+def complete_local_plan_task(plan_id: str, task_id: int, update: TaskCompletion):
+    status = "complete" if update.complete else "pending"
+    with plan_db() as db:
+        result = db.execute(
+            "UPDATE local_plan_tasks SET status = ? WHERE id = ? AND plan_id = ?",
+            (status, task_id, plan_id),
+        )
+        if result.rowcount == 0:
+            raise HTTPException(404, "Task does not belong to this plan")
+    return {"id": task_id, "status": status}
 
 
 @app.get("/process-plans/{job_id}")

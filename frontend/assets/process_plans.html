@@ -206,7 +206,7 @@
           <div id="ai-plan-milestones"></div>
           <p class="muted">Review these titles. Clear any title you do not want to include.</p>
         </div>
-        <p class="muted">New plans and their tasks disappear when you refresh this page.</p>
+        <p class="muted">Plans created here are saved in OmniCommand, and their tasks appear in Tasks.</p>
         <p id="new-plan-status" class="message" role="status"></p>
       </form>
     </section>
@@ -231,7 +231,7 @@
             <div class="field"><label for="milestone-title">Milestone name</label><input id="milestone-title" required maxlength="200"></div>
             <button id="add-milestone" class="primary-button" type="submit">Add to plan</button>
           </div>
-          <p class="muted">New milestones are saved here; their tasks are created in Accelo under the job.</p>
+          <p class="muted">Milestones and tasks are saved when you click Save changes.</p>
           <p id="milestone-status" class="message" role="status"></p>
         </form>
         <form id="task-form" class="task-form">
@@ -290,12 +290,9 @@
     const formStatus = document.getElementById("form-status");
     let plans = [];
     let companies = [];
-    const localCompanies = [];
     let staffMembers = [];
-    const draftPlans = [];
     const details = new Map();
     const pending = new Map();
-    let draftNumber = 0;
     let draftMilestoneNumber = 0;
     let draftTaskNumber = 0;
     let selectedPlanId = null;
@@ -314,6 +311,12 @@
         throw new Error(typeof detail === "string" ? detail : "Request failed (HTTP " + response.status + ")");
       }
       return data;
+    }
+
+    function planPath(id) {
+      return typeof id === "string"
+        ? "/process-plans/local/" + encodeURIComponent(id)
+        : "/process-plans/" + id;
     }
 
     function element(tag, value, className) {
@@ -338,7 +341,7 @@
     }
 
     function allPlans() {
-      return [...draftPlans, ...plans];
+      return plans;
     }
 
     function statusText(status) {
@@ -352,7 +355,6 @@
         new Option("All statuses", "all"),
         ...statuses.map(status => new Option(statusText(status), status))
       ];
-      if (draftPlans.length) options.push(new Option("Temporary", "temporary"));
       statusFilter.replaceChildren(...options);
       statusFilter.value = options.some(option => option.value === selected) ? selected : "all";
     }
@@ -368,7 +370,7 @@
     function updateCompanyOptions() {
       const selectedFilter = companyFilter.value;
       const selectedNewPlanCompany = newPlanCompany.value;
-      const options = [...companies, ...localCompanies];
+      const options = companies;
       companyFilter.replaceChildren(
         new Option("All companies", "all"),
         ...options.map(company => new Option(company.name, String(company.id)))
@@ -382,17 +384,6 @@
       newPlanCompany.value = selectedNewPlanCompany === "new" || options.some(company => String(company.id) === selectedNewPlanCompany)
         ? selectedNewPlanCompany : "";
       updateNewCompanyField();
-    }
-
-    function draftDetail(draft) {
-      const completed = draft.tasks.filter(task => task.status === "complete").length;
-      const needsChecklist = !draft.milestones.length || draft.tasks.some(task => task.milestone_id === "draft");
-      return {
-        job: draft,
-        milestones: [...(needsChecklist ? [{ id: "draft", title: "Checklist" }] : []), ...draft.milestones],
-        tasks: draft.tasks,
-        progress: { completed: completed, total: draft.tasks.length, percent: draft.tasks.length ? Math.round(completed * 100 / draft.tasks.length) : 0 }
-      };
     }
 
     function milestonesFor(id, data) {
@@ -413,7 +404,7 @@
       const status = statusFilter.value;
       const filtered = allPlans().filter(plan =>
         (companyId === "all" || String(plan.company_id) === companyId) &&
-        (status === "all" || (plan.draft ? "temporary" : plan.status) === status) &&
+        (status === "all" || plan.status === status) &&
         (plan.title + " " + plan.company_name).toLocaleLowerCase().includes(query)
       );
       const totalPages = Math.max(1, Math.ceil(filtered.length / 10));
@@ -452,7 +443,7 @@
           row.append(
             nameCell,
             element("td", plan.company_name),
-            element("td", plan.draft ? "Temporary" : statusText(plan.status), "status"),
+            element("td", statusText(plan.status), "status"),
             progressCell
           );
           return row;
@@ -470,8 +461,7 @@
       if (saving) return;
       selectedPlanId = id;
       const url = new URL(window.location.href);
-      if (typeof id === "string") url.searchParams.delete("job_id");
-      else url.searchParams.set("job_id", String(id));
+      url.searchParams.set("job_id", String(id));
       history.replaceState(null, "", url);
       taskForm.reset();
       milestoneForm.reset();
@@ -532,7 +522,7 @@
       planEmpty.hidden = true;
       planContent.hidden = false;
       planTitle.textContent = data.job.title;
-      planCompany.textContent = data.job.company_name + (data.job.draft ? " · Temporary" : "");
+      planCompany.textContent = data.job.company_name;
       planProgress.value = percent;
       progressText.textContent = completed + " of " + tasks.length + " tasks complete (" + percent + "%)";
       saveButton.disabled = (!hasEdits(id) && !needsSync(id)) || saving;
@@ -580,9 +570,7 @@
       planEmpty.classList.remove("error");
       planContent.hidden = true;
       try {
-        const data = typeof id === "string"
-          ? draftDetail(draftPlans.find(plan => plan.id === id))
-          : await api("/process-plans/" + id);
+        const data = await api(planPath(id));
         if (requestId !== detailRequestId || selectedPlanId !== id) return;
         details.set(id, data);
         renderDetail(data);
@@ -601,13 +589,13 @@
         updateStatusOptions();
         renderTable();
         if (selectedPlanId === null && plans.length) {
-          const requested = Number(new URLSearchParams(window.location.search).get("job_id"));
-          const initial = plans.find(plan => plan.id === requested) || plans[0];
+          const requested = new URLSearchParams(window.location.search).get("job_id");
+          const initial = plans.find(plan => String(plan.id) === requested) || plans[0];
           const index = allPlans().findIndex(plan => plan.id === initial.id);
           tablePage = Math.floor(index / 10);
           renderTable();
           selectPlan(initial.id);
-        } else if (selectedPlanId === null && !draftPlans.length) {
+        } else if (selectedPlanId === null) {
           planEmpty.textContent = "No process plans found";
         }
       } catch (error) {
@@ -650,10 +638,11 @@
       let draft;
       try { draft = JSON.parse(raw); } catch { return; }
       if (!draft || typeof draft.name !== "string" || !Array.isArray(draft.milestones)) return;
-      newPlanName.value = draft.name.slice(0, 200);
       const companyName = typeof draft.company_name === "string" ? draft.company_name.trim() : "";
+      newPlanName.value = (companyName && /\bonboard/i.test(draft.name) && !draft.name.toLocaleLowerCase().includes(companyName.toLocaleLowerCase())
+        ? companyName + " onboarding" : draft.name).slice(0, 200);
       if (companyName) {
-        const company = [...companies, ...localCompanies].find(item => item.name.toLocaleLowerCase() === companyName.toLocaleLowerCase());
+        const company = companies.find(item => item.name.toLocaleLowerCase() === companyName.toLocaleLowerCase());
         newPlanCompany.value = company ? String(company.id) : "new";
         updateNewCompanyField();
         if (!company) newPlanCompanyName.value = companyName.slice(0, 200);
@@ -688,7 +677,7 @@
         return section;
       }));
       aiPlanSuggestion.hidden = false;
-      newPlanStatus.textContent = "Review the suggested fields, choose a company if needed, then create this temporary plan.";
+      newPlanStatus.textContent = "Review the suggested fields, choose a company if needed, then create the plan.";
       newPlanStatus.classList.remove("error");
       newPlanForm.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -759,21 +748,10 @@
       saveStatus.classList.remove("error");
       const edits = editsFor(id);
       try {
-        if (typeof id === "string") {
-          const draft = draftPlans.find(plan => plan.id === id);
-          for (const [taskId, complete] of edits.checks) {
-            const task = draft.tasks.find(item => item.id === taskId);
-            if (task) task.status = complete ? "complete" : "pending";
-          }
-          draft.milestones.push(...edits.milestones);
-          draft.tasks.push(...edits.tasks);
-          edits.checks.clear();
-          edits.milestones.length = 0;
-          edits.tasks.length = 0;
-          details.set(id, draftDetail(draft));
-        } else {
+        const base = planPath(id);
+        if (typeof id === "number") {
           for (const task of details.get(id).tasks.filter(item => String(item.id).startsWith("local-task-"))) {
-            const created = await api("/process-plans/" + id + "/local-tasks/" + task.id + "/sync", {
+            const created = await api(base + "/local-tasks/" + task.id + "/sync", {
               method: "POST"
             });
             if (edits.checks.has(task.id)) {
@@ -781,54 +759,52 @@
               edits.checks.delete(task.id);
             }
           }
-          for (const milestone of [...edits.milestones]) {
-            const created = await api("/process-plans/" + id + "/milestones", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ title: milestone.title })
-            });
-            edits.milestones.splice(edits.milestones.indexOf(milestone), 1);
-            for (const task of edits.tasks) {
-              if (task.milestone_id === milestone.id) task.milestone_id = created.id;
-            }
-          }
-          for (const task of [...edits.tasks]) {
-            const payload = { title: task.title, milestone_id: task.milestone_id };
-            if (task.assignee !== null) payload.assignee = task.assignee;
-            if (task.date_due) payload.date_due = task.date_due;
-            if (typeof task.milestone_id === "string") payload.assignee_name = task.assignee_name;
-            const path = typeof task.milestone_id === "string" ? "/local-tasks" : "/tasks";
-            const created = await api("/process-plans/" + id + path, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
-            edits.tasks.splice(edits.tasks.indexOf(task), 1);
-            if (task.status === "complete") edits.checks.set(created.id, true);
-          }
-          for (const [taskId, complete] of [...edits.checks]) {
-            const path = String(taskId).startsWith("local-task-") ? "/local-tasks/" : "/tasks/";
-            await api("/process-plans/" + id + path + taskId, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ complete: complete })
-            });
-            edits.checks.delete(taskId);
-          }
-          const data = await api("/process-plans/" + id);
-          details.set(id, data);
-          await loadPlans();
         }
+        for (const milestone of [...edits.milestones]) {
+          const created = await api(base + "/milestones", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: milestone.title })
+          });
+          edits.milestones.splice(edits.milestones.indexOf(milestone), 1);
+          for (const task of edits.tasks) {
+            if (task.milestone_id === milestone.id) task.milestone_id = created.id;
+          }
+        }
+        for (const task of [...edits.tasks]) {
+          const payload = { title: task.title, milestone_id: task.milestone_id };
+          if (task.assignee !== null) payload.assignee = task.assignee;
+          if (task.date_due) payload.date_due = task.date_due;
+          if (typeof id === "string" || typeof task.milestone_id === "string") payload.assignee_name = task.assignee_name;
+          const path = typeof id === "string" || typeof task.milestone_id !== "string" ? "/tasks" : "/local-tasks";
+          const created = await api(base + path, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          edits.tasks.splice(edits.tasks.indexOf(task), 1);
+          if (task.status === "complete") edits.checks.set(created.id, true);
+        }
+        for (const [taskId, complete] of [...edits.checks]) {
+          const path = typeof id === "number" && String(taskId).startsWith("local-task-") ? "/local-tasks/" : "/tasks/";
+          await api(base + path + taskId, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ complete: complete })
+          });
+          edits.checks.delete(taskId);
+        }
+        const data = await api(base);
+        details.set(id, data);
+        await loadPlans();
         if (selectedPlanId === id) {
           renderDetail(details.get(id));
           milestoneStatus.textContent = "";
           formStatus.textContent = "";
-          saveStatus.textContent = typeof id === "string" ? "Saved for this session" : "Changes saved";
+          saveStatus.textContent = "Changes saved";
         }
       } catch (error) {
-        if (typeof id === "number") {
-          try { details.set(id, await api("/process-plans/" + id)); } catch { /* Keep the last loaded plan. */ }
-        }
+        try { details.set(id, await api(planPath(id))); } catch { /* Keep the last loaded plan. */ }
         if (selectedPlanId === id) {
           renderDetail(details.get(id));
           saveStatus.textContent = error.message;
@@ -847,66 +823,64 @@
       }
     }
 
-    newPlanForm.addEventListener("submit", event => {
+    newPlanForm.addEventListener("submit", async event => {
       event.preventDefault();
-      if (saving) return;
+      if (saving || createPlanButton.disabled) return;
       const title = newPlanName.value.trim();
       const isNewCompany = newPlanCompany.value === "new";
-      const companyName = isNewCompany ? newPlanCompanyName.value.trim() : newPlanCompany.selectedOptions[0]?.textContent;
-      if (!title || !newPlanCompany.value || !companyName) return;
-      let companyId = newPlanCompany.value;
-      if (isNewCompany) {
-        let company = localCompanies.find(item => item.name.toLocaleLowerCase() === companyName.toLocaleLowerCase());
-        if (!company) {
-          company = { id: "local-company-" + (localCompanies.length + 1), name: companyName };
-          localCompanies.push(company);
-        }
-        companyId = company.id;
-      }
-      const draft = {
-        id: "draft-" + ++draftNumber,
-        draft: true,
-        title: title,
-        company_id: companyId,
-        company_name: companyName,
-        milestones: [],
-        tasks: []
+      const companyName = isNewCompany ? newPlanCompanyName.value.trim() : "";
+      if (!title || !newPlanCompany.value || (isNewCompany && !companyName)) return;
+      const payload = {
+        title,
+        ...(isNewCompany ? { company_name: companyName } : { company_id: Number(newPlanCompany.value) }),
+        milestones: []
       };
       if (!aiPlanSuggestion.hidden) {
         for (const suggestion of aiPlanMilestones.querySelectorAll(".ai-milestone")) {
           const milestoneTitle = suggestion.querySelector(".ai-milestone-title").value.trim();
           if (!milestoneTitle) continue;
-          const milestone = { id: "draft-milestone-" + ++draftMilestoneNumber, title: milestoneTitle };
-          draft.milestones.push(milestone);
+          const milestone = { title: milestoneTitle, tasks: [] };
+          payload.milestones.push(milestone);
           for (const row of suggestion.querySelectorAll(".ai-task")) {
             const taskTitle = row.querySelector(".ai-task-title").value.trim();
             const assignee = row.querySelector(".ai-task-assignee");
-            if (taskTitle) draft.tasks.push({
-              id: "draft-task-" + ++draftTaskNumber,
+            if (taskTitle) milestone.tasks.push({
               title: taskTitle,
-              milestone_id: milestone.id,
               assignee: assignee.value ? Number(assignee.value) : null,
               assignee_name: assignee.value ? assignee.selectedOptions[0].textContent : null,
-              date_due: row.querySelector(".ai-task-due").value || null,
-              status: "pending"
+              date_due: row.querySelector(".ai-task-due").value || null
             });
           }
         }
       }
-      draftPlans.unshift(draft);
-      updateStatusOptions();
-      newPlanForm.reset();
-      aiPlanMilestones.replaceChildren();
-      aiPlanSuggestion.hidden = true;
-      updateCompanyOptions();
-      planSearch.value = "";
-      companyFilter.value = "all";
-      statusFilter.value = "all";
-      tablePage = 0;
-      newPlanStatus.textContent = "Temporary plan created";
+      createPlanButton.disabled = true;
+      newPlanStatus.textContent = "Creating plan...";
       newPlanStatus.classList.remove("error");
-      renderTable();
-      selectPlan(draft.id, true);
+      try {
+        const created = await api("/process-plans/local", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        newPlanForm.reset();
+        aiPlanMilestones.replaceChildren();
+        aiPlanSuggestion.hidden = true;
+        await loadCompanies();
+        planSearch.value = "";
+        companyFilter.value = "all";
+        statusFilter.value = "all";
+        selectedPlanId = created.job.id;
+        details.set(created.job.id, created);
+        await loadPlans();
+        tablePage = Math.max(0, Math.floor(plans.findIndex(plan => plan.id === created.job.id) / 10));
+        selectPlan(created.job.id, true);
+        newPlanStatus.textContent = "Plan created and saved";
+      } catch (error) {
+        newPlanStatus.textContent = error.message;
+        newPlanStatus.classList.add("error");
+      } finally {
+        createPlanButton.disabled = false;
+      }
     });
 
     planSearch.addEventListener("input", () => { tablePage = 0; renderTable(); });
