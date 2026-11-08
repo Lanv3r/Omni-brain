@@ -16,6 +16,6 @@ createServer((request, response) => {
   } catch {
     response.writeHead(404).end("Not found");
   }
-}).listen(3000, "127.0.0.1", () => {
+}).listen(3000, process.env.FRONTEND_HOST || "127.0.0.1", () => {
   console.log("Frontend running at http://127.0.0.1:3000");
 });
