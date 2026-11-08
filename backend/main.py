@@ -43,6 +43,7 @@ tasks_url = os.getenv(
 jobs_url = os.getenv("JOBS_URL", "http://127.0.0.1:8080/api/v0/jobs")
 milestones_url = os.getenv("MILESTONES_URL", "http://127.0.0.1:8080/api/v0/milestones")
 staff_url = os.getenv("STAFF_URL", "http://127.0.0.1:8080/api/v0/staff")
+admin_stats_url = os.getenv("ADMIN_STATS_URL", "http://127.0.0.1:8080/admin/stats")
 process_plan_db_path = Path(os.getenv("PROCESS_PLAN_DB", Path(__file__).with_name("process_plans.sqlite3")))
 
 
@@ -236,6 +237,14 @@ def task_assignee(item):
 def issues():
     tickets = fetch_pages(issues_url, 100, {"status": "open"})
     return {"total": len(tickets), "issues": tickets}
+
+
+@app.get("/admin/stats")
+def admin_stats():
+    counts = read_json(admin_stats_url).get("counts")
+    if not isinstance(counts, dict):
+        raise HTTPException(502, "Stats API did not return counts")
+    return {"counts": counts}
 
 
 def selected_statuses(value, order):
