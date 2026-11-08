@@ -169,7 +169,6 @@
     <div class="intro">
       <p class="eyebrow">IT Operations Workspace</p>
       <h1>Command Center</h1>
-      <hr>
     <section aria-label="Operations summary">
       <div class="grid overview-grid">
         <article class="panel">
@@ -214,11 +213,20 @@
           </div>
         </article>
       </div>
-      <hr>
-     <div class="dashboard-visuals">
+     
+</div>
+</div>
+    </section>
+    <section class="general-stats" aria-labelledby="general-stats-heading">
+      <h2 id="general-stats-heading">General stats</h2>
+      <div class="grid stats-grid" id="general-stats" aria-live="polite">
+        <p class="stats-message">Loading stats...</p>
+      </div>
+    </section>
+      <div class="dashboard-visuals">
 
     <div class="chart-container">
-        <h2>Ticket Data</h2>
+        <h2 class="right-band">Ticket Data</h2>
         <canvas id="alertsPieChart"></canvas>
     </div>
 
@@ -238,16 +246,6 @@
         </div>
 
     </div>
-</div>
-<hr>
-</div>
-    </section>
-    <section class="general-stats" aria-labelledby="general-stats-heading">
-      <h2 id="general-stats-heading">General stats</h2>
-      <div class="grid stats-grid" id="general-stats" aria-live="polite">
-        <p class="stats-message">Loading stats...</p>
-      </div>
-    </section>
   </main>
   <script src="assets/current_user.js?v=2"></script>
   <script>
@@ -357,7 +355,13 @@ async function loadAlertChart() {
                 responsive: true,
                 plugins: {
                     legend: {
-                        position: "bottom"
+                        position: "bottom",
+                        labels: {
+                          font: {
+                              size: 18,
+                              weight: "bold"
+                          }
+                        }
                     }
                 }
             }
