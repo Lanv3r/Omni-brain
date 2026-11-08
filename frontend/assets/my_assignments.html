@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Tickets and tasks assigned to the selected employee">
+  <title>My Assignments | OmniCommand</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #fff; --line: #dedede; --text: #333; --muted: #666; --accent: #ffa500; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    a { color: inherit; }
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+    header { border-bottom: 1px solid var(--line); background: #fff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; flex: 0 0 auto; font-size: 19px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+    .page-heading, .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+    .page-heading { margin-bottom: 30px; }
+    .section-heading { margin-bottom: 12px; }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
+    h2 { margin: 0; font-size: 23px; }
+    .result-count, .selection-prompt { margin: 0; color: var(--muted); font-size: 13px; }
+    .selection-prompt { padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); font-size: 15px; }
+    .assignment-section { margin-bottom: 38px; }
+    .panel { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; padding: 16px; border-bottom: 1px solid var(--line); background: #fafafa; }
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 170px; }
+    label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    input, select { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--text); font: inherit; }
+    .multi-dropdown { position: relative; width: 100%; }
+    .multi-dropdown summary { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--text); cursor: pointer; font-size: 14px; list-style: none; }
+    .multi-dropdown summary::-webkit-details-marker { display: none; }
+    .multi-dropdown summary::after { color: var(--muted); content: "▾"; }
+    .multi-dropdown[open] summary { border-color: var(--accent); }
+    .multi-options { position: absolute; z-index: 2; top: calc(100% + 6px); left: 0; display: grid; min-width: 100%; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #f5f5f5; box-shadow: 0 12px 28px rgb(0 0 0 / 28%); }
+    .multi-option { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
+    .multi-option input[type="checkbox"] { width: 15px; min-height: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--accent); }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+    th { background: #f5f5f5; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+    .item-id { color: var(--accent); font-weight: 650; }
+    .subject { color: var(--text); font-weight: 600; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid transparent; border-radius: 999px; font-size: 11px; font-weight: 650; }
+    .pill::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .status-open, .status-pending { border-color: #e2bd65; background: #fff9e9; color: #765000; }
+    .status-progress { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .status-resolved, .status-complete { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
+    .status-closed { border-color: var(--line); background: #f5f5f5; color: var(--muted); }
+    .priority-high { border-color: #e8c47e; background: #fff5df; color: #875000; }
+    .priority-urgent { border-color: #e8a39f; background: #fff0ef; color: #a32922; }
+    .priority-normal { color: #765000; }
+    .priority-low, .overdue-false { color: var(--muted); }
+    .overdue-true { color: #a32922; }
+    .empty-state { padding: 32px 16px; color: var(--muted); text-align: center; white-space: normal; }
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+    .pagination button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; }
+    .pagination button:disabled { opacity: .5; cursor: default; }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .page-heading, .section-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .search-field, .filter-field { flex-basis: 100%; }
+      th, td { padding-inline: 12px; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html" aria-label="OmniCommand home"><span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span><span>OmniCommand</span></a>
+      <div class="current-employee" style="display:grid;gap:4px;margin-left:auto;min-width:180px"><label for="current-employee" style="font-size:12px">Current employee</label><select id="current-employee" style="min-height:36px;width:100%"><option value="">Loading employees...</option></select></div>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation"><div class="section-nav-inner shell">
+      <a href="tickets.html">Tickets</a>
+      <a href="tasks.html">Tasks</a>
+      <a href="my_assignments.html" aria-current="page">My Assignments</a>
+      <a href="process_plans.html">Process plans</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="device_monitoring.html">Device monitoring</a>
+    </div></nav>
+  </header>
+  <main class="shell">
+    <div class="page-heading"><div><p class="eyebrow">OmniCommand</p><h1>My Assignments</h1></div><p class="result-count" id="employee-name"></p></div>
+    <p id="selection-prompt" class="selection-prompt" role="status">Choose a current employee above to see assignments.</p>
+    <div id="assignment-content" hidden>
+      <section class="assignment-section" aria-labelledby="tickets-heading">
+        <div class="section-heading"><h2 id="tickets-heading">Tickets</h2><p class="result-count" id="ticket-count" aria-live="polite"></p></div>
+        <div class="panel">
+          <form class="toolbar" role="search" onsubmit="return false">
+            <div class="field search-field"><label for="ticket-search">Search tickets</label><input id="ticket-search" type="search" placeholder="Search title or description"></div>
+            <div class="field filter-field"><label for="ticket-company">Company</label><select id="ticket-company"><option value="all">All</option></select></div>
+            <div class="field filter-field"><label id="ticket-status-label">Status</label><details class="multi-dropdown" id="ticket-status"><summary aria-labelledby="ticket-status-label ticket-status-selection"><span id="ticket-status-selection">2 selected</span></summary><div class="multi-options"><label class="multi-option"><input type="checkbox" value="open" checked> Open</label><label class="multi-option"><input type="checkbox" value="inprogress" checked> In progress</label><label class="multi-option"><input type="checkbox" value="resolved"> Resolved</label><label class="multi-option"><input type="checkbox" value="closed"> Closed</label></div></details></div>
+            <div class="field filter-field"><label id="priority-label">Priority</label><details class="multi-dropdown" id="ticket-priority"><summary aria-labelledby="priority-label priority-selection"><span id="priority-selection">All</span></summary><div class="multi-options"><label class="multi-option"><input type="checkbox" value="urgent"> Urgent</label><label class="multi-option"><input type="checkbox" value="high"> High</label><label class="multi-option"><input type="checkbox" value="normal"> Normal</label><label class="multi-option"><input type="checkbox" value="low"> Low</label></div></details></div>
+          </form>
+          <div class="table-scroll"><table><thead><tr><th scope="col">Ticket</th><th scope="col">Requester</th><th scope="col">Status</th><th scope="col">Priority</th><th scope="col">Assignee</th><th scope="col">Submitted</th></tr></thead><tbody id="ticket-rows"><tr><td class="empty-state" colspan="6">Loading tickets...</td></tr></tbody></table></div>
+        </div>
+        <nav class="pagination" aria-label="My ticket pages"><button id="ticket-previous" type="button" disabled>Previous</button><span id="ticket-page">Page 1</span><button id="ticket-next" type="button" disabled>Next</button></nav>
+      </section>
+      <section class="assignment-section" aria-labelledby="tasks-heading">
+        <div class="section-heading"><h2 id="tasks-heading">Tasks</h2><p class="result-count" id="task-count" aria-live="polite"></p></div>
+        <div class="panel">
+          <form class="toolbar" role="search" onsubmit="return false">
+            <div class="field search-field"><label for="task-search">Search tasks</label><input id="task-search" type="search" placeholder="Search title or description"></div>
+            <div class="field filter-field"><label for="task-company">Company</label><select id="task-company"><option value="all">All</option></select></div>
+            <div class="field filter-field"><label id="task-status-label">Status</label><details class="multi-dropdown" id="task-status"><summary aria-labelledby="task-status-label task-status-selection"><span id="task-status-selection">2 selected</span></summary><div class="multi-options"><label class="multi-option"><input type="checkbox" value="pending" checked> Pending</label><label class="multi-option"><input type="checkbox" value="inprogress" checked> In progress</label><label class="multi-option"><input type="checkbox" value="complete"> Complete</label></div></details></div>
+            <div class="field filter-field"><label for="task-overdue">Overdue</label><select id="task-overdue"><option value="all">All</option><option value="true">Yes</option><option value="false">No</option></select></div>
+          </form>
+          <div class="table-scroll"><table><thead><tr><th scope="col">Task</th><th scope="col">Company</th><th scope="col">Status</th><th scope="col">Overdue</th><th scope="col">Assignee</th><th scope="col">Due date</th></tr></thead><tbody id="task-rows"><tr><td class="empty-state" colspan="6">Loading tasks...</td></tr></tbody></table></div>
+        </div>
+        <nav class="pagination" aria-label="My task pages"><button id="task-previous" type="button" disabled>Previous</button><span id="task-page">Page 1</span><button id="task-next" type="button" disabled>Next</button></nav>
+      </section>
+    </div>
+  </main>
+  <script src="assets/current_user.js?v=2"></script>
+  <script>
+    const byId = id => document.getElementById(id);
+    const content = byId("assignment-content");
+    const prompt = byId("selection-prompt");
+    const employeeName = byId("employee-name");
+    const companyNames = new Map();
+    const ticketStatusLabels = { open: "Open", inprogress: "In progress", resolved: "Resolved", closed: "Closed" };
+    const ticketStatusClasses = { open: "status-open", inprogress: "status-progress", resolved: "status-resolved", closed: "status-closed" };
+    const taskStatusLabels = { pending: "Pending", inprogress: "In progress", complete: "Complete" };
+    const taskStatusClasses = { pending: "status-pending", inprogress: "status-progress", complete: "status-complete" };
+    const priorityInputs = [...byId("ticket-priority").querySelectorAll('input[type="checkbox"]')];
+    const ticketStatusInputs = [...byId("ticket-status").querySelectorAll('input[type="checkbox"]')];
+    const taskStatusInputs = [...byId("task-status").querySelectorAll('input[type="checkbox"]')];
+    const state = { tickets: { page: 0, request: 0, rows: [] }, tasks: { page: 0, request: 0, rows: [] } };
+    let currentEmployee = null;
+    let identityReady = false;
+    let companiesLoaded = false;
+    let ticketSearchTimer;
+    let taskSearchTimer;
+
+    function element(tag, value, className) {
+      const item = document.createElement(tag);
+      item.textContent = value == null || value === "" ? "—" : String(value);
+      if (className) item.className = className;
+      return item;
+    }
+    function cell(...children) { const item = document.createElement("td"); item.append(...children); return item; }
+    function showMessage(kind, message) {
+      const row = document.createElement("tr");
+      const item = element("td", message, "empty-state");
+      item.colSpan = 6;
+      row.append(item);
+      byId(kind === "tickets" ? "ticket-rows" : "task-rows").replaceChildren(row);
+    }
+    function renderTickets(items) {
+      if (!items.length) return showMessage("tickets", "No matching tickets");
+      byId("ticket-rows").replaceChildren(...items.map(ticket => {
+        const status = String(ticket.status || "").toLowerCase();
+        const priority = String(ticket.priority || "").toLowerCase();
+        const submitted = ticket.date_submitted ? new Date(ticket.date_submitted) : null;
+        const submittedText = submitted && !Number.isNaN(submitted.getTime()) ? submitted.toLocaleString() : "—";
+        const row = document.createElement("tr");
+        row.append(
+          cell(element("span", "#" + ticket.id, "item-id"), element("span", ticket.title, "secondary subject")),
+          cell(element("span", ticket.contact_name), element("span", companyNames.get(Number(ticket.company_id)), "secondary")),
+          cell(element("span", ticketStatusLabels[status] || ticket.status, "pill " + (ticketStatusClasses[status] || ""))),
+          cell(element("span", priority ? priority[0].toUpperCase() + priority.slice(1) : "—", "pill priority-" + priority)),
+          cell(element("span", ticket.assignee_name || OmniEmployee.getName() || "—")),
+          cell(element("span", submittedText))
+        );
+        return row;
+      }));
+    }
+    function renderTasks(items) {
+      if (!items.length) return showMessage("tasks", "No matching tasks");
+      byId("task-rows").replaceChildren(...items.map(task => {
+        const status = String(task.status || "").toLowerCase();
+        const due = task.date_due ? new Date(task.date_due + "T00:00:00") : null;
+        const dueText = due && !Number.isNaN(due.getTime()) ? due.toLocaleDateString() : "—";
+        const row = document.createElement("tr");
+        row.append(
+          cell(element("span", String(task.id).startsWith("local-task-") ? "Local" : "#" + task.id, "item-id"), element("span", task.title, "secondary subject")),
+          cell(element("span", companyNames.get(Number(task.company_id)))),
+          cell(element("span", taskStatusLabels[status] || task.status, "pill " + (taskStatusClasses[status] || ""))),
+          cell(element("span", task.overdue ? "Yes" : "No", "pill overdue-" + Boolean(task.overdue))),
+          cell(element("span", task.assignee_name || OmniEmployee.getName() || "—")),
+          cell(element("span", dueText))
+        );
+        return row;
+      }));
+    }
+    async function loadCompanies() {
+      if (companiesLoaded) return;
+      companiesLoaded = true;
+      try {
+        const response = await fetch("http://127.0.0.1:8000/companies");
+        if (!response.ok) throw new Error("Could not load companies");
+        const companies = await response.json();
+        for (const company of companies) companyNames.set(Number(company.id), company.name);
+        for (const select of [byId("ticket-company"), byId("task-company")]) {
+          const selected = select.value;
+          select.replaceChildren(new Option("All", "all"), ...companies.map(company => new Option(company.name, String(company.id))));
+          if (selected !== "all") select.value = selected;
+        }
+        if (state.tickets.rows.length) renderTickets(state.tickets.rows);
+        if (state.tasks.rows.length) renderTasks(state.tasks.rows);
+      } catch {
+        companiesLoaded = false;
+      }
+    }
+    function updatePriorityLabel() {
+      const count = priorityInputs.filter(input => input.checked).length;
+      byId("priority-selection").textContent = count ? count + " selected" : "All";
+    }
+    function updateStatusLabel(kind) {
+      const selected = (kind === "tickets" ? ticketStatusInputs : taskStatusInputs).filter(input => input.checked);
+      byId(kind === "tickets" ? "ticket-status-selection" : "task-status-selection").textContent =
+        selected.length === 0 ? "All" : selected.length === 1
+          ? selected[0].parentElement.textContent.trim() : selected.length + " selected";
+    }
+    function paramsFor(kind) {
+      const params = new URLSearchParams({ page: String(state[kind].page), assignees: currentEmployee });
+      const company = byId(kind === "tickets" ? "ticket-company" : "task-company").value;
+      const statuses = (kind === "tickets" ? ticketStatusInputs : taskStatusInputs)
+        .filter(input => input.checked).map(input => input.value);
+      const search = byId(kind === "tickets" ? "ticket-search" : "task-search").value.trim();
+      if (company !== "all") params.set("company_id", company);
+      if (statuses.length) params.set("status", statuses.join(","));
+      if (search) params.set("q", search);
+      if (kind === "tickets") {
+        const priorities = priorityInputs.filter(input => input.checked).map(input => input.value);
+        if (priorities.length) params.set("priority", priorities.join(","));
+      } else {
+        const overdue = byId("task-overdue").value;
+        if (overdue !== "all") params.set("overdue", overdue);
+      }
+      return params;
+    }
+    async function loadRows(kind) {
+      if (!currentEmployee) return;
+      const current = state[kind];
+      const request = ++current.request;
+      const count = byId(kind === "tickets" ? "ticket-count" : "task-count");
+      const previous = byId(kind === "tickets" ? "ticket-previous" : "task-previous");
+      const next = byId(kind === "tickets" ? "ticket-next" : "task-next");
+      const pageLabel = byId(kind === "tickets" ? "ticket-page" : "task-page");
+      count.textContent = "Loading " + kind + "...";
+      showMessage(kind, "Loading " + kind + "...");
+      previous.disabled = true;
+      next.disabled = true;
+      try {
+        const response = await fetch("http://127.0.0.1:8000/" + kind + "?" + paramsFor(kind));
+        if (!response.ok) throw new Error("Could not load " + kind + " (HTTP " + response.status + ")");
+        const data = await response.json();
+        if (request !== current.request || !currentEmployee) return;
+        current.rows = data[kind];
+        if (kind === "tickets") renderTickets(current.rows);
+        else renderTasks(current.rows);
+        const totalPages = Math.max(1, Math.ceil(data.total / 10));
+        const first = data.total ? current.page * 10 + 1 : 0;
+        const last = data.total ? Math.min(current.page * 10 + current.rows.length, data.total) : 0;
+        count.textContent = "Showing " + first + "–" + last + " of " + data.total + " " + kind;
+        pageLabel.textContent = "Page " + (current.page + 1) + " of " + totalPages;
+        previous.disabled = current.page === 0;
+        next.disabled = current.page + 1 >= totalPages;
+      } catch (error) {
+        if (request !== current.request || !currentEmployee) return;
+        showMessage(kind, error.message);
+        count.textContent = "Could not load " + kind;
+        previous.disabled = current.page === 0;
+      }
+    }
+    function filtersChanged(kind) { state[kind].page = 0; updateStatusLabel(kind); if (kind === "tickets") updatePriorityLabel(); loadRows(kind); }
+    function resetFilters() {
+      for (const id of ["ticket-search", "task-search"]) byId(id).value = "";
+      for (const id of ["ticket-company", "task-company", "task-overdue"]) byId(id).value = "all";
+      ticketStatusInputs.forEach(input => { input.checked = ["open", "inprogress"].includes(input.value); });
+      taskStatusInputs.forEach(input => { input.checked = ["pending", "inprogress"].includes(input.value); });
+      updateStatusLabel("tickets");
+      updateStatusLabel("tasks");
+      priorityInputs.forEach(input => { input.checked = false; });
+      updatePriorityLabel();
+      clearTimeout(ticketSearchTimer);
+      clearTimeout(taskSearchTimer);
+    }
+    function identityChanged() {
+      const id = OmniEmployee.getId();
+      if (id === currentEmployee && identityReady) return;
+      identityReady = true;
+      currentEmployee = id;
+      state.tickets.request++;
+      state.tasks.request++;
+      state.tickets.page = 0;
+      state.tasks.page = 0;
+      if (!id) {
+        content.hidden = true;
+        prompt.hidden = false;
+        prompt.textContent = OmniEmployee.getError() || "Choose a current employee above to see assignments.";
+        employeeName.textContent = "";
+        return;
+      }
+      prompt.hidden = true;
+      content.hidden = false;
+      employeeName.textContent = OmniEmployee.getName();
+      resetFilters();
+      loadCompanies();
+      loadRows("tickets");
+      loadRows("tasks");
+    }
+    for (const kind of ["tickets", "tasks"]) {
+      const prefix = kind === "tickets" ? "ticket" : "task";
+      for (const id of [prefix + "-company", ...(kind === "tasks" ? ["task-overdue"] : [])]) {
+        byId(id).addEventListener("change", () => filtersChanged(kind));
+      }
+      byId(prefix + "-search").addEventListener("input", () => {
+        const timer = kind === "tickets" ? ticketSearchTimer : taskSearchTimer;
+        clearTimeout(timer);
+        const next = setTimeout(() => filtersChanged(kind), 300);
+        if (kind === "tickets") ticketSearchTimer = next;
+        else taskSearchTimer = next;
+      });
+      byId(prefix + "-previous").addEventListener("click", () => {
+        if (state[kind].page > 0) { state[kind].page--; loadRows(kind); }
+      });
+      byId(prefix + "-next").addEventListener("click", () => { state[kind].page++; loadRows(kind); });
+    }
+    priorityInputs.forEach(input => input.addEventListener("change", () => filtersChanged("tickets")));
+    ticketStatusInputs.forEach(input => input.addEventListener("change", () => filtersChanged("tickets")));
+    taskStatusInputs.forEach(input => input.addEventListener("change", () => filtersChanged("tasks")));
+    for (const dropdown of [byId("ticket-priority"), byId("ticket-status"), byId("task-status")]) {
+      document.addEventListener("click", event => { if (!dropdown.contains(event.target)) dropdown.open = false; });
+      dropdown.addEventListener("keydown", event => {
+        if (event.key === "Escape") { dropdown.open = false; dropdown.querySelector("summary").focus(); }
+      });
+    }
+    window.addEventListener("omni:employee-changed", identityChanged);
+    OmniEmployee.ready.then(identityChanged);
+  </script>
+</body>
+</html>
