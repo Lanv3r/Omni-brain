@@ -6,7 +6,8 @@
   <meta name="description" content="Manage client process plans and tasks in OmniCommand">
   <title>Process plans | OmniCommand</title>
   <style>
-    :root { color-scheme: light; --bg: #f6f6f6; --panel: #fff; --line: #dedede; --text: #333; --muted: #666; --accent: #ffa500; }
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #fff; --line: #dedede; --text: #333; --muted: #666; --accent: #ffa500; --plan-green: #217a47; }
+    html[data-theme="dark"] { --plan-green: #8cdea9; }
     * { box-sizing: border-box; }
     body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
     a { color: inherit; }
@@ -29,6 +30,7 @@
     h2, h3, p { margin: 0; }
     h2 { font-size: 21px; }
     h3 { font-size: 16px; }
+    #new-plan-heading, #selected-plan-title, #milestone-form h3, #task-form h3 { color: var(--plan-green); }
     .muted, .task-meta, .plan-company { color: var(--muted); }
     .panel { min-width: 0; margin-bottom: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
     .panel-content { padding: 20px; }
@@ -89,6 +91,7 @@
     .task-form h3 { margin-bottom: 14px; }
     .task-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
     .task-fields .field:first-child { grid-column: 1 / -1; }
+    .detail-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
     .primary-button { min-height: 42px; padding: 9px 16px; border: 1px solid #c87e00; border-radius: 8px; background: var(--accent); color: #222; font-weight: 650; }
     .primary-button:hover { background: #f3a000; }
     .message { min-height: 22px; margin-top: 10px; color: var(--muted); font-size: 13px; }
@@ -206,7 +209,6 @@
           <div id="ai-plan-milestones"></div>
           <p class="muted">Review these titles. Clear any title you do not want to include.</p>
         </div>
-        <p class="muted">Plans created here are saved in OmniCommand, and their tasks appear in Tasks.</p>
         <p id="new-plan-status" class="message" role="status"></p>
       </form>
     </section>
@@ -245,6 +247,7 @@
           <button id="add-task" class="primary-button" type="submit">Add to plan</button>
           <p id="form-status" class="message" role="status"></p>
         </form>
+        <div class="detail-actions"><button id="save-plan-bottom" class="primary-button" type="button" disabled>Save changes</button></div>
       </div>
     </section>
   </main>
@@ -275,6 +278,7 @@
     const progressText = document.getElementById("progress-text");
     const planProgress = document.getElementById("plan-progress");
     const saveButton = document.getElementById("save-plan");
+    const saveButtons = [saveButton, document.getElementById("save-plan-bottom")];
     const saveStatus = document.getElementById("save-status");
     const milestoneList = document.getElementById("milestones");
     const milestoneForm = document.getElementById("milestone-form");
@@ -525,7 +529,7 @@
       planCompany.textContent = data.job.company_name;
       planProgress.value = percent;
       progressText.textContent = completed + " of " + tasks.length + " tasks complete (" + percent + "%)";
-      saveButton.disabled = (!hasEdits(id) && !needsSync(id)) || saving;
+      saveButtons.forEach(button => { button.disabled = (!hasEdits(id) && !needsSync(id)) || saving; });
       saveStatus.textContent = hasEdits(id) ? "Unsaved changes" : needsSync(id) ? "Save to sync local tasks with Accelo" : "";
       saveStatus.classList.remove("error");
       const selectedMilestone = taskMilestone.value;
@@ -739,7 +743,7 @@
       const id = selectedPlanId;
       if (id === null || (!hasEdits(id) && !needsSync(id)) || saving) return;
       saving = true;
-      saveButton.disabled = true;
+      saveButtons.forEach(button => { button.disabled = true; });
       addMilestoneButton.disabled = true;
       addTaskButton.disabled = true;
       createPlanButton.disabled = true;
@@ -815,7 +819,7 @@
         renderTable();
         createPlanButton.disabled = false;
         if (selectedPlanId === id) {
-          saveButton.disabled = !hasEdits(id) && !needsSync(id);
+          saveButtons.forEach(button => { button.disabled = !hasEdits(id) && !needsSync(id); });
           addMilestoneButton.disabled = false;
           addTaskButton.disabled = taskMilestone.options.length === 0;
           for (const checkbox of milestoneList.querySelectorAll('input[type="checkbox"]')) checkbox.disabled = false;
@@ -891,7 +895,7 @@
     nextPage.addEventListener("click", () => { tablePage++; renderTable(); });
     milestoneForm.addEventListener("submit", stageMilestone);
     taskForm.addEventListener("submit", stageTask);
-    saveButton.addEventListener("click", savePlan);
+    saveButtons.forEach(button => button.addEventListener("click", savePlan));
     loadPlans();
     Promise.all([loadCompanies(), loadStaff()]).then(showSuggestedPlan);
   </script>
