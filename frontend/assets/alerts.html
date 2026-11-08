@@ -60,6 +60,27 @@
       letter-spacing: -.04em;
     }
 
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    .pagination button {
+      padding: 8px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
     .mark {
       display: block;
       flex: 0 0 auto;
@@ -295,101 +316,227 @@
               </tr>
             </thead>
             <tbody id="alert-rows">
-              <tr data-severity="Critical">
-                <td><span class="alert-id">DEMO-A203</span><span class="secondary">Server not responding</span></td>
-                <td><span class="severity severity-critical">Critical</span></td>
-                <td>HQ-FILE-01</td>
-                <td>Brightside Studio</td>
-                <td><span class="alert-state">Active</span></td>
-                <td>4 min ago</td>
-              </tr>
-              <tr data-severity="Critical">
-                <td><span class="alert-id">DEMO-A202</span><span class="secondary">Backup job failed</span></td>
-                <td><span class="severity severity-critical">Critical</span></td>
-                <td>BACKUP-02</td>
-                <td>Willow Accounting</td>
-                <td><span class="alert-state">Active</span></td>
-                <td>12 min ago</td>
-              </tr>
-              <tr data-severity="Warning">
-                <td><span class="alert-id">DEMO-A201</span><span class="secondary">Disk space below 15%</span></td>
-                <td><span class="severity severity-warning">Warning</span></td>
-                <td>DESIGN-WS-14</td>
-                <td>Northstar Design</td>
-                <td><span class="alert-state">Active</span></td>
-                <td>19 min ago</td>
-              </tr>
-              <tr data-severity="Warning">
-                <td><span class="alert-id">DEMO-A200</span><span class="secondary">Endpoint protection needs attention</span></td>
-                <td><span class="severity severity-warning">Warning</span></td>
-                <td>CEDAR-LT-08</td>
-                <td>Cedar Works</td>
-                <td><span class="alert-state">Active</span></td>
-                <td>31 min ago</td>
-              </tr>
-              <tr data-severity="Warning">
-                <td><span class="alert-id">DEMO-A199</span><span class="secondary">Device has pending updates</span></td>
-                <td><span class="severity severity-warning">Warning</span></td>
-                <td>HARBOR-WS-03</td>
-                <td>Harbor &amp; Pine</td>
-                <td><span class="alert-state">Active</span></td>
-                <td>52 min ago</td>
-              </tr>
-              <tr data-severity="Info">
-                <td><span class="alert-id">DEMO-A198</span><span class="secondary">Scheduled maintenance completed</span></td>
-                <td><span class="severity severity-info">Info</span></td>
-                <td>WILLOW-SQL-01</td>
-                <td>Willow Accounting</td>
-                <td><span class="alert-state">Active</span></td>
-                <td>1 hr ago</td>
-              </tr>
-              <tr id="empty-state" hidden>
-                <td class="empty-state" colspan="6">
-                  <strong>No matching alerts</strong>
-                  Try another search or severity.
-                </td>
+              <tr>
+                <td colspan="6" class="empty-state">Loading alerts...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+      <div class="pagination">
+      <button id="previous-page" type="button">Previous</button>
+    <span id="page-number">Page 1</span>
+    <button id="next-page" type="button">Next</button>
+  </div>
       <p class="table-note">These fictional alerts are for layout preview only; live monitoring data will appear when the N-central connection is added.</p>
     </section>
   </main>
 
   <script>
-    const searchInput = document.getElementById("alert-search");
-    const severityFilter = document.getElementById("severity-filter");
-    const alertRowsContainer = document.getElementById("alert-rows");
-    const resultCount = document.getElementById("result-count");
-    const emptyState = document.getElementById("empty-state");
-    const requestedSeverity = new URLSearchParams(window.location.search).get("severity");
-    const alertRows = [...alertRowsContainer.querySelectorAll("tr[data-severity]")];
 
-    if ([...severityFilter.options].some(option => option.value === requestedSeverity)) {
+  const searchInput = document.getElementById("alert-search");
+  const severityFilter = document.getElementById("severity-filter");
+  const alertRowsContainer = document.getElementById("alert-rows");
+  const resultCount = document.getElementById("result-count");
+
+  const previousButton = document.getElementById("previous-page");
+  const nextButton = document.getElementById("next-page");
+  const pageNumber = document.getElementById("page-number");
+
+  let allAlerts = [];
+  let currentPage = 1;
+  const pageSize = 10;
+
+  const requestedSeverity =
+      new URLSearchParams(window.location.search).get("severity");
+
+  if ([...severityFilter.options].some(
+      option => option.value === requestedSeverity
+  )) {
       severityFilter.value = requestedSeverity;
-    }
+  }
 
-    function filterAlerts() {
-      const query = searchInput.value.trim().toLocaleLowerCase();
-      const severity = severityFilter.value;
-      let visibleCount = 0;
+  // Create an HTML table cell safely
+  function addCell(row, value, className = "") {
+      const td = document.createElement("td");
 
-      for (const row of alertRows) {
-        const matchesQuery = row.textContent.toLocaleLowerCase().includes(query);
-        const matchesSeverity = severity === "all" || row.dataset.severity === severity;
-        const isVisible = matchesQuery && matchesSeverity;
-        row.hidden = !isVisible;
-        if (isVisible) visibleCount += 1;
+      if (className) {
+          const span = document.createElement("span");
+          span.className = className;
+          span.textContent = value ?? "—";
+          td.appendChild(span);
+      } else {
+          td.textContent = value ?? "—";
       }
 
-      emptyState.hidden = visibleCount > 0;
-      resultCount.textContent = `Showing ${visibleCount} of ${alertRows.length} example alerts`;
-    }
+      row.appendChild(td);
+      return td;
+  }
 
-    filterAlerts();
-    searchInput.addEventListener("input", filterAlerts);
-    severityFilter.addEventListener("change", filterAlerts);
+  // Create one table row from an alert object
+  function createAlertRow(alert) {
+      const row = document.createElement("tr");
+      const severity = String(alert.severity || "info").toLowerCase();
+
+      row.dataset.severity = severity;
+
+      // Alert ID and description
+      const alertCell = document.createElement("td");
+
+      const id = document.createElement("span");
+      id.className = "alert-id";
+      id.textContent = alert.alertId ?? "N/A";
+
+      const message = document.createElement("span");
+      message.className = "secondary";
+      message.textContent = alert.message ?? "";
+
+      alertCell.append(id, message);
+      row.appendChild(alertCell);
+
+      // Severity badge
+      const severityName =
+          severity.charAt(0).toUpperCase() + severity.slice(1);
+
+      addCell(
+          row,
+          severityName,
+          `severity severity-${severity}`
+      );
+
+      // Device and company
+      addCell(row, alert.deviceName);
+      addCell(row, alert.customerName);
+
+      // State
+      addCell(
+          row,
+          alert.state === "active" ? "Active" : "Cleared",
+          "alert-state"
+      );
+
+      // Detection time
+      const date = alert.triggeredAt
+          ? new Date(alert.triggeredAt).toLocaleString()
+          : "Unknown";
+
+      addCell(row, date);
+
+      return row;
+  }
+
+  // Filter alerts and display only the current page
+  function renderAlerts() {
+      const query = searchInput.value.trim().toLowerCase();
+      const severity = severityFilter.value.toLowerCase();
+
+      const filtered = allAlerts.filter(alert => {
+          const matchesSeverity =
+              severity === "all" ||
+              String(alert.severity).toLowerCase() === severity;
+
+          const searchableText = [
+              alert.alertId,
+              alert.message,
+              alert.deviceName,
+              alert.customerName,
+              alert.serviceName
+          ].join(" ").toLowerCase();
+
+          return matchesSeverity && searchableText.includes(query);
+      });
+
+      const totalPages = Math.max(
+          1,
+          Math.ceil(filtered.length / pageSize)
+      );
+
+      currentPage = Math.min(currentPage, totalPages);
+
+      const start = (currentPage - 1) * pageSize;
+      const visibleAlerts = filtered.slice(start, start + pageSize);
+
+      // Remove previous table rows
+      alertRowsContainer.replaceChildren();
+
+      if (visibleAlerts.length === 0) {
+          const row = document.createElement("tr");
+          addCell(row, "No matching alerts found", "empty-state")
+              .colSpan = 6;
+          alertRowsContainer.appendChild(row);
+      } else {
+          for (const alert of visibleAlerts) {
+              alertRowsContainer.appendChild(createAlertRow(alert));
+          }
+      }
+
+      resultCount.textContent =
+          `Showing ${visibleAlerts.length} of ${filtered.length} matching alerts`;
+
+      pageNumber.textContent =
+          `Page ${currentPage} of ${totalPages}`;
+
+      previousButton.disabled = currentPage === 1;
+      nextButton.disabled = currentPage >= totalPages;
+  }
+
+  // Fetch alerts from your team's FastAPI backend
+  async function loadAlerts() {
+      try {
+          const response = await fetch(
+              "http://127.0.0.1:8000/alerts"
+          );
+
+          if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          allAlerts = result.alerts;
+          renderAlerts();
+
+      } catch (error) {
+          console.error("Failed to load alerts:", error);
+          resultCount.textContent = "Could not load alerts";
+          alertRowsContainer.replaceChildren();
+
+          const row = document.createElement("tr");
+          const td = addCell(
+              row,
+              "Unable to connect to the alerts API."
+          );
+          td.colSpan = 6;
+          alertRowsContainer.appendChild(row);
+          previousButton.disabled = true;
+          nextButton.disabled = true;
+      }
+  }
+
+  // Pagination
+  nextButton.addEventListener("click", () => {
+      currentPage++;
+      renderAlerts();
+  });
+
+  previousButton.addEventListener("click", () => {
+      currentPage--;
+      renderAlerts();
+  });
+
+  // Searching or filtering starts at page 1
+  searchInput.addEventListener("input", () => {
+      currentPage = 1;
+      renderAlerts();
+  });
+
+  severityFilter.addEventListener("change", () => {
+      currentPage = 1;
+      renderAlerts();
+  });
+
+  // Start!
+  loadAlerts();
   </script>
 </body>
 </html>
