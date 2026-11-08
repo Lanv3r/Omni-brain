@@ -61,6 +61,11 @@
     .new-plan-form h2 { margin-bottom: 14px; }
     .new-plan-fields { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 12px; }
     .new-plan-form .muted { margin-top: 10px; font-size: 12px; }
+    .ai-plan-suggestion { margin-top: 20px; }
+    .ai-plan-suggestion h3 { margin-bottom: 10px; }
+    .ai-milestone { margin-top: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; }
+    .ai-milestone-tasks { display: grid; gap: 10px; margin-top: 12px; }
+    .ai-task { display: grid; grid-template-columns: minmax(0, 1fr) 180px 160px; align-items: end; gap: 10px; }
     .detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
     .progress-line { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: var(--muted); font-size: 13px; }
     progress { accent-color: var(--accent); }
@@ -91,6 +96,7 @@
     @media (max-width: 700px) {
       .new-plan-fields { grid-template-columns: 1fr 1fr; }
       .new-plan-fields button { grid-column: 1 / -1; }
+      .ai-task { grid-template-columns: 1fr; }
     }
     @media (max-width: 560px) {
       .shell { width: min(100% - 32px, 1160px); }
@@ -101,7 +107,7 @@
       .search-field, .filter-field { flex-basis: 100%; }
     }
   </style>
-  <link rel="stylesheet" href="theme.css?v=9">
+  <link rel="stylesheet" href="theme.css?v=11">
   <script src="theme.js?v=4"></script>
 </head>
 <body>
@@ -195,6 +201,11 @@
           </div>
           <button id="create-plan" class="primary-button" type="submit">Create plan</button>
         </div>
+        <div id="ai-plan-suggestion" class="ai-plan-suggestion" hidden>
+          <h3>Suggested milestones and tasks</h3>
+          <div id="ai-plan-milestones"></div>
+          <p class="muted">Review these titles. Clear any title you do not want to include.</p>
+        </div>
         <p class="muted">New plans and their tasks disappear when you refresh this page.</p>
         <p id="new-plan-status" class="message" role="status"></p>
       </form>
@@ -254,6 +265,8 @@
     const newPlanCompanyName = document.getElementById("new-plan-company-name");
     const createPlanButton = document.getElementById("create-plan");
     const newPlanStatus = document.getElementById("new-plan-status");
+    const aiPlanSuggestion = document.getElementById("ai-plan-suggestion");
+    const aiPlanMilestones = document.getElementById("ai-plan-milestones");
     const planEmpty = document.getElementById("plan-empty");
     const planDetail = document.getElementById("plan-detail");
     const planContent = document.getElementById("plan-content");
@@ -278,6 +291,7 @@
     let plans = [];
     let companies = [];
     const localCompanies = [];
+    let staffMembers = [];
     const draftPlans = [];
     const details = new Map();
     const pending = new Map();
@@ -372,9 +386,10 @@
 
     function draftDetail(draft) {
       const completed = draft.tasks.filter(task => task.status === "complete").length;
+      const needsChecklist = !draft.milestones.length || draft.tasks.some(task => task.milestone_id === "draft");
       return {
         job: draft,
-        milestones: [{ id: "draft", title: "Checklist" }, ...draft.milestones],
+        milestones: [...(needsChecklist ? [{ id: "draft", title: "Checklist" }] : []), ...draft.milestones],
         tasks: draft.tasks,
         progress: { completed: completed, total: draft.tasks.length, percent: draft.tasks.length ? Math.round(completed * 100 / draft.tasks.length) : 0 }
       };
@@ -612,13 +627,79 @@
       }
     }
 
+    function suggestedField(labelText, value, className) {
+      const label = document.createElement("label");
+      label.className = "field";
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.className = className;
+      input.maxLength = 200;
+      input.value = value;
+      label.append(input);
+      return label;
+    }
+
+    function showSuggestedPlan() {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("ai_draft") !== "1") return;
+      url.searchParams.delete("ai_draft");
+      history.replaceState(null, "", url);
+      const raw = sessionStorage.getItem("omni-ai-process-plan-draft");
+      sessionStorage.removeItem("omni-ai-process-plan-draft");
+      if (!raw) return;
+      let draft;
+      try { draft = JSON.parse(raw); } catch { return; }
+      if (!draft || typeof draft.name !== "string" || !Array.isArray(draft.milestones)) return;
+      newPlanName.value = draft.name.slice(0, 200);
+      const companyName = typeof draft.company_name === "string" ? draft.company_name.trim() : "";
+      if (companyName) {
+        const company = [...companies, ...localCompanies].find(item => item.name.toLocaleLowerCase() === companyName.toLocaleLowerCase());
+        newPlanCompany.value = company ? String(company.id) : "new";
+        updateNewCompanyField();
+        if (!company) newPlanCompanyName.value = companyName.slice(0, 200);
+      }
+      aiPlanMilestones.replaceChildren(...draft.milestones.slice(0, 5).map(milestone => {
+        const section = document.createElement("div");
+        section.className = "ai-milestone";
+        section.append(suggestedField("Milestone", String(milestone.title || ""), "ai-milestone-title"));
+        const tasks = document.createElement("div");
+        tasks.className = "ai-milestone-tasks";
+        for (const task of (Array.isArray(milestone.tasks) ? milestone.tasks : []).slice(0, 8)) {
+          const row = document.createElement("div");
+          row.className = "ai-task";
+          const assigneeLabel = document.createElement("label");
+          assigneeLabel.className = "field";
+          assigneeLabel.textContent = "Assignee";
+          const assignee = document.createElement("select");
+          assignee.className = "ai-task-assignee";
+          assignee.replaceChildren(new Option("Unassigned", ""), ...staffMembers.map(member => new Option(member.name, String(member.id))));
+          assigneeLabel.append(assignee);
+          const dueLabel = document.createElement("label");
+          dueLabel.className = "field";
+          dueLabel.textContent = "Deadline";
+          const due = document.createElement("input");
+          due.className = "ai-task-due";
+          due.type = "date";
+          dueLabel.append(due);
+          row.append(suggestedField("Task", String(task.title || ""), "ai-task-title"), assigneeLabel, dueLabel);
+          tasks.append(row);
+        }
+        section.append(tasks);
+        return section;
+      }));
+      aiPlanSuggestion.hidden = false;
+      newPlanStatus.textContent = "Review the suggested fields, choose a company if needed, then create this temporary plan.";
+      newPlanStatus.classList.remove("error");
+      newPlanForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
     async function loadStaff() {
       try {
-        const staff = await OmniEmployee.ready;
+        staffMembers = await OmniEmployee.ready;
         if (OmniEmployee.getError()) throw new Error(OmniEmployee.getError());
         taskAssignee.replaceChildren(
           new Option("Unassigned", ""),
-          ...staff.map(member => new Option(member.name, String(member.id)))
+          ...staffMembers.map(member => new Option(member.name, String(member.id)))
         );
       } catch {
         taskAssignee.title = "Could not load staff";
@@ -791,9 +872,32 @@
         milestones: [],
         tasks: []
       };
+      if (!aiPlanSuggestion.hidden) {
+        for (const suggestion of aiPlanMilestones.querySelectorAll(".ai-milestone")) {
+          const milestoneTitle = suggestion.querySelector(".ai-milestone-title").value.trim();
+          if (!milestoneTitle) continue;
+          const milestone = { id: "draft-milestone-" + ++draftMilestoneNumber, title: milestoneTitle };
+          draft.milestones.push(milestone);
+          for (const row of suggestion.querySelectorAll(".ai-task")) {
+            const taskTitle = row.querySelector(".ai-task-title").value.trim();
+            const assignee = row.querySelector(".ai-task-assignee");
+            if (taskTitle) draft.tasks.push({
+              id: "draft-task-" + ++draftTaskNumber,
+              title: taskTitle,
+              milestone_id: milestone.id,
+              assignee: assignee.value ? Number(assignee.value) : null,
+              assignee_name: assignee.value ? assignee.selectedOptions[0].textContent : null,
+              date_due: row.querySelector(".ai-task-due").value || null,
+              status: "pending"
+            });
+          }
+        }
+      }
       draftPlans.unshift(draft);
       updateStatusOptions();
       newPlanForm.reset();
+      aiPlanMilestones.replaceChildren();
+      aiPlanSuggestion.hidden = true;
       updateCompanyOptions();
       planSearch.value = "";
       companyFilter.value = "all";
@@ -815,8 +919,7 @@
     taskForm.addEventListener("submit", stageTask);
     saveButton.addEventListener("click", savePlan);
     loadPlans();
-    loadCompanies();
-    loadStaff();
+    Promise.all([loadCompanies(), loadStaff()]).then(showSuggestedPlan);
   </script>
 </body>
 </html>

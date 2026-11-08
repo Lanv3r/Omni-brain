@@ -27,6 +27,7 @@
     .chat-entry.user { align-self: flex-end; background: var(--panel-raised, #fff3dc); }
     .chat-entry.assistant { align-self: flex-start; }
     .chat-entry.error { color: #b32727; }
+    .plan-action { display: block; margin-top: 14px; padding: 9px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #222; font: inherit; font-weight: 700; cursor: pointer; }
     .chat-composer { display: flex; align-items: flex-end; gap: 12px; padding: 16px; border-top: 1px solid var(--line); }
     textarea { flex: 1; min-height: 58px; max-height: 180px; padding: 12px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit; }
     textarea::placeholder { color: var(--muted); }
@@ -38,7 +39,7 @@
       .chat-panel { min-height: 360px; }
     }
   </style>
-  <link rel="stylesheet" href="theme.css?v=9">
+  <link rel="stylesheet" href="theme.css?v=11">
   <script src="theme.js?v=4"></script>
 </head>
 <body>
@@ -125,6 +126,21 @@
           pending.textContent += "\n\nSources:\n" + citedSources
             .map(source => `${source.citation} ${source.document_title} (section ${source.chunk_index + 1})`)
             .join("\n");
+        }
+        if (result.process_plan) {
+          const action = document.createElement("button");
+          action.className = "plan-action";
+          action.type = "button";
+          action.textContent = "Create a process plan";
+          action.addEventListener("click", () => {
+            try {
+              sessionStorage.setItem("omni-ai-process-plan-draft", JSON.stringify(result.process_plan));
+              window.location.href = "process_plans.html?ai_draft=1";
+            } catch {
+              pending.textContent += "\n\nCould not open the plan draft in this browser.";
+            }
+          });
+          pending.append(action);
         }
       } catch (error) {
         pending.classList.add("error");

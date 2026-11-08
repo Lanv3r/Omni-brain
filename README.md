@@ -14,6 +14,8 @@ Compose starts the mock API, PostgreSQL with pgvector, the AI table initializati
 
 Indexing sends knowledge-base text to the configured AI provider for embeddings; asking a question sends retrieved excerpts for the answer. Both operations use the API key and incur API usage.
 
+When the AI Assistant can build an onboarding plan from the documentation, it offers a **Create a process plan** button. This opens editable name, company, milestone, and task fields in Process plans. Assignees and deadlines are left for the user to choose. Clicking **Create plan** creates a temporary plan for this browser session; the connected API has no job-creation endpoint.
+
 PostgreSQL data persists in the `postgres_data` Docker volume. The process planner's separate SQLite database persists in the `process_plan_data` volume; on the first start, Compose copies an existing `backend/process_plans.sqlite3` into that volume if one exists. `.env` and SQLite data stay out of Git. Each developer needs their own `.env` file and Docker volumes. `docker compose down` stops the services without deleting data; `docker compose down -v` deletes both volumes.
 
 If startup fails, check `docker compose logs knowledge-index` for a missing or invalid API key, mock API errors, or document ingestion errors.
