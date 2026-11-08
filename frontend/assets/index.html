@@ -25,7 +25,6 @@
     main { padding-block: clamp(36px, 7vw, 78px); }
     .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
     h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 12px 0; }
-    h2 { font-size: 20px; margin: 0 0 12px; }
     h3 { font-size: 16px; margin: 0; }
     p { color: var(--muted); margin: 0; }
     .intro { margin-bottom: 36px; text-align: center; }
@@ -35,7 +34,7 @@
     .panel p { font-size: 14px; }
     .overview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .summary-heading { display: flex; align-items: baseline; justify-content: center; gap: 12px; text-align: center; }
-    .summary-heading a, .workspace h3 a { color: var(--accent); text-decoration: none; }
+    .summary-heading a { color: var(--accent); text-decoration: none; }
     .summary-heading h3 { font-size: 19px; }
     .summary-heading p { font-size: 12px; }
     .summary-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
@@ -51,9 +50,6 @@
     .summary-item.ticket-urgent:hover, .summary-item.critical:hover { border-color: #c43b33; }
     .summary-item.info { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
     .summary-item.info:hover { border-color: #4d83bb; }
-    .workspace { margin-top: 34px; }
-    .workspace .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); }
-    .workspace h3 { margin-bottom: 6px; }
     @media (max-width: 760px) {
       .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -128,13 +124,6 @@
             <a class="summary-item" href="device_monitoring.html?online=false"><span>Offline</span><strong data-endpoint="offline-devices">—</strong></a>
           </div>
         </article>
-      </div>
-    </section>
-    <section class="workspace" aria-labelledby="workspace">
-      <h2 id="workspace">Coming to this workspace</h2>
-      <div class="grid">
-        <article class="panel"><h3><a href="knowledge_base.html">Knowledge base</a></h3><p>Ask a question and open the guide behind the answer.</p></article>
-        <article class="panel"><h3><a href="process_plans.html">Process plans</a></h3><p>Start an onboarding checklist, assign steps, and track completion.</p></article>
       </div>
     </section>
   </main>
