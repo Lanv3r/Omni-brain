@@ -19,7 +19,7 @@
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
     .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
@@ -101,6 +101,8 @@
       .search-field, .filter-field { flex-basis: 100%; }
     }
   </style>
+  <link rel="stylesheet" href="theme.css?v=2">
+  <script src="theme.js?v=2"></script>
 </head>
 <body>
   <header>
@@ -114,6 +116,7 @@
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">
+        <a href="index.html">Dashboard</a>
         <a href="tickets.html">Tickets</a>
         <a href="tasks.html">Tasks</a>
         <a href="my_assignments.html">My Assignments</a>
