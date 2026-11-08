@@ -9,8 +9,8 @@
   <style>
     :root { color-scheme: light; --bg: #f6f6f6; --panel: #fff; --line: #dedede; --text: #333; --muted: #666; --accent: #ffa500; }
     * { box-sizing: border-box; }
-    body { min-height: 100dvh; display: flex; flex-direction: column; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
-    header { border-bottom: 1px solid var(--line); background: #fff; }
+    body { height: 100dvh; display: flex; flex-direction: column; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    header { flex: none; border-bottom: 1px solid var(--line); background: #fff; }
     .bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 75px; padding-block: 14px; }
     .brand { display: inline-flex; align-items: center; gap: 12px; color: var(--text); font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
@@ -20,11 +20,11 @@
     .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
-    main { width: 100%; max-width: 1160px; flex: 1; display: flex; flex-direction: column; gap: 14px; margin-inline: auto; padding: 24px clamp(18px, 5vw, 56px); }
-    .chat-panel { flex: 1; min-height: 420px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    main { width: 100%; max-width: 1160px; flex: 1; min-height: 340px; display: flex; flex-direction: column; margin-inline: auto; padding: 8px clamp(18px, 5vw, 56px); }
+    .chat-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
     .chat-messages { flex: 1; display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 24px; overflow-y: auto; }
     .chat-empty { max-width: 360px; margin: auto; color: var(--muted); text-align: center; }
-    .chat-entry { max-width: 85%; padding: 12px 14px; border-radius: 10px; background: var(--bg); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .chat-entry { flex: none; max-width: 85%; padding: 12px 14px; border-radius: 10px; background: var(--bg); white-space: pre-wrap; overflow-wrap: anywhere; }
     .chat-entry.user { align-self: flex-end; background: var(--panel-raised, #fff3dc); }
     .chat-entry.assistant { align-self: flex-start; }
     .chat-entry.assistant p, .chat-entry.assistant ol { margin: 0; }
@@ -34,15 +34,13 @@
     .chat-entry.assistant li + li { margin-top: 10px; }
     .chat-entry.error { color: #b32727; }
     .plan-action { display: block; margin-top: 14px; padding: 9px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #222; font: inherit; font-weight: 700; cursor: pointer; }
-    .chat-composer { display: flex; align-items: flex-end; gap: 12px; padding: 16px; border-top: 1px solid var(--line); }
+    .chat-composer { flex: none; display: flex; align-items: flex-end; gap: 12px; padding: 16px; border-top: 1px solid var(--line); }
     textarea { flex: 1; min-height: 58px; max-height: 180px; padding: 12px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit; }
     textarea::placeholder { color: var(--muted); }
     button.send { min-height: 44px; padding: 10px 18px; border: 0; border-radius: 10px; background: var(--accent); color: #222; font: inherit; font-weight: 700; }
     button.send:disabled { opacity: .55; cursor: not-allowed; }
     @media (max-width: 520px) {
       .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      main { padding-block: 18px; }
-      .chat-panel { min-height: 360px; }
     }
   </style>
   <link rel="stylesheet" href="theme.css?v=11">
@@ -98,6 +96,10 @@
     const maxSavedMessages = 12;
     let chatHistory = [];
 
+    function scrollToLatest() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
     function rememberMessage(entry) {
       chatHistory.push(entry);
       chatHistory = chatHistory.slice(-maxSavedMessages);
@@ -112,7 +114,7 @@
       message.className = `chat-entry ${kind}`;
       message.textContent = text;
       chatMessages.append(message);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      scrollToLatest();
       return message;
     }
 
@@ -187,6 +189,7 @@
         });
         message.append(action);
       }
+      scrollToLatest();
     }
 
     try {
@@ -200,6 +203,7 @@
           if (entry.kind === "assistant") renderAssistant(addMessage("", "assistant"), entry.result);
           else addMessage(entry.text, entry.kind === "error" ? "assistant error" : "user");
         }
+        scrollToLatest();
       }
     } catch { /* Start with an empty chat if saved data is unavailable. */ }
 
@@ -240,7 +244,7 @@
         chatInput.disabled = false;
         sendButton.disabled = false;
         chatInput.focus();
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        scrollToLatest();
       }
     });
 
