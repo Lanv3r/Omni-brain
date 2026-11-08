@@ -40,16 +40,29 @@
       toggle.title = `Current theme: ${currentTheme}`;
       toggle.querySelector(".theme-current").textContent = `${isDark ? "Dark" : "Light"} mode`;
       option.dataset.themeOption = nextTheme;
-      option.querySelector("span").textContent = `${nextTheme === "dark" ? "Dark" : "Light"} mode`;
+      option.querySelector(".theme-option-label").textContent = `${nextTheme === "dark" ? "Dark" : "Light"} mode`;
     }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     const bar = document.querySelector("header .bar");
     if (bar) {
+      const sunIcon = '<svg class="theme-icon theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>';
+      const moonIcon = '<svg class="theme-icon theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg>';
       const menu = document.createElement("div");
       menu.className = "theme-menu";
-      menu.innerHTML = '<button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false"><span class="theme-current">Light mode</span><span aria-hidden="true">▾</span></button><div class="theme-options" hidden><button class="theme-option" type="button"><span>Dark mode</span></button></div>';
+      menu.innerHTML = `
+        <button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="theme-icon-wrap">${sunIcon}${moonIcon}</span>
+          <span class="theme-current">Light mode</span>
+          <svg class="theme-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div class="theme-options" hidden>
+          <button class="theme-option" type="button">
+            <span class="theme-option-icon">${sunIcon}${moonIcon}</span>
+            <span class="theme-option-label">Dark mode</span>
+          </button>
+        </div>`;
       bar.insertBefore(menu, bar.querySelector(".partner-brand"));
     }
     const menus = document.querySelectorAll(".theme-menu");
