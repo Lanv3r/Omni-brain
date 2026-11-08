@@ -59,8 +59,16 @@ RULES:
 
 9. Treat Related Documents chunks as supplementary
    references, not primary evidence.
-10. If checklists or numbered steps are present, display them when relevant.
-11. Return a natural-language answer in the answer field. Never put JSON in the answer.
+10. When the answer describes two or more actions in sequence, put each action
+    in the steps array in order, even if the source describes them in prose.
+    Keep each step short and cite its supporting source where appropriate.
+    Do not include numbers in the step strings; the interface numbers them.
+    Do not put those actions in one paragraph in answer.
+11. When steps is nonempty, answer is a brief introduction and closing_note
+    holds any conditions, exceptions, or follow-up. Do not repeat the steps in
+    either field. Otherwise, put the complete natural-language response in
+    answer, leave steps empty, and leave closing_note empty. Never put JSON in
+    the answer.
 12. For onboarding or another repeatable workflow with concrete steps in the
     primary sources, set suggest_process_plan to true and provide a draft,
     even when the user asks "how do I..." rather than requesting a plan by name.
@@ -69,8 +77,10 @@ RULES:
     suggest_process_plan to false and leave the plan empty.
 13. A suggested plan must have a name and 1-5 milestones with actionable tasks.
     Use only steps supported by the primary sources; do not invent work.
-14. Set company_name only when the user names a company. Otherwise use an empty
-    string so the user can choose one. Never invent a deadline or assignee.
+14. When the user names a company, copy that name into company_name exactly,
+    including a suffix such as Corp. or Inc. The name can come from the user's
+    question even when it is absent from the documents. Leave company_name
+    empty only when the user did not name one. Never invent a deadline or assignee.
 15. The plan is a draft for the user to review, never an instruction to create
     or modify anything automatically. Do not ask whether the user wants a
     checklist when you can provide a supported process plan draft."""
@@ -84,6 +94,8 @@ REPLY_FORMAT = {
             "type": "object",
             "properties": {
                 "answer": {"type": "string"},
+                "steps": {"type": "array", "items": {"type": "string"}},
+                "closing_note": {"type": "string"},
                 "suggest_process_plan": {"type": "boolean"},
                 "process_plan": {
                     "type": "object",
@@ -115,7 +127,7 @@ REPLY_FORMAT = {
                     "additionalProperties": False,
                 },
             },
-            "required": ["answer", "suggest_process_plan", "process_plan"],
+            "required": ["answer", "steps", "closing_note", "suggest_process_plan", "process_plan"],
             "additionalProperties": False,
         },
     }
@@ -162,6 +174,8 @@ class SuggestedProcessPlan(BaseModel):
 
 class ModelReply(BaseModel):
     answer: str
+    steps: list[str]
+    closing_note: str
     suggest_process_plan: bool
     process_plan: SuggestedProcessPlan
 
@@ -184,15 +198,43 @@ def documented_onboarding(question: str, sources: list[Source]) -> bool:
     return any(title_hint in source.document_title.casefold() for source in sources)
 
 
+def company_in_question(question: str) -> str:
+    word = r"[A-Z][\w&'’.-]*"
+    suffix = r"(?:Corporation|Corp\.?|Incorporated|Inc\.?|LLC|Limited|Ltd\.?|Company|Co\.?)"
+    named = re.search(
+        rf"\b(?P<name>(?:{word}\s+){{1,6}}{suffix})(?=$|[\s?!,;:])",
+        question,
+    )
+    if named:
+        return named.group("name")
+
+    # A company without a legal suffix can still be named after "onboard" or "for".
+    if not re.search(r"\b(?:onboard|oboard)(?:ing)?\b", question, re.IGNORECASE):
+        return ""
+    context = r"(?:(?i:onboard|oboard)(?:ing)?\s+(?:(?:a|an|the|client|company|customer|named)\s+)*|(?i:for)\s+)"
+    named = re.search(
+        rf"\b{context}(?P<name>{word}(?:\s+{word}){{0,5}})(?=$|[?!.;,]|\s+(?:in|on|with|using|through)\b)",
+        question,
+    )
+    if named and named.group("name").casefold() not in {
+        "new user", "user", "new client", "client", "new customer", "customer", "company"
+    }:
+        return named.group("name")
+    return ""
+
+
 def usable_plan(
     reply: ModelReply, question: str, answer: str, sources: list[Source], onboarding: bool = False
 ) -> SuggestedProcessPlan | None:
     if not reply.suggest_process_plan or (not onboarding and not any(source.citation in answer for source in sources)):
         return None
     name = reply.process_plan.name.strip()[:200]
-    company_name = reply.process_plan.company_name.strip()[:200]
+    company_name = company_in_question(question) or reply.process_plan.company_name.strip()
     if company_name and company_name.casefold() not in question.casefold():
         company_name = ""
+    company_name = company_name[:200]
+    if company_name and re.search(r"\bonboard", name, re.IGNORECASE) and company_name.casefold() not in name.casefold():
+        name = f"{company_name} onboarding"[:200]
     milestones = []
     for item in reply.process_plan.milestones[:5]:
         title = item.title.strip()[:200]
@@ -296,21 +338,38 @@ def answer_question(request: AskRequest) -> AskResponse:
     allowed = {s.citation for s in sources}
 
     def prepare(reply: ModelReply) -> tuple[str, SuggestedProcessPlan | None]:
-        answer = re.sub(
-            r"\[(\d+)\]",
-            lambda match: match.group(0) if match.group(0) in allowed else "",
-            reply.answer.strip(),
-        )
+        def clean(text: str) -> str:
+            return re.sub(
+                r"\[(\d+)\]",
+                lambda match: match.group(0) if match.group(0) in allowed else "",
+                text.strip(),
+            )
+
+        intro = clean(reply.answer)
+        steps = [step for item in reply.steps if (step := re.sub(r"^\d+[.)]\s*", "", clean(item)))]
+        note = clean(reply.closing_note)
+        answer = "\n\n".join(part for part in (
+            intro,
+            "\n".join(f"{index}. {step}" for index, step in enumerate(steps, 1)),
+            note,
+        ) if part)
         if not answer:
             raise RuntimeError("Generation returned no text")
         return answer, usable_plan(reply, question, answer, sources, onboarding)
 
-    answer, process_plan = prepare(generate())
+    reply = generate()
+    answer, process_plan = prepare(reply)
     if onboarding and process_plan is None:
-        retry = generate("\nFor this documented onboarding request, set suggest_process_plan to true and populate process_plan with concrete steps.")
+        retry = generate("\nFor this documented onboarding request, set suggest_process_plan to true and populate process_plan with concrete steps. Put the procedure's actions in steps, not answer.")
         retry_answer, retry_plan = prepare(retry)
         if retry_plan is not None:
-            answer, process_plan = retry_answer, retry_plan
+            reply, answer, process_plan = retry, retry_answer, retry_plan
+    sequence_words = re.findall(r"\b(first|then|next|finally)\b", reply.answer, re.IGNORECASE)
+    if not reply.steps and (process_plan is not None or len(sequence_words) >= 2):
+        retry = generate("\nYour answer describes a procedure. Put each documented action in the steps array in order. Keep answer to a short introduction and closing_note to caveats.")
+        if retry.steps:
+            answer, retry_plan = prepare(retry)
+            process_plan = retry_plan or process_plan
     return AskResponse(
         question=question,
         answer=answer,
