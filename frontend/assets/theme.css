@@ -1,0 +1,126 @@
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1421;
+  --panel: #171f30;
+  --panel-raised: #1c273a;
+  --line: #303d54;
+  --text: #f2f6ff;
+  --muted: #aab8cf;
+  --accent: #ffa500;
+}
+
+.bar { flex-wrap: wrap; }
+.theme-menu { position: relative; }
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.theme-toggle:hover { border-color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.theme-options {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 145px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+}
+.theme-option { display: flex; width: 100%; align-items: center; gap: 9px; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; font: inherit; text-align: left; }
+.theme-option:hover, .theme-option:focus-visible { background: var(--panel-raised, #f5f5f5); outline: 2px solid var(--accent); outline-offset: -2px; }
+[hidden] { display: none !important; }
+
+html[data-theme="dark"] body { background: var(--bg); color: var(--text); }
+html[data-theme="dark"] header { background: var(--panel); border-color: var(--line); }
+html[data-theme="dark"] .section-nav { background: #11192a; border-color: var(--line); }
+html[data-theme="dark"] .section-nav a { color: var(--muted); }
+html[data-theme="dark"] .section-nav a:hover,
+html[data-theme="dark"] .section-nav a[aria-current="page"] { background: var(--panel-raised); color: var(--text); }
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .ticket-panel,
+html[data-theme="dark"] .alert-panel,
+html[data-theme="dark"] .task-panel,
+html[data-theme="dark"] .device-panel { background: var(--panel); border-color: var(--line); }
+html[data-theme="dark"] .toolbar { background: #141d2e; border-color: var(--line); }
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] .multi-dropdown summary { background: #11192a; border-color: var(--line); color: var(--text); }
+html[data-theme="dark"] input::placeholder { color: #aab8cf; }
+html[data-theme="dark"] th { background: #1c273a; color: var(--muted); }
+html[data-theme="dark"] td,
+html[data-theme="dark"] th { border-color: var(--line); }
+html[data-theme="dark"] tbody tr:hover { background: #1c273a; }
+html[data-theme="dark"] .multi-options { background: var(--panel-raised); border-color: var(--line); }
+html[data-theme="dark"] .demo-badge { background: rgb(229 185 107 / 12%); border-color: #806b3c; color: #f1d49a; }
+html[data-theme="dark"] .demo-dot { background: #e5b96b; }
+html[data-theme="dark"] .empty-state,
+html[data-theme="dark"] .table-note,
+html[data-theme="dark"] .description,
+html[data-theme="dark"] .result-count,
+html[data-theme="dark"] .secondary,
+html[data-theme="dark"] label,
+html[data-theme="dark"] .partner-brand { color: var(--muted); }
+html[data-theme="dark"] .summary-item { background: var(--panel-raised); border-color: var(--line); color: var(--text); }
+html[data-theme="dark"] .summary-item.urgent,
+html[data-theme="dark"] .summary-item.warning,
+html[data-theme="dark"] .summary-item.pending,
+html[data-theme="dark"] .status-pending,
+html[data-theme="dark"] .severity-warning { background: rgb(229 185 107 / 12%); border-color: #806b3c; color: #f1d49a; }
+html[data-theme="dark"] .summary-item.new-ticket,
+html[data-theme="dark"] .summary-item.online,
+html[data-theme="dark"] .status-resolved,
+html[data-theme="dark"] .status-complete,
+html[data-theme="dark"] .status-online { background: rgb(95 185 125 / 12%); border-color: #34705e; color: #99efba; }
+html[data-theme="dark"] .summary-item.ticket-urgent,
+html[data-theme="dark"] .summary-item.critical,
+html[data-theme="dark"] .summary-item.overdue,
+html[data-theme="dark"] .summary-item.offline,
+html[data-theme="dark"] .status-overdue,
+html[data-theme="dark"] .status-offline,
+html[data-theme="dark"] .severity-critical { background: rgb(255 119 119 / 10%); border-color: #70404a; color: #ff9a9a; }
+html[data-theme="dark"] .summary-item.open-ticket,
+html[data-theme="dark"] .summary-item.in-progress,
+html[data-theme="dark"] .summary-item.info,
+html[data-theme="dark"] .status-progress,
+html[data-theme="dark"] .severity-info { background: rgb(105 173 230 / 10%); border-color: #345477; color: #a8d5ff; }
+html[data-theme="dark"] .status-waiting,
+html[data-theme="dark"] .alert-state,
+html[data-theme="dark"] .state-active { background: rgb(180 147 232 / 10%); border-color: #554773; color: #cbb8f0; }
+html[data-theme="dark"] .status-open,
+html[data-theme="dark"] .priority-high { background: rgb(229 185 107 / 12%); border-color: #806b3c; color: #f1d49a; }
+html[data-theme="dark"] .priority-urgent,
+html[data-theme="dark"] .overdue-true { background: rgb(255 119 119 / 10%); border-color: #70404a; color: #ff9a9a; }
+html[data-theme="dark"] .status-closed,
+html[data-theme="dark"] .state-cleared { background: var(--panel-raised); border-color: var(--line); color: var(--muted); }
+html[data-theme="dark"] .task-id,
+html[data-theme="dark"] .ticket-id,
+html[data-theme="dark"] .alert-id,
+html[data-theme="dark"] .device-id,
+html[data-theme="dark"] .item-id { color: #ffc15a; }
+html[data-theme="dark"] .priority-normal,
+html[data-theme="dark"] .priority-medium { color: #f1d49a; }
+html[data-theme="dark"] .priority-low { color: var(--muted); }
+html[data-theme="dark"] .selection-prompt { background: var(--panel); border-color: var(--line); }
+html[data-theme="dark"] tbody tr.selected { background: #25354a; }
+html[data-theme="dark"] .plan-link:hover { color: #ffc15a; }
+html[data-theme="dark"] .unsaved-tag { color: #f1d49a; }
+html[data-theme="dark"] .error { color: #ff9a9a; }
+html[data-theme="dark"] .partner-brand { padding: 3px 5px; border-radius: 6px; background: #fff; }
+
+@media (max-width: 560px) {
+  .theme-menu { margin-left: auto; }
+  .theme-toggle { padding: 7px; }
+}
