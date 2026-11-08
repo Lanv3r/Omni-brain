@@ -3,14 +3,6 @@
   const select = document.getElementById("current-employee");
   if (!select) return;
 
-  const style = document.createElement("style");
-  style.textContent = `
-    .current-employee { display: grid; gap: 4px; margin-left: auto; min-width: 180px; }
-    .current-employee label { color: #666; font: 600 12px/1.2 system-ui, sans-serif; }
-    .current-employee select { width: 100%; min-height: 36px; padding: 6px 9px; border: 1px solid #dedede; border-radius: 8px; background: #fff; color: #333; font: 14px system-ui, sans-serif; }
-  `;
-  document.head.append(style);
-
   select.disabled = true;
 
   let staff = [];
