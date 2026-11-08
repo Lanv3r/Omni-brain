@@ -299,3 +299,33 @@ def info_alerts():
 @app.get("/online-devices")
 def online_devices():
     return {"total": count_ncentral(devices_url, {"online": "true"})}
+
+
+
+@app.get("/alerts-batched")
+def alerts(page: int = 0, severity: str | None = None):
+
+    if page < 0:
+        raise HTTPException(422, "Invalid page")
+
+    filters = {
+        "active": "true",
+        "pageNumber": page + 1,
+        "pageSize": 10
+    }
+
+    if severity:
+        severity = severity.lower().strip()
+        if severity not in {"critical", "warning", "info"}:
+            raise HTTPException(422, "Invalid severity")
+        filters["severity"] = severity
+
+    query = urlencode(filters)
+    data = read_json(f"{alerts_url}?{query}")
+
+    return {
+        "page": page,
+        "page_size": 10,
+        "total": data["totalItems"],
+        "alerts": data["data"]
+    }
