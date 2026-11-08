@@ -67,7 +67,7 @@
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
 
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
@@ -108,8 +108,8 @@
     .field { display: grid; gap: 6px; }
     .search-field { flex: 1 1 250px; }
     .filter-field { flex: 0 1 170px; }
-    .priority-dropdown { position: relative; width: 100%; }
-    .priority-dropdown summary {
+    .multi-dropdown { position: relative; width: 100%; }
+    .multi-dropdown summary {
       display: flex;
       min-height: 42px;
       align-items: center;
@@ -124,16 +124,18 @@
       font-size: 14px;
       list-style: none;
     }
-    .priority-dropdown summary::-webkit-details-marker { display: none; }
-    .priority-dropdown summary::after { color: var(--muted); content: "▾"; }
-    .priority-dropdown[open] summary { border-color: var(--accent); }
-    .priority-options {
+    .multi-dropdown summary::-webkit-details-marker { display: none; }
+    .multi-dropdown summary::after { color: var(--muted); content: "▾"; }
+    .multi-dropdown[open] summary { border-color: var(--accent); }
+    .multi-options {
       position: absolute;
       z-index: 2;
       top: calc(100% + 6px);
       left: 0;
       display: grid;
       min-width: 100%;
+      max-height: 300px;
+      overflow-y: auto;
       gap: 10px;
       padding: 12px;
       border: 1px solid var(--line);
@@ -141,8 +143,8 @@
       background: var(--panel-raised);
       box-shadow: 0 12px 28px rgb(0 0 0 / 28%);
     }
-    .priority-option { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
-    .priority-option input[type="checkbox"] { width: 15px; min-height: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--accent); }
+    .multi-option { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
+    .multi-option input[type="checkbox"] { width: 15px; min-height: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--accent); }
 
     label {
       color: var(--muted);
@@ -247,12 +249,15 @@
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
         <span>OmniCommand</span>
       </a>
+      <div class="current-employee" style="display:grid;gap:4px;margin-left:auto;min-width:180px"><label for="current-employee" style="font-size:12px">Current employee</label><select id="current-employee" style="min-height:36px;width:100%"><option value="">Loading employees...</option></select></div>
       <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">
         <a href="tickets.html" aria-current="page">Tickets</a>
         <a href="tasks.html">Tasks</a>
+        <a href="my_assignments.html">My Assignments</a>
+        <a href="process_plans.html">Process plans</a>
         <a href="alerts.html">Alerts</a>
         <a href="device_monitoring.html">Device monitoring</a>
       </div>
@@ -281,25 +286,34 @@
             </select>
           </div>
           <div class="field filter-field">
-            <label for="status-filter">Status</label>
-            <select id="status-filter">
-              <option value="all">All statuses</option>
-              <option value="open">Open</option>
-              <option value="inprogress">In progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
-            </select>
+            <label id="status-label">Status</label>
+            <details class="multi-dropdown status-dropdown">
+              <summary aria-labelledby="status-label status-selection"><span id="status-selection">2 selected</span></summary>
+              <div class="multi-options">
+                <label class="multi-option"><input type="checkbox" name="status" value="open" checked> Open</label>
+                <label class="multi-option"><input type="checkbox" name="status" value="inprogress" checked> In progress</label>
+                <label class="multi-option"><input type="checkbox" name="status" value="resolved"> Resolved</label>
+                <label class="multi-option"><input type="checkbox" name="status" value="closed"> Closed</label>
+              </div>
+            </details>
           </div>
           <div class="field filter-field">
             <label id="priority-label">Priority</label>
-            <details class="priority-dropdown">
+            <details class="multi-dropdown priority-dropdown">
               <summary aria-labelledby="priority-label priority-selection"><span id="priority-selection">All</span></summary>
-              <div class="priority-options">
-                <label class="priority-option"><input type="checkbox" name="priority" value="urgent"> Urgent</label>
-                <label class="priority-option"><input type="checkbox" name="priority" value="high"> High</label>
-                <label class="priority-option"><input type="checkbox" name="priority" value="normal"> Normal</label>
-                <label class="priority-option"><input type="checkbox" name="priority" value="low"> Low</label>
+              <div class="multi-options">
+                <label class="multi-option"><input type="checkbox" name="priority" value="urgent"> Urgent</label>
+                <label class="multi-option"><input type="checkbox" name="priority" value="high"> High</label>
+                <label class="multi-option"><input type="checkbox" name="priority" value="normal"> Normal</label>
+                <label class="multi-option"><input type="checkbox" name="priority" value="low"> Low</label>
               </div>
+            </details>
+          </div>
+          <div class="field filter-field">
+            <label id="assignee-label">Assignee</label>
+            <details class="multi-dropdown assignee-dropdown">
+              <summary aria-labelledby="assignee-label assignee-selection"><span id="assignee-selection">All</span></summary>
+              <div class="multi-options" id="assignee-options"></div>
             </details>
           </div>
         </form>
@@ -330,13 +344,19 @@
     </section>
   </main>
 
+  <script src="assets/current_user.js?v=2"></script>
   <script>
     const searchInput = document.getElementById("ticket-search");
     const companyFilter = document.getElementById("company-filter");
-    const statusFilter = document.getElementById("status-filter");
+    const statusDropdown = document.querySelector(".status-dropdown");
+    const statusFilters = [...document.querySelectorAll('input[name="status"]')];
+    const statusSelection = document.getElementById("status-selection");
     const priorityDropdown = document.querySelector(".priority-dropdown");
     const priorityFilters = [...document.querySelectorAll('input[name="priority"]')];
     const prioritySelection = document.getElementById("priority-selection");
+    const assigneeDropdown = document.querySelector(".assignee-dropdown");
+    const assigneeOptions = document.getElementById("assignee-options");
+    const assigneeSelection = document.getElementById("assignee-selection");
     const ticketRowsContainer = document.getElementById("ticket-rows");
     const resultCount = document.getElementById("result-count");
     const previousPage = document.getElementById("previous-page");
@@ -349,6 +369,7 @@
     let currentPage = 0;
     let requestId = 0;
     let searchTimer;
+    let assigneeFilter;
 
     function element(tag, value, className) {
       const item = document.createElement(tag);
@@ -404,13 +425,23 @@
       prioritySelection.textContent = count ? count + " selected" : "All";
     }
 
+    function updateStatusSelection() {
+      const selected = statusFilters.filter(filter => filter.checked);
+      statusSelection.textContent = selected.length === 0 ? "All"
+        : selected.length === 1 ? selected[0].parentElement.textContent.trim()
+          : selected.length + " selected";
+    }
+
     async function loadTickets() {
       const thisRequest = ++requestId;
       const params = new URLSearchParams({ page: String(currentPage) });
       if (companyFilter.value !== "all") params.set("company_id", companyFilter.value);
-      if (statusFilter.value !== "all") params.set("status", statusFilter.value);
+      const statuses = statusFilters.filter(filter => filter.checked).map(filter => filter.value);
+      if (statuses.length) params.set("status", statuses.join(","));
       const priorities = priorityFilters.filter(filter => filter.checked).map(filter => filter.value);
       if (priorities.length) params.set("priority", priorities.join(","));
+      const assignees = assigneeFilter?.values() || [];
+      if (assignees.length) params.set("assignees", assignees.join(","));
       if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
 
       resultCount.textContent = "Loading tickets...";
@@ -470,21 +501,25 @@
       }
     }
 
-    const requestedStatus = (searchParams.get("status") || "").toLowerCase().replace(" ", "");
-    if ([...statusFilter.options].some(option => option.value === requestedStatus)) {
-      statusFilter.value = requestedStatus;
+    const requestedStatuses = searchParams.getAll("status");
+    if (requestedStatuses.length) {
+      const values = requestedStatuses.flatMap(value => value.toLowerCase().split(",").map(item => item.trim().replaceAll(" ", "")));
+      statusFilters.forEach(filter => { filter.checked = values.includes(filter.value); });
     }
+    updateStatusSelection();
     const requestedPriorities = searchParams.getAll("priority").flatMap(value => value.toLowerCase().split(","));
     priorityFilters.forEach(filter => {
       filter.checked = requestedPriorities.includes(filter.value);
     });
     updatePrioritySelection();
+    const requestedAssignees = searchParams.getAll("assignees").flatMap(value => value.split(","));
 
     loadCompanyOptions();
     loadTickets();
 
     function filtersChanged() {
       currentPage = 0;
+      updateStatusSelection();
       updatePrioritySelection();
       loadTickets();
     }
@@ -494,8 +529,17 @@
       searchTimer = setTimeout(filtersChanged, 300);
     });
     companyFilter.addEventListener("change", filtersChanged);
-    statusFilter.addEventListener("change", filtersChanged);
+    statusFilters.forEach(filter => filter.addEventListener("change", filtersChanged));
     priorityFilters.forEach(filter => filter.addEventListener("change", filtersChanged));
+    OmniEmployee.ready.then(() => {
+      assigneeFilter = OmniEmployee.createAssigneeFilter({
+        options: assigneeOptions,
+        selection: assigneeSelection,
+        requested: requestedAssignees,
+        onChange: filtersChanged
+      });
+      if (assigneeFilter.values().length) filtersChanged();
+    });
     previousPage.addEventListener("click", () => {
       if (currentPage > 0) {
         currentPage -= 1;
@@ -507,18 +551,17 @@
       loadTickets();
     });
 
-    document.addEventListener("click", event => {
-      if (!priorityDropdown.contains(event.target)) {
-        priorityDropdown.open = false;
-      }
-    });
-
-    priorityDropdown.addEventListener("keydown", event => {
-      if (event.key === "Escape") {
-        priorityDropdown.open = false;
-        priorityDropdown.querySelector("summary").focus();
-      }
-    });
+    for (const dropdown of [statusDropdown, priorityDropdown, assigneeDropdown]) {
+      document.addEventListener("click", event => {
+        if (!dropdown.contains(event.target)) dropdown.open = false;
+      });
+      dropdown.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          dropdown.open = false;
+          dropdown.querySelector("summary").focus();
+        }
+      });
+    }
   </script>
 </body>
 </html>
