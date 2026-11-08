@@ -197,8 +197,7 @@
           <div class="field">
             <label for="new-plan-company">Company</label>
             <select id="new-plan-company" required>
-              <option value="">Choose a company</option>
-              <option value="new">New company</option>
+              <option value="new" selected>New company</option>
             </select>
             <label id="new-plan-company-name-label" for="new-plan-company-name" hidden>New company name</label>
             <input id="new-plan-company-name" maxlength="200" hidden>
@@ -382,12 +381,11 @@
       );
       companyFilter.value = options.some(company => String(company.id) === selectedFilter) ? selectedFilter : "all";
       newPlanCompany.replaceChildren(
-        new Option("Choose a company", ""),
-        ...options.map(company => new Option(company.name, String(company.id))),
-        new Option("New company", "new")
+        new Option("New company", "new"),
+        ...options.map(company => new Option(company.name, String(company.id)))
       );
       newPlanCompany.value = selectedNewPlanCompany === "new" || options.some(company => String(company.id) === selectedNewPlanCompany)
-        ? selectedNewPlanCompany : "";
+        ? selectedNewPlanCompany : "new";
       updateNewCompanyField();
     }
 
@@ -897,6 +895,7 @@
     milestoneForm.addEventListener("submit", stageMilestone);
     taskForm.addEventListener("submit", stageTask);
     saveButtons.forEach(button => button.addEventListener("click", savePlan));
+    updateNewCompanyField();
     loadPlans();
     Promise.all([loadCompanies(), loadStaff()]).then(showSuggestedPlan);
   </script>
