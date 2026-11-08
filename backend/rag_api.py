@@ -59,8 +59,67 @@ RULES:
 
 9. Treat Related Documents chunks as supplementary
    references, not primary evidence.
-10. If checklists or numerated steps are present, display them to the user 
-    if deemed relevant by previous instructions given."""
+10. If checklists or numbered steps are present, display them when relevant.
+11. Return a natural-language answer in the answer field. Never put JSON in the answer.
+12. For onboarding or another repeatable workflow with concrete steps in the
+    primary sources, set suggest_process_plan to true and provide a draft,
+    even when the user asks "how do I..." rather than requesting a plan by name.
+    A missing client name is okay: leave company_name empty for the user to fill.
+    For ordinary questions or insufficiently supported workflows, set
+    suggest_process_plan to false and leave the plan empty.
+13. A suggested plan must have a name and 1-5 milestones with actionable tasks.
+    Use only steps supported by the primary sources; do not invent work.
+14. Set company_name only when the user names a company. Otherwise use an empty
+    string so the user can choose one. Never invent a deadline or assignee.
+15. The plan is a draft for the user to review, never an instruction to create
+    or modify anything automatically. Do not ask whether the user wants a
+    checklist when you can provide a supported process plan draft."""
+
+REPLY_FORMAT = {
+    "format": {
+        "type": "json_schema",
+        "name": "omni_assistant_reply",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "answer": {"type": "string"},
+                "suggest_process_plan": {"type": "boolean"},
+                "process_plan": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "company_name": {"type": "string"},
+                        "milestones": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "tasks": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {"title": {"type": "string"}},
+                                            "required": ["title"],
+                                            "additionalProperties": False,
+                                        },
+                                    },
+                                },
+                                "required": ["title", "tasks"],
+                                "additionalProperties": False,
+                            },
+                        },
+                    },
+                    "required": ["name", "company_name", "milestones"],
+                    "additionalProperties": False,
+                },
+            },
+            "required": ["answer", "suggest_process_plan", "process_plan"],
+            "additionalProperties": False,
+        },
+    }
+}
 
 
 class AskRequest(BaseModel):
@@ -86,6 +145,27 @@ class RelatedReference(BaseModel):
     similarity: float
 
 
+class SuggestedTask(BaseModel):
+    title: str
+
+
+class SuggestedMilestone(BaseModel):
+    title: str
+    tasks: list[SuggestedTask]
+
+
+class SuggestedProcessPlan(BaseModel):
+    name: str
+    company_name: str
+    milestones: list[SuggestedMilestone]
+
+
+class ModelReply(BaseModel):
+    answer: str
+    suggest_process_plan: bool
+    process_plan: SuggestedProcessPlan
+
+
 class AskResponse(BaseModel):
     question: str
     answer: str
@@ -93,6 +173,35 @@ class AskResponse(BaseModel):
     related_references: list[RelatedReference]
     status: str
     model: str | None = None
+    process_plan: SuggestedProcessPlan | None = None
+
+
+def documented_onboarding(question: str, sources: list[Source]) -> bool:
+    if not re.search(r"\bonboard(?:ing)?\b", question, flags=re.IGNORECASE):
+        return False
+    client_workflow = re.search(r"\b(client|company|customer)\b", question, flags=re.IGNORECASE)
+    title_hint = "client onboarding" if client_workflow else "onboard"
+    return any(title_hint in source.document_title.casefold() for source in sources)
+
+
+def usable_plan(
+    reply: ModelReply, question: str, answer: str, sources: list[Source], onboarding: bool = False
+) -> SuggestedProcessPlan | None:
+    if not reply.suggest_process_plan or (not onboarding and not any(source.citation in answer for source in sources)):
+        return None
+    name = reply.process_plan.name.strip()[:200]
+    company_name = reply.process_plan.company_name.strip()[:200]
+    if company_name and company_name.casefold() not in question.casefold():
+        company_name = ""
+    milestones = []
+    for item in reply.process_plan.milestones[:5]:
+        title = item.title.strip()[:200]
+        tasks = [SuggestedTask(title=task.title.strip()[:200]) for task in item.tasks[:8] if task.title.strip()]
+        if title and tasks:
+            milestones.append(SuggestedMilestone(title=title, tasks=tasks))
+    if not name or not milestones:
+        return None
+    return SuggestedProcessPlan(name=name, company_name=company_name, milestones=milestones)
 
 
 def build_context(primary_results: list[dict]) -> tuple[str, list[Source]]:
@@ -159,29 +268,49 @@ def answer_question(request: AskRequest) -> AskResponse:
         )
 
     client = make_client(timeout=45.0, max_retries=2)
-    response = client.responses.create(
-        model=MODEL,
-        instructions=INSTRUCTIONS,
-        input=(
-            f"USER QUESTION:\n{question}\n\n"
-            f"PRIMARY SOURCE EXCERPTS:\n{context}\n\n"
-            "Only cite the numbered primary source excerpts above. "
-            "Do not use related-reference listings as evidence."
-        ),
-        max_output_tokens=900,
-        store=False,
+    onboarding = documented_onboarding(question, sources)
+    prompt = (
+        f"USER QUESTION:\n{question}\n\n"
+        f"PRIMARY SOURCE EXCERPTS:\n{context}\n\n"
+        "Only cite the numbered primary source excerpts above. "
+        "Do not use related-reference listings as evidence."
     )
-    answer = (response.output_text or "").strip()
-    if not answer:
-        raise RuntimeError("Generation returned no text")
+    if onboarding:
+        prompt += (
+            "\nThis is a documented onboarding workflow. Provide a process plan "
+            "draft with milestones and tasks. Leave company_name blank if unnamed."
+        )
+
+    def generate(extra_instruction: str = "") -> ModelReply:
+        response = client.responses.create(
+            model=MODEL,
+            instructions=INSTRUCTIONS + extra_instruction,
+            input=prompt,
+            text=REPLY_FORMAT,
+            max_output_tokens=2400,
+            store=False,
+        )
+        return ModelReply.model_validate_json(response.output_text or "")
 
     # Remove unsupported numeric source citations (e.g. the model invents [99]).
     allowed = {s.citation for s in sources}
-    answer = re.sub(
-        r"\[(\d+)\]",
-        lambda match: match.group(0) if match.group(0) in allowed else "",
-        answer,
-    )
+
+    def prepare(reply: ModelReply) -> tuple[str, SuggestedProcessPlan | None]:
+        answer = re.sub(
+            r"\[(\d+)\]",
+            lambda match: match.group(0) if match.group(0) in allowed else "",
+            reply.answer.strip(),
+        )
+        if not answer:
+            raise RuntimeError("Generation returned no text")
+        return answer, usable_plan(reply, question, answer, sources, onboarding)
+
+    answer, process_plan = prepare(generate())
+    if onboarding and process_plan is None:
+        retry = generate("\nFor this documented onboarding request, set suggest_process_plan to true and populate process_plan with concrete steps.")
+        retry_answer, retry_plan = prepare(retry)
+        if retry_plan is not None:
+            answer, process_plan = retry_answer, retry_plan
     return AskResponse(
         question=question,
         answer=answer,
@@ -189,6 +318,7 @@ def answer_question(request: AskRequest) -> AskResponse:
         related_references=related,
         status="answered",
         model=MODEL,
+        process_plan=process_plan,
     )
 
 

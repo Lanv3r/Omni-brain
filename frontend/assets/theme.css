@@ -31,6 +31,7 @@ header .section-nav a.ai-tab { display: flex; align-items: center; justify-conte
 header .ai-tab-icon { display: block; width: 20px; height: 20px; flex: 0 0 20px; object-fit: contain; mix-blend-mode: multiply; }
 html[data-theme="dark"] header .ai-tab-icon { filter: invert(1); mix-blend-mode: screen; }
 header .partner-brand, header .mark img { height: 48px; }
+header .partner-brand { padding: 3px 5px; border-radius: 6px; background: #fff; }
 .current-employee { display: flex; align-items: center; flex: 0 0 180px; margin-left: auto; }
 .current-employee select { width: 100%; min-height: 42px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font: inherit; font-size: 13px; font-weight: 650; }
 .current-employee select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -176,7 +177,7 @@ html[data-theme="dark"] tbody tr.selected { background: #25354a; }
 html[data-theme="dark"] .plan-link:hover { color: #ffc15a; }
 html[data-theme="dark"] .unsaved-tag { color: #f1d49a; }
 html[data-theme="dark"] .error { color: #ff9a9a; }
-html[data-theme="dark"] .partner-brand { padding: 3px 5px; border-radius: 6px; background: #fff; }
+html[data-theme="dark"] .partner-brand { background: transparent; filter: invert(1) hue-rotate(180deg); }
 
 @media (max-width: 560px) {
   .theme-menu { margin-left: auto; }
