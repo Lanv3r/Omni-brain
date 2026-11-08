@@ -196,18 +196,30 @@
       .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
-  <link rel="stylesheet" href="theme.css?v=4">
-  <script src="theme.js?v=3"></script>
+  <link rel="stylesheet" href="theme.css?v=5">
+  <script src="theme.js?v=4"></script>
 </head>
 <body>
   <header>
     <div class="bar shell">
       <a class="brand" href="index.html" aria-label="OmniCommand home">
-        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" width="128" height="163" alt=""></span>
         <span>OmniCommand</span>
       </a>
       <div class="current-employee"><select id="current-employee" aria-label="Current employee"><option value="">Loading employees...</option></select></div>
-      <img class="partner-brand" src="assets/omnitechpro-logo.png" alt="OmniTechPro">
+      <script src="assets/current_user.js?v=4"></script>
+      <div class="theme-menu">
+        <button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Choose color theme">
+          <span class="theme-icon-wrap" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-current theme-light-label">Light mode</span><span class="theme-current theme-dark-label">Dark mode</span>
+          <svg class="theme-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div class="theme-options" hidden><button class="theme-option" type="button">
+          <span class="theme-option-icon" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-option-label theme-dark-label">Dark mode</span><span class="theme-option-label theme-light-label">Light mode</span>
+        </button></div>
+      </div>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" width="355" height="163" alt="OmniTechPro">
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">
@@ -286,7 +298,6 @@
     </section>
   </main>
 
-  <script src="assets/current_user.js?v=3"></script>
   <script>
     const searchInput = document.getElementById("device-search");
     const deviceClassFilter = document.getElementById("device-class-filter");
