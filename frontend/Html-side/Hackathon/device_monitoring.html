@@ -29,10 +29,10 @@
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
     .section-nav-inner { display: flex; overflow-x: auto; }
-    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
-    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+    main { padding-block: 12px 24px; }
     .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
     .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
     h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
@@ -42,6 +42,7 @@
     .queue-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
     .queue-summary h2 { margin: 0; font-size: 18px; }
     .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+    .result-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
     .device-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
     .toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; padding: 16px; border-bottom: 1px solid var(--line); background: #fafafa; }
     .field { display: grid; gap: 6px; }
@@ -57,6 +58,9 @@
     td { font-size: 13px; }
     tbody tr:last-child td { border-bottom: 0; }
     tbody tr:hover { background: #fff8eb; }
+    tbody tr.device-row-offline td { background: #fff1f0; border-top: 1px solid #e5a5a1; border-bottom: 1px solid #e5a5a1; }
+    tbody tr.device-row-offline td:first-child { border-left: 1px solid #e5a5a1; }
+    tbody tr.device-row-offline td:last-child { border-right: 1px solid #e5a5a1; }
     .device-id { color: #9a6200; font-weight: 650; }
     .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
     .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 650; }
@@ -81,10 +85,10 @@
 <body>
   <header>
     <div class="bar shell">
-      <a class="brand" href="index.html" aria-label="OmniCommand home">
+      <div class="brand">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
         <span>OmniCommand</span>
-      </a>
+      </div>
       <div class="header-tools">
         <div class="theme-menu">
           <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
@@ -100,7 +104,7 @@
             </button>
           </div>
         </div>
-        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
       </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
@@ -110,6 +114,10 @@
         <a href="tasks.html">Tasks</a>
         <a href="alerts.html">Alerts</a>
         <a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
       </div>
     </nav>
   </header>
@@ -118,16 +126,14 @@
     <section class="page-heading" aria-labelledby="page-title">
       <div>
         <p class="eyebrow">N-central · Monitoring</p>
-        <h1 id="page-title">Device monitoring</h1>
+        <h1 id="page-title">Device Monitoring</h1>
         <p class="description">Check device availability and recent connections.</p>
       </div>
-      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
     </section>
 
-    <section aria-labelledby="queue-title">
+    <section aria-label="Device data">
       <div class="queue-summary">
-        <h2 id="queue-title">Device inventory</h2>
-        <p class="result-count" id="result-count" aria-live="polite">Showing 7 example devices</p>
+        <p class="result-count" id="result-count" aria-live="polite">Showing 7 devices</p>
       </div>
       <div class="device-panel">
         <form class="toolbar" role="search" onsubmit="return false">
@@ -175,7 +181,7 @@
                 <td><span class="pill status-online">Online</span></td>
                 <td>2 min ago</td>
               </tr>
-              <tr data-company="Willow Accounting" data-status="Offline">
+              <tr class="device-row-offline" data-company="Willow Accounting" data-status="Offline">
                 <td><span class="device-id">WILLOW-WS-07</span><span class="secondary">Windows 11 Pro</span></td>
                 <td>Willow Accounting</td>
                 <td>Workstation</td>
@@ -196,7 +202,7 @@
                 <td><span class="pill status-online">Online</span></td>
                 <td>1 min ago</td>
               </tr>
-              <tr data-company="Cedar Works" data-status="Offline">
+              <tr class="device-row-offline" data-company="Cedar Works" data-status="Offline">
                 <td><span class="device-id">CEDAR-LT-08</span><span class="secondary">Windows 11 Pro</span></td>
                 <td>Cedar Works</td>
                 <td>Laptop</td>
@@ -257,7 +263,7 @@
       }
 
       emptyState.hidden = visibleCount > 0;
-      resultCount.textContent = `Showing ${visibleCount} of ${deviceRows.length} example devices`;
+      resultCount.textContent = `Showing ${visibleCount} of ${deviceRows.length} devices`;
     }
 
     filterDevices();

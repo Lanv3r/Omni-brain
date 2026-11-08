@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Alert details in OmniCommand">
+  <title>Alert details | OmniCommand</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    a { color: inherit; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+    header { border-bottom: 1px solid var(--line); background: #ffffff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--text); font-size: 19px; font-weight: 750; text-decoration: none; }
+    .mark img, .partner-brand { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { max-width: min(160px, 35vw); }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: flex; overflow-x: auto; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    main { padding-block: 12px 24px; }
+    .back-link { display: inline-block; margin-bottom: 14px; color: #765000; font-weight: 650; text-decoration: none; }
+    .page-heading { margin-bottom: 18px; text-align: center; }
+    .page-heading h1 { margin: 0; color: var(--accent); font-size: clamp(34px, 5vw, 48px); }
+    .alert-panel { padding: 24px; border: 1px solid #e5a5a1; border-radius: 14px; background: #fff1f0; }
+    .alert-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
+    .alert-facts dt { margin-bottom: 4px; color: #765000; font-size: 12px; font-weight: 700; }
+    .alert-facts dd { margin: 0; font-weight: 650; }
+    .alert-description { margin: 24px 0 0; padding-top: 18px; border-top: 1px solid #e5a5a1; color: var(--muted); }
+    .severity { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; color: #a32922; font-size: 11px; font-weight: 650; }
+    .severity::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    @media (max-width: 560px) { .shell { width: min(100% - 32px, 1160px); } .alert-facts { grid-template-columns: 1fr; } }
+  </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html"><span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand</a>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="index.html">Command Center</a><a href="tickets.html">Tickets</a><a href="tasks.html">Tasks</a><a href="alerts.html" aria-current="page">Alerts</a><a href="device_monitoring.html">Devices</a><a href="knowledge_base.html">Knowledge Base</a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell">
+    <a class="back-link" href="alerts.html">← Back to alerts</a>
+    <section class="page-heading"><h1 id="alert-title">Alert details</h1></section>
+    <section class="alert-panel" id="alert-panel" hidden>
+      <dl class="alert-facts">
+        <div><dt>Alert ID</dt><dd id="alert-id"></dd></div>
+        <div><dt>Severity</dt><dd><span class="severity">Critical</span></dd></div>
+        <div><dt>Device</dt><dd id="alert-device"></dd></div>
+        <div><dt>Company</dt><dd id="alert-company"></dd></div>
+        <div><dt>State</dt><dd id="alert-state"></dd></div>
+        <div><dt>Last detected</dt><dd id="alert-detected"></dd></div>
+      </dl>
+      <p class="alert-description" id="alert-description"></p>
+    </section>
+  </main>
+  <script>
+    const alerts = {
+      "DEMO-A203": ["Server not responding", "HQ-FILE-01", "Brightside Studio", "Active", "4 min ago", "The file server is not responding to health checks. Verify connectivity and review the server event logs."],
+      "DEMO-A202": ["Backup job failed", "BACKUP-02", "Willow Accounting", "Active", "12 min ago", "The scheduled backup job failed. Check the backup target and retry the job after confirming available storage."],
+      "DEMO-A201": ["Disk space below 15%", "DESIGN-WS-14", "Northstar Design", "Active", "19 min ago", "Available disk space is below the warning threshold. Review large files and schedule cleanup before capacity is exhausted."],
+      "DEMO-A200": ["Endpoint protection needs attention", "CEDAR-LT-08", "Cedar Works", "Active", "31 min ago", "Endpoint protection needs attention on this workstation. Open the device record and review the protection status."],
+      "DEMO-A199": ["Device has pending updates", "HARBOR-WS-03", "Harbor & Pine", "Active", "52 min ago", "This device has pending updates. Review the update list and schedule installation during an approved maintenance window."],
+      "DEMO-A198": ["Scheduled maintenance completed", "WILLOW-SQL-01", "Willow Accounting", "Active", "1 hr ago", "Scheduled maintenance completed successfully. No additional action is currently required."]
+    };
+    const id = new URLSearchParams(window.location.search).get("id");
+    const alert = alerts[id];
+    if (alert) {
+      document.title = `${id} | OmniCommand`;
+      document.getElementById("alert-title").textContent = alert[0];
+      document.getElementById("alert-id").textContent = id;
+      document.getElementById("alert-device").textContent = alert[1];
+      document.getElementById("alert-company").textContent = alert[2];
+      document.getElementById("alert-state").textContent = alert[3];
+      document.getElementById("alert-detected").textContent = alert[4];
+      document.getElementById("alert-description").textContent = alert[5];
+      document.getElementById("alert-panel").hidden = false;
+    }
+  </script>
+</body>
+</html>

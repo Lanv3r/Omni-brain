@@ -68,12 +68,12 @@
 
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
     .section-nav-inner { display: flex; overflow-x: auto; }
-    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
 
-    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+    main { padding-block: 12px 24px; }
 
     .eyebrow {
       margin: 0 0 8px;
@@ -126,11 +126,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
 
     .queue-summary h2 { margin: 0; font-size: 18px; }
     .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+    .queue-summary .table-note { margin: 0; }
+    .result-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
 
     .ticket-panel {
       overflow: hidden;
@@ -233,6 +235,8 @@
 
     .ticket-id { color: var(--accent); font-weight: 650; }
     .subject { color: var(--text); font-weight: 600; }
+    .ticket-link { display: block; text-decoration: none; }
+    .ticket-link:hover .subject, .ticket-link:focus-visible .subject { text-decoration: underline; text-decoration-color: var(--accent); }
     .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
 
     .pill {
@@ -254,14 +258,10 @@
       content: "";
     }
 
-    .status-open, .status-resolved { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
-    .status-progress { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .status-open { border-color: #79b9e8; background: #e5f4ff; color: #1d5f91; }
+    .status-resolved { border-color: #8bc59b; background: #e4f4e8; color: #2f7d46; }
+    .status-progress { border-color: #c7b5e5; background: #f3effa; color: #65438f; }
     .status-waiting { border-color: #c8b7e5; background: #f5f0fb; color: #65438f; }
-    .priority-high { color: #a32922; }
-    .priority-urgent { color: #a32922; }
-    .priority-medium { color: #765000; }
-    .priority-low { color: #666666; }
-
     .empty-state {
       padding: 32px 16px;
       color: var(--muted);
@@ -295,10 +295,10 @@
 <body>
   <header>
     <div class="bar shell">
-      <a class="brand" href="index.html" aria-label="OmniCommand home">
+      <div class="brand">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
         <span>OmniCommand</span>
-      </a>
+      </div>
       <div class="header-tools">
         <div class="theme-menu">
           <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
@@ -314,7 +314,7 @@
             </button>
           </div>
         </div>
-        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
       </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
@@ -324,6 +324,10 @@
         <a href="alerts.html">Alerts</a>
         <a href="device_monitoring.html">Devices</a>
         <a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
       </div>
     </nav>
   </header>
@@ -335,13 +339,12 @@
         <h1 id="page-title">Tickets</h1>
         <p class="description">Review new, in-progress, and resolved requests.</p>
       </div>
-      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
     </section>
 
-    <section aria-labelledby="queue-title">
+    <section aria-label="Ticket data">
       <div class="queue-summary">
-        <h2 id="queue-title">Ticket queue</h2>
-        <p class="result-count" id="result-count" aria-live="polite">Showing 5 example tickets</p>
+        <p class="table-note" id="ticket-load-status" role="status" aria-live="polite"></p>
+        <p class="result-count" id="result-count" aria-live="polite">Showing 5 tickets</p>
       </div>
       <div class="ticket-panel">
         <form class="toolbar" role="search" onsubmit="return false">
@@ -389,7 +392,7 @@
             </thead>
             <tbody id="ticket-rows">
               <tr data-company="Brightside Studio" data-status="New" data-priority="High">
-                <td><span class="ticket-id">DEMO-1048</span><span class="secondary subject">New starter can't access email</span></td>
+                <td><a class="ticket-link" href="ticket_detail.html?id=DEMO-1048" aria-label="View ticket DEMO-1048: New starter can't access email"><span class="ticket-id">DEMO-1048</span><span class="secondary subject">New starter can't access email</span></a></td>
                 <td>Jordan Lee<span class="secondary">Brightside Studio</span></td>
                 <td><span class="pill status-open">New</span></td>
                 <td><span class="pill priority-high">High</span></td>
@@ -397,7 +400,7 @@
                 <td>18 min ago</td>
               </tr>
               <tr data-company="Harbor &amp; Pine" data-status="In progress" data-priority="Medium">
-                <td><span class="ticket-id">DEMO-1047</span><span class="secondary subject">VPN disconnects during calls</span></td>
+                <td><a class="ticket-link" href="ticket_detail.html?id=DEMO-1047" aria-label="View ticket DEMO-1047: VPN disconnects during calls"><span class="ticket-id">DEMO-1047</span><span class="secondary subject">VPN disconnects during calls</span></a></td>
                 <td>Sam Rivera<span class="secondary">Harbor &amp; Pine</span></td>
                 <td><span class="pill status-progress">In progress</span></td>
                 <td><span class="pill priority-medium">Medium</span></td>
@@ -405,7 +408,7 @@
                 <td>46 min ago</td>
               </tr>
               <tr data-company="Cedar Works" data-status="Resolved" data-priority="Low">
-                <td><span class="ticket-id">DEMO-1046</span><span class="secondary subject">Request for a shared project folder</span></td>
+                <td><a class="ticket-link" href="ticket_detail.html?id=DEMO-1046" aria-label="View ticket DEMO-1046: Request for a shared project folder"><span class="ticket-id">DEMO-1046</span><span class="secondary subject">Request for a shared project folder</span></a></td>
                 <td>Casey Patel<span class="secondary">Cedar Works</span></td>
                 <td><span class="pill status-resolved">Resolved</span></td>
                 <td><span class="pill priority-low">Low</span></td>
@@ -413,7 +416,7 @@
                 <td>2 hr ago</td>
               </tr>
               <tr data-company="Northstar Design" data-status="New" data-priority="Medium">
-                <td><span class="ticket-id">DEMO-1045</span><span class="secondary subject">Laptop running out of disk space</span></td>
+                <td><a class="ticket-link" href="ticket_detail.html?id=DEMO-1045" aria-label="View ticket DEMO-1045: Laptop running out of disk space"><span class="ticket-id">DEMO-1045</span><span class="secondary subject">Laptop running out of disk space</span></a></td>
                 <td>Alex Morgan<span class="secondary">Northstar Design</span></td>
                 <td><span class="pill status-open">New</span></td>
                 <td><span class="pill priority-medium">Medium</span></td>
@@ -421,7 +424,7 @@
                 <td>3 hr ago</td>
               </tr>
               <tr data-company="Willow Accounting" data-status="In progress" data-priority="Urgent">
-                <td><span class="ticket-id">DEMO-1044</span><span class="secondary subject">Unable to print from finance workstation</span></td>
+                <td><a class="ticket-link" href="ticket_detail.html?id=DEMO-1044" aria-label="View ticket DEMO-1044: Unable to print from finance workstation"><span class="ticket-id">DEMO-1044</span><span class="secondary subject">Unable to print from finance workstation</span></a></td>
                 <td>Riley Thompson<span class="secondary">Willow Accounting</span></td>
                 <td><span class="pill status-progress">In progress</span></td>
                 <td><span class="pill priority-urgent">Urgent</span></td>
@@ -455,6 +458,7 @@
     const requestedStatus = searchParams.get("status");
     const requestedPriorities = searchParams.getAll("priority");
     const openOnly = searchParams.get("openOnly") === "true";
+    let usingPracticeApi = false;
 
     function getTicketRows() {
       return [...ticketRowsContainer.querySelectorAll("tr[data-status]")];
@@ -501,7 +505,7 @@
       }
 
       emptyState.hidden = visibleCount > 0;
-      resultCount.textContent = `Showing ${visibleCount} of ${ticketRows.length} example tickets`;
+      resultCount.textContent = `Showing ${visibleCount} of ${ticketRows.length} tickets`;
     }
 
     if ([...statusFilter.options].some(option => option.value === requestedStatus)) {
@@ -529,6 +533,92 @@
     companyFilter.addEventListener("change", filterTickets);
     statusFilter.addEventListener("change", filterTickets);
     priorityFilters.forEach(filter => filter.addEventListener("change", filterTickets));
+
+    function addCell(row, content, secondary = "") {
+      const cell = document.createElement("td");
+      cell.textContent = content;
+      if (secondary) {
+        const detail = document.createElement("span");
+        detail.className = "secondary";
+        detail.textContent = secondary;
+        cell.append(detail);
+      }
+      row.append(cell);
+    }
+
+    function renderPracticeTickets(tickets) {
+      for (const row of getTicketRows()) row.remove();
+      for (const ticket of tickets) {
+        const row = document.createElement("tr");
+        row.dataset.company = ticket.company;
+        row.dataset.status = ticket.status;
+        row.dataset.priority = ticket.priority;
+
+        const titleCell = document.createElement("td");
+        const link = document.createElement("a");
+        link.className = "ticket-link";
+        link.href = `ticket_detail.html?id=${encodeURIComponent(ticket.id)}`;
+        link.setAttribute("aria-label", `View ticket ${ticket.id}: ${ticket.subject}`);
+        const id = document.createElement("span");
+        id.className = "ticket-id";
+        id.textContent = ticket.id;
+        const subject = document.createElement("span");
+        subject.className = "secondary subject";
+        subject.textContent = ticket.subject;
+        link.append(id, subject);
+        titleCell.append(link);
+        row.append(titleCell);
+
+        const clientSummary = [ticket.company, ticket.core_plan, ticket.industry]
+          .filter(Boolean)
+          .join(" · ");
+        addCell(row, ticket.requester, clientSummary);
+
+        const statusCell = document.createElement("td");
+        const statusPill = document.createElement("span");
+        statusPill.className = `pill ${ticket.status === "New" ? "status-open" : ticket.status === "Resolved" ? "status-resolved" : "status-progress"}`;
+        statusPill.textContent = ticket.status;
+        statusCell.append(statusPill);
+        row.append(statusCell);
+
+        const priorityCell = document.createElement("td");
+        const priorityPill = document.createElement("span");
+        priorityPill.className = `pill priority-${ticket.priority.toLowerCase()}`;
+        priorityPill.textContent = ticket.priority;
+        priorityCell.append(priorityPill);
+        row.append(priorityCell);
+
+        addCell(row, ticket.assignee);
+        const opened = ticket.updated ? new Date(ticket.updated) : null;
+        addCell(row, opened && !Number.isNaN(opened.valueOf())
+          ? opened.toLocaleString()
+          : ticket.updated || "—");
+        ticketRowsContainer.insertBefore(row, emptyState);
+      }
+      usingPracticeApi = true;
+      document.getElementById("ticket-load-status").textContent = "";
+      updateCompanyOptions();
+      filterTickets();
+    }
+
+    async function loadPracticeTickets() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/v1/practice/tickets");
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.detail || `The request failed (${response.status}).`);
+        }
+        if (!Array.isArray(result.tickets)) {
+          throw new Error("The backend returned an invalid ticket list.");
+        }
+        renderPracticeTickets(result.tickets);
+      } catch (error) {
+        document.getElementById("ticket-load-status").textContent =
+          `Could not load connected tickets; showing the ticket queue instead. ${error.message}`;
+      }
+    }
+
+    loadPracticeTickets();
 
     document.addEventListener("click", event => {
       if (!priorityDropdown.contains(event.target)) {

@@ -24,13 +24,13 @@
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
     .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
-    main { padding-block: clamp(36px, 7vw, 78px); padding-top: clamp(4.5px, 0.9375vw, 12px); }
+    main { padding-block: clamp(36px, 7vw, 78px); padding-top: 4px; }
     .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
-    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 12px 0; }
+    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 0; }
     h2 { font-size: 20px; margin: 0 0 12px; }
     h3 { font-size: 16px; margin: 0; }
     p { color: var(--muted); margin: 0; }
-    .intro { margin-bottom: 36px; text-align: center; }
+    .intro { margin-bottom: 20px; text-align: center; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr)); gap: 14px; }
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
     .metric { display: block; margin: 10px 0 6px; font-size: 29px; font-weight: 700; }
@@ -38,7 +38,7 @@
     .overview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .summary-heading { display: flex; align-items: baseline; justify-content: center; gap: 12px; text-align: center; }
     .summary-heading a { color: var(--accent); text-decoration: none; }
-    .summary-heading h3 { font-size: 19px; }
+    .summary-heading h2 { margin: 0; font-size: 19px; }
     .summary-heading p { font-size: 12px; }
     .summary-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
     .summary-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; }
@@ -57,10 +57,17 @@
     .summary-item.info:hover { border-color: #4d83bb; }
     .workspace { margin-top: 34px; }
     .workspace .grid { grid-template-columns: 1fr; }
-    .workspace h3 { margin-bottom: 6px; }
-    .workspace h3 a { color: var(--accent); text-decoration: none; }
+    .workspace h2 { margin-bottom: 6px; font-size: 16px; }
+    .workspace-title { text-align: center; }
+    .workspace h2 a,
+    .workspace h2 a:visited { color: var(--accent); text-decoration: none; }
     .knowledge-search { width: 100%; margin: 24px 0 34px; }
-    .knowledge-search h2 { margin-bottom: 14px; }
+    .knowledge-search h2 { margin-bottom: 14px; text-align: center; }
+    .knowledge-search h2 a,
+    .knowledge-search h2 a:visited {
+      color: var(--accent);
+      text-decoration: none;
+    }
     .knowledge-search form { display: flex; gap: 10px; }
     .knowledge-search input { flex: 1; min-width: 0; min-height: 52px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; background: #ffffff; color: var(--text); font: inherit; }
     .knowledge-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -88,10 +95,10 @@
 <body>
   <header>
     <div class="bar">
-      <a class="brand" href="index.html" aria-label="OmniCommand home">
+      <div class="brand">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
-      </a>
-      <h1 class="header-title">IT Operations Center</h1>
+      </div>
+      <div class="header-title">IT Operations Center</div>
       <div class="header-tools">
         <div class="theme-menu">
           <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
@@ -107,7 +114,7 @@
             </button>
           </div>
         </div>
-        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
       </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
@@ -117,6 +124,10 @@
         <a href="alerts.html">Alerts</a>
         <a href="device_monitoring.html">Devices</a>
         <a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
       </div>
     </nav>
   </header>
@@ -128,7 +139,7 @@
       <div class="grid overview-grid">
         <article class="panel">
           <div class="summary-heading">
-            <h3><a href="tickets.html">Tickets</a></h3>
+            <h2><a href="tickets.html">Tickets</a></h2>
           </div>
           <div class="summary-list">
             <a class="summary-item new-ticket" href="tickets.html?status=New"><span>New</span><strong>2</strong></a>
@@ -138,7 +149,7 @@
         </article>
         <article class="panel">
           <div class="summary-heading">
-            <h3><a href="tasks.html">Tasks</a></h3>
+            <h2><a href="tasks.html">Tasks</a></h2>
           </div>
           <div class="summary-list">
             <a class="summary-item overdue" href="tasks.html?status=Overdue"><span>Overdue</span><strong>3</strong></a>
@@ -148,7 +159,7 @@
         </article>
         <article class="panel">
           <div class="summary-heading">
-            <h3><a href="alerts.html">Alerts</a></h3>
+            <h2><a href="alerts.html">Alerts</a></h2>
           </div>
           <div class="summary-list">
             <a class="summary-item critical" href="alerts.html?severity=Critical"><span>Critical</span><strong>2</strong></a>
@@ -158,7 +169,7 @@
         </article>
         <article class="panel">
           <div class="summary-heading">
-            <h3><a href="device_monitoring.html">Device monitoring</a></h3>
+            <h2><a href="device_monitoring.html">Device monitoring</a></h2>
           </div>
           <div class="summary-list">
             <a class="summary-item online" href="device_monitoring.html?status=Online"><span>Online</span><strong>5</strong></a>
@@ -176,7 +187,7 @@
     </section>
     <section class="workspace" aria-label="Workspace tools">
       <div class="grid">
-        <article class="panel"><h3><a href="process_plans.html">Process plans</a></h3><p>Start an onboarding checklist, assign steps, and track completion.</p></article>
+        <article class="panel"><h2 class="workspace-title"><a href="process_plans.html">Process Plans</a></h2><p>Choose an onboarding or account workflow, follow the source-based steps, and track progress.</p></article>
       </div>
     </section>
   </main>

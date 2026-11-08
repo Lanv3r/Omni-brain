@@ -8,7 +8,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -19,8 +19,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from backend.ai import suggest_ticket_tasks
 from backend.data_api import router as data_router
-from backend.database import initialize_database
+from backend.database import database_connection, initialize_database
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -51,6 +52,33 @@ knowledge_cache_lock = threading.Lock()
 CACHE_SECONDS = 300
 MAX_KB_FILES = 200
 MAX_CHUNK_CHARS = 4000
+PROCESS_PLAN_SOURCES = (
+    {
+        "id": "new-client-onboarding",
+        "title": "New client onboarding",
+        "path": "sops/01-new-client-onboarding.md",
+    },
+    {
+        "id": "new-client-onboarding-cpa",
+        "title": "CPA firm client onboarding",
+        "path": "process-plans/new-client-onboarding-cpa.md",
+    },
+    {
+        "id": "new-user-onboarding",
+        "title": "New user account setup",
+        "path": "sops/02-new-user-onboarding.md",
+    },
+    {
+        "id": "new-hire-workstation",
+        "title": "New-hire workstation setup",
+        "path": "process-plans/new-hire-workstation.md",
+    },
+    {
+        "id": "employee-offboarding",
+        "title": "Employee offboarding",
+        "path": "process-plans/employee-offboarding.md",
+    },
+)
 
 
 @app.on_event("startup")
@@ -60,6 +88,21 @@ def initialize_app_database() -> None:
 
 class KnowledgeQuestion(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
+
+
+class TicketTaskSuggestionRequest(BaseModel):
+    subject: str = Field(min_length=1, max_length=300)
+    description: str = Field(min_length=1, max_length=4000)
+
+
+class TaskSuggestion(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    description: str = Field(max_length=1000)
+    priority: Literal["Urgent", "High", "Medium", "Low"]
+
+
+class TaskSuggestionResponse(BaseModel):
+    suggestions: list[TaskSuggestion] = Field(max_items=3)
 
 
 def _request_bytes(url: str, headers: dict[str, str] | None = None) -> bytes:
@@ -83,6 +126,146 @@ def _practice_headers() -> dict[str, str]:
     if practice_api_key:
         return {"Authorization": f"Bearer {practice_api_key}"}
     return {}
+
+
+def _practice_json(path: str) -> Any:
+    response_bytes = _request_bytes(
+        f"{practice_api_base_url}{path}", _practice_headers()
+    )
+    try:
+        payload = json.loads(response_bytes)
+    except json.JSONDecodeError as error:
+        raise HTTPException(
+            status_code=502,
+            detail="Practice API returned invalid JSON.",
+        ) from error
+    meta = payload.get("meta") if isinstance(payload, dict) else None
+    if isinstance(meta, dict) and meta.get("status") == "failure":
+        raise HTTPException(
+            status_code=502,
+            detail=str(meta.get("message") or "Practice API request failed."),
+        )
+    return payload
+
+
+def _practice_response(payload: Any) -> Any:
+    if not isinstance(payload, dict) or "response" not in payload:
+        raise HTTPException(
+            status_code=502,
+            detail="Practice API returned an invalid response envelope.",
+        )
+    return payload["response"]
+
+
+def _practice_list(path: str) -> list[dict[str, Any]]:
+    response = _practice_response(_practice_json(path))
+    if not isinstance(response, list) or not all(
+        isinstance(item, dict) for item in response
+    ):
+        raise HTTPException(
+            status_code=502,
+            detail="Practice API returned an invalid list.",
+        )
+    return response
+
+
+def _practice_item(path: str) -> dict[str, Any]:
+    response = _practice_response(_practice_json(path))
+    if not isinstance(response, dict):
+        raise HTTPException(
+            status_code=502,
+            detail="Practice API returned an invalid record.",
+        )
+    return response
+
+
+def _map_practice_ticket(
+    issue: dict[str, Any], company: dict[str, Any], requester: str | None = None
+) -> dict[str, Any]:
+    statuses = {
+        "open": "New",
+        "inprogress": "In progress",
+        "resolved": "Resolved",
+        "closed": "Resolved",
+    }
+    priorities = {
+        "urgent": "Urgent",
+        "high": "High",
+        "normal": "Medium",
+        "low": "Low",
+    }
+    contact_id = issue.get("contact_id")
+    ticket = {
+        "id": f"ACC-{issue['id']}",
+        "external_id": str(issue["id"]),
+        "subject": str(issue.get("title") or "Untitled ticket"),
+        "description": str(issue.get("description") or ""),
+        "requester": requester or (
+            f"Contact #{contact_id}" if contact_id else "Unknown requester"
+        ),
+        "company": str(company["name"]),
+        "status": statuses.get(str(issue.get("status", "")).lower(), "New"),
+        "priority": priorities.get(str(issue.get("priority", "")).lower(), "Medium"),
+        "assignee": str(issue.get("assignee_name") or "Unassigned"),
+        "updated": str(issue.get("date_resolved") or issue.get("date_opened") or ""),
+        "industry": str(company.get("industry") or ""),
+        "core_plan": str(company.get("core_plan") or "Time and materials"),
+        "service_plans": company.get("service_plans") or [],
+        "external_company_id": int(company["id"]),
+        "contact_id": contact_id,
+        "ticket_class": str(issue.get("class") or ""),
+        "client": {
+            "id": int(company["id"]),
+            "name": str(company["name"]),
+            "industry": str(company.get("industry") or ""),
+            "core_plan": str(company.get("core_plan") or "Time and materials"),
+            "service_plans": company.get("service_plans") or [],
+            "employee_count": company.get("employee_count") or company.get("employees"),
+            "city": str(company.get("city") or ""),
+        },
+    }
+    _sync_practice_ticket(ticket)
+    return ticket
+
+
+def _sync_practice_ticket(ticket: dict[str, Any]) -> None:
+    with database_connection() as connection:
+        display_order = connection.execute(
+            "SELECT COALESCE(MAX(display_order), 0) + 1 FROM tickets"
+        ).fetchone()[0]
+        connection.execute(
+            """
+            INSERT INTO tickets
+                (id, subject, requester, company, status, priority, assignee,
+                 updated_at, display_order, description, external_company_id,
+                 industry, core_plan, service_plans, contact_id, ticket_class)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                subject = excluded.subject,
+                requester = excluded.requester,
+                company = excluded.company,
+                status = excluded.status,
+                priority = excluded.priority,
+                assignee = excluded.assignee,
+                updated_at = excluded.updated_at,
+                description = excluded.description,
+                external_company_id = excluded.external_company_id,
+                industry = excluded.industry,
+                core_plan = excluded.core_plan,
+                service_plans = excluded.service_plans,
+                contact_id = excluded.contact_id,
+                ticket_class = excluded.ticket_class
+            """,
+            (
+                ticket["id"], ticket["subject"], ticket["requester"], ticket["company"],
+                ticket["status"], ticket["priority"], ticket["assignee"],
+                ticket["updated"], display_order, ticket["description"],
+                ticket["external_company_id"], ticket["industry"], ticket["core_plan"],
+                json.dumps(ticket["service_plans"]), ticket["contact_id"],
+                ticket["ticket_class"],
+            ),
+        )
+        connection.commit()
 
 
 def _fetch_document(file: dict[str, Any]) -> dict[str, str]:
@@ -306,6 +489,65 @@ def _ask_openrouter(
     raise HTTPException(status_code=502, detail="OpenRouter returned an invalid answer.")
 
 
+@app.post(
+    "/api/v1/tickets/{ticket_id}/task-suggestions",
+    response_model=TaskSuggestionResponse,
+)
+def get_ticket_task_suggestions(
+    ticket_id: str, request: TicketTaskSuggestionRequest
+):
+    with database_connection() as connection:
+        ticket = connection.execute(
+            "SELECT id, company, status, priority FROM tickets WHERE id = ?",
+            (ticket_id,),
+        ).fetchone()
+        if ticket is None:
+            raise HTTPException(status_code=404, detail="Ticket not found.")
+        existing_tasks = [
+            row["title"]
+            for row in connection.execute(
+                "SELECT title FROM tasks WHERE ticket_id = ?", (ticket_id,)
+            )
+        ]
+
+    ticket_context = {
+        "id": ticket_id,
+        "subject": request.subject.strip(),
+        "description": request.description.strip(),
+        "company": ticket["company"],
+        "status": ticket["status"],
+        "priority": ticket["priority"],
+    }
+    raw_suggestions = suggest_ticket_tasks(ticket_context, existing_tasks)
+    try:
+        parsed = json.loads(raw_suggestions)
+        if not isinstance(parsed, dict) or not isinstance(
+            parsed.get("suggestions"), list
+        ):
+            raise ValueError("Suggestions must be returned as a list.")
+        validated = [
+            TaskSuggestion(**suggestion)
+            for suggestion in parsed["suggestions"]
+        ]
+    except (json.JSONDecodeError, TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=502,
+            detail="The AI returned task suggestions in an invalid format.",
+        ) from error
+
+    existing_titles = {title.strip().casefold() for title in existing_tasks}
+    suggestions = []
+    for suggestion in validated:
+        normalized_title = suggestion.title.strip().casefold()
+        if normalized_title in existing_titles:
+            continue
+        existing_titles.add(normalized_title)
+        suggestions.append(suggestion)
+        if len(suggestions) == 3:
+            break
+    return TaskSuggestionResponse(suggestions=suggestions)
+
+
 @app.get("/issues")
 def issues():
     try:
@@ -341,3 +583,69 @@ def ask_knowledge_base(request: KnowledgeQuestion):
         "answer": _ask_openrouter(question, chunks, sources),
         "sources": sources,
     }
+
+
+@app.get("/api/v1/practice/clients")
+def get_practice_clients():
+    return _practice_list("/api/v0/companies?_limit=100&_page=0")
+
+
+@app.get("/api/v1/practice/tickets")
+def get_practice_tickets():
+    companies = _practice_list("/api/v0/companies?_limit=100&_page=0")
+    company_by_id = {int(company["id"]): company for company in companies}
+    issues = _practice_list("/api/v0/issues?_limit=100&_page=0")
+    tickets = []
+    for issue in issues:
+        company = company_by_id.get(int(issue.get("against_id", -1)))
+        if company is None:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Ticket {issue.get('id')} refers to an unknown client.",
+            )
+        tickets.append(_map_practice_ticket(issue, company))
+    return {"tickets": tickets, "total": len(tickets)}
+
+
+@app.get("/api/v1/practice/tickets/{ticket_id}")
+def get_practice_ticket(ticket_id: str):
+    external_id = ticket_id.removeprefix("ACC-")
+    if not external_id.isdigit():
+        raise HTTPException(status_code=404, detail="Ticket not found.")
+
+    issue = _practice_item(f"/api/v0/issues/{external_id}")
+    company_id = int(issue.get("against_id", -1))
+    company = _practice_item(f"/api/v0/companies/{company_id}")
+    requester = None
+    contact_id = issue.get("contact_id")
+    if contact_id is not None:
+        contact = _practice_item(f"/api/v0/contacts/{contact_id}")
+        requester = str(contact.get("name") or "") or None
+
+    ticket = _map_practice_ticket(issue, company, requester)
+    profile_values = _practice_list(
+        f"/api/v0/companies/{company_id}/profiles/values"
+    )
+    profiles = {item.get("field_name"): item.get("value") for item in profile_values}
+    try:
+        employee_count = int(profiles["Employee"]) if profiles.get("Employee") else None
+    except (TypeError, ValueError):
+        employee_count = None
+    ticket["client"]["employee_count"] = employee_count
+    ticket["client"]["parent_company"] = profiles.get("Parent Company")
+    return ticket
+
+
+@app.get("/process-plans")
+def get_process_plans():
+    def load_plan(source: dict[str, str]) -> dict[str, str]:
+        document = _fetch_document({"path": source["path"], "title": source["title"]})
+        return {
+            "id": source["id"],
+            "title": source["title"],
+            "content": document["content"],
+        }
+
+    with ThreadPoolExecutor(max_workers=len(PROCESS_PLAN_SOURCES)) as executor:
+        plans = list(executor.map(load_plan, PROCESS_PLAN_SOURCES))
+    return {"plans": plans}

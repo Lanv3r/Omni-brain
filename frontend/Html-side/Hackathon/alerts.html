@@ -68,12 +68,12 @@
 
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
     .section-nav-inner { display: flex; overflow-x: auto; }
-    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
 
-    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+    main { padding-block: 12px 24px; }
 
     .eyebrow {
       margin: 0 0 8px;
@@ -126,6 +126,7 @@
 
     .queue-summary h2 { margin: 0; font-size: 18px; }
     .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+    .result-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
 
     .alert-panel {
       overflow: hidden;
@@ -185,6 +186,18 @@
     td { font-size: 13px; }
     tbody tr:last-child td { border-bottom: 0; }
     tbody tr:hover { background: #fff8eb; }
+    tbody tr.alert-row-critical td { background: #fff1f0; border-top: 1px solid #e5a5a1; border-bottom: 1px solid #e5a5a1; }
+    tbody tr.alert-row-critical td:first-child { border-left: 1px solid #e5a5a1; }
+    tbody tr.alert-row-critical td:last-child { border-right: 1px solid #e5a5a1; }
+    tbody tr.alert-row-warning td { background: #fff9e9; border-top: 1px solid #e2bd65; border-bottom: 1px solid #e2bd65; }
+    tbody tr.alert-row-warning td:first-child { border-left: 1px solid #e2bd65; }
+    tbody tr.alert-row-warning td:last-child { border-right: 1px solid #e2bd65; }
+    tbody tr[data-severity] { cursor: pointer; }
+    tbody tr[data-severity]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .alert-detail-row td { padding: 14px 16px; background: #fff1f0; border-top: 1px solid #e5a5a1; border-bottom: 1px solid #e5a5a1; color: var(--muted); white-space: normal; }
+    .alert-detail-row td:first-child { border-left: 1px solid #e5a5a1; }
+    .alert-detail-row td:last-child { border-right: 1px solid #e5a5a1; }
+    .alert-detail-row strong { display: block; margin-bottom: 4px; color: var(--text); }
 
     .alert-id { color: var(--accent); font-weight: 650; }
     .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
@@ -235,10 +248,10 @@
 <body>
   <header>
     <div class="bar shell">
-      <a class="brand" href="index.html" aria-label="OmniCommand home">
+      <div class="brand">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
         <span>OmniCommand</span>
-      </a>
+      </div>
       <div class="header-tools">
         <div class="theme-menu">
           <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
@@ -254,7 +267,7 @@
             </button>
           </div>
         </div>
-        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
       </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
@@ -264,6 +277,10 @@
         <a href="tasks.html">Tasks</a>
         <a href="device_monitoring.html">Devices</a>
         <a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
       </div>
     </nav>
   </header>
@@ -275,13 +292,11 @@
         <h1 id="page-title">Alerts</h1>
         <p class="description">Review active alerts by severity and affected device.</p>
       </div>
-      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
     </section>
 
-    <section aria-labelledby="alerts-title">
+    <section aria-label="Alert data">
       <div class="queue-summary">
-        <h2 id="alerts-title">Alert queue</h2>
-        <p class="result-count" id="result-count" aria-live="polite">Showing 6 example alerts</p>
+        <p class="result-count" id="result-count" aria-live="polite">Showing 6 alerts</p>
       </div>
       <div class="alert-panel">
         <form class="toolbar" role="search" onsubmit="return false">
@@ -313,7 +328,7 @@
               </tr>
             </thead>
             <tbody id="alert-rows">
-              <tr data-severity="Critical">
+              <tr class="alert-row-critical" data-id="DEMO-A203" data-severity="Critical">
                 <td><span class="alert-id">DEMO-A203</span><span class="secondary">Server not responding</span></td>
                 <td><span class="severity severity-critical">Critical</span></td>
                 <td>HQ-FILE-01</td>
@@ -321,7 +336,7 @@
                 <td><span class="alert-state">Active</span></td>
                 <td>4 min ago</td>
               </tr>
-              <tr data-severity="Critical">
+              <tr class="alert-row-critical" data-id="DEMO-A202" data-severity="Critical">
                 <td><span class="alert-id">DEMO-A202</span><span class="secondary">Backup job failed</span></td>
                 <td><span class="severity severity-critical">Critical</span></td>
                 <td>BACKUP-02</td>
@@ -329,7 +344,7 @@
                 <td><span class="alert-state">Active</span></td>
                 <td>12 min ago</td>
               </tr>
-              <tr data-severity="Warning">
+              <tr class="alert-row-warning" data-id="DEMO-A201" data-severity="Warning">
                 <td><span class="alert-id">DEMO-A201</span><span class="secondary">Disk space below 15%</span></td>
                 <td><span class="severity severity-warning">Warning</span></td>
                 <td>DESIGN-WS-14</td>
@@ -337,7 +352,7 @@
                 <td><span class="alert-state">Active</span></td>
                 <td>19 min ago</td>
               </tr>
-              <tr data-severity="Warning">
+              <tr class="alert-row-warning" data-id="DEMO-A200" data-severity="Warning">
                 <td><span class="alert-id">DEMO-A200</span><span class="secondary">Endpoint protection needs attention</span></td>
                 <td><span class="severity severity-warning">Warning</span></td>
                 <td>CEDAR-LT-08</td>
@@ -345,7 +360,7 @@
                 <td><span class="alert-state">Active</span></td>
                 <td>31 min ago</td>
               </tr>
-              <tr data-severity="Warning">
+              <tr class="alert-row-warning" data-id="DEMO-A199" data-severity="Warning">
                 <td><span class="alert-id">DEMO-A199</span><span class="secondary">Device has pending updates</span></td>
                 <td><span class="severity severity-warning">Warning</span></td>
                 <td>HARBOR-WS-03</td>
@@ -353,7 +368,7 @@
                 <td><span class="alert-state">Active</span></td>
                 <td>52 min ago</td>
               </tr>
-              <tr data-severity="Info">
+              <tr data-id="DEMO-A198" data-severity="Info">
                 <td><span class="alert-id">DEMO-A198</span><span class="secondary">Scheduled maintenance completed</span></td>
                 <td><span class="severity severity-info">Info</span></td>
                 <td>WILLOW-SQL-01</td>
@@ -383,6 +398,20 @@
     const requestedSeverity = new URLSearchParams(window.location.search).get("severity");
     const alertRows = [...alertRowsContainer.querySelectorAll("tr[data-severity]")];
 
+    for (const row of alertRows) {
+      row.tabIndex = 0;
+      row.setAttribute("aria-label", `View details for alert ${row.dataset.id}`);
+      const openDetails = () => {
+        window.location.href = `alert_detail.html?id=${encodeURIComponent(row.dataset.id)}`;
+      };
+      row.addEventListener("click", openDetails);
+      row.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        openDetails();
+      });
+    }
+
     if ([...severityFilter.options].some(option => option.value === requestedSeverity)) {
       severityFilter.value = requestedSeverity;
     }
@@ -401,7 +430,7 @@
       }
 
       emptyState.hidden = visibleCount > 0;
-      resultCount.textContent = `Showing ${visibleCount} of ${alertRows.length} example alerts`;
+      resultCount.textContent = `Showing ${visibleCount} of ${alertRows.length} alerts`;
     }
 
     filterAlerts();

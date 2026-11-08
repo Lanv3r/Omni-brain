@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Omnicommand IT Operations Workspace">
-  <title>OmniCommand | Operations Dashboard</title>
+  <title>Process Plans | OmniCommand</title>
   <style>
     :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
     * { box-sizing: border-box; }
@@ -18,7 +18,7 @@
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
     .section-nav-inner { display: flex; max-width: 1160px; margin: auto; overflow-x: auto; padding-inline: clamp(18px, 5vw, 56px); }
-    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
     .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
@@ -36,6 +36,46 @@
     .workspace { margin-top: 34px; }
     .workspace .grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); }
     .workspace h3 { margin-bottom: 6px; }
+    main { padding-block: clamp(36px, 6vw, 64px); }
+    .intro { margin-bottom: 28px; }
+    .plan-picker { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+    .plan-picker label { display: block; margin-bottom: 6px; font-weight: 650; }
+    .plan-picker select { width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit; }
+    button { min-height: 42px; padding: 9px 16px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #242424; font: inherit; font-weight: 700; cursor: pointer; }
+    button:hover { filter: brightness(.96); }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    button:disabled { cursor: not-allowed; opacity: .6; }
+    .status-message { margin-top: 12px; }
+    .wizard { display: grid; gap: 16px; margin-top: 22px; }
+    .wizard-heading { display: grid; gap: 10px; }
+    .wizard-heading h2 { margin: 0; }
+    .plan-progress { display: grid; grid-template-columns: minmax(120px, 1fr) auto; align-items: center; gap: 12px; }
+    .plan-progress progress { width: 100%; height: 12px; accent-color: var(--accent); }
+    .step-card { border: 1px solid var(--line); border-radius: 12px; padding: clamp(18px, 4vw, 28px); background: var(--panel); }
+    .step-phase { margin: 0 0 4px; color: #765000; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .step-count { margin-bottom: 14px; font-size: 14px; }
+    .step-card h3 { margin-bottom: 10px; font-size: 20px; line-height: 1.35; }
+    .step-check { margin-top: 12px; padding: 12px; border-left: 3px solid var(--accent); background: #fff8e9; }
+    .step-meta { margin-top: 12px; font-size: 14px; }
+    .complete-toggle { display: flex; align-items: flex-start; gap: 10px; margin-top: 22px; font-weight: 650; }
+    .complete-toggle input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent); }
+    .step-actions { display: flex; justify-content: space-between; gap: 12px; }
+    .step-actions button:first-child { background: var(--panel); color: var(--text); border-color: var(--line); }
+    .prep-list { margin: 10px 0 0; padding-left: 22px; color: var(--muted); }
+    .prep-list li + li { margin-top: 7px; }
+    .plan-notes summary { cursor: pointer; font-weight: 650; }
+    .plan-notes h3 { margin: 16px 0 6px; }
+    .plan-notes h3:first-child { margin-top: 14px; }
+    .plan-finished { padding: 12px; border-radius: 8px; background: #edf8ef; color: #245c35; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    html[data-theme="dark"] .step-phase { color: var(--accent); }
+    html[data-theme="dark"] .step-check { background: var(--panel-raised); }
+    html[data-theme="dark"] .plan-finished { background: rgb(95 185 125 / 12%); color: #99efba; }
+    @media (max-width: 560px) {
+      .plan-picker { grid-template-columns: 1fr; }
+      .plan-progress { grid-template-columns: 1fr; gap: 4px; }
+      .step-actions button { flex: 1; }
+    }
     @media (max-width: 520px) { .section-nav-inner { padding-inline: 16px; } }
   </style>
   <link rel="stylesheet" href="assets/theme.css">
@@ -44,9 +84,9 @@
 <body>
   <header>
     <div class="bar shell">
-      <a class="brand" href="index.html" aria-label="OmniCommand home">
+      <div class="brand">
         <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand
-      </a>
+      </div>
       <div class="header-tools">
         <div class="theme-menu">
           <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
@@ -62,7 +102,7 @@
             </button>
           </div>
         </div>
-        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-dark.png" alt="OmniTechPro">
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
       </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
@@ -73,8 +113,313 @@
         <a href="alerts.html">Alerts</a>
         <a href="device_monitoring.html">Devices</a>
         <a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
       </div>
     </nav>
   </header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">Guided workflows</p>
+      <h1 id="page-title">What do you need to do?</h1>
+      <p>Choose a process and work through its source-based steps one at a time.</p>
+    </section>
+
+    <section class="panel" aria-label="Choose a process">
+      <form class="plan-picker" id="plan-picker">
+        <div>
+          <label for="plan-select">I need to…</label>
+          <select id="plan-select" required disabled>
+            <option value="">Loading available processes…</option>
+          </select>
+        </div>
+        <button id="start-plan" type="submit" disabled>Start process</button>
+      </form>
+      <p class="status-message" id="load-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="wizard" id="wizard" aria-labelledby="plan-title" hidden>
+      <div class="panel wizard-heading">
+        <p class="eyebrow" id="plan-kicker">Process plan</p>
+        <h2 id="plan-title"></h2>
+        <p id="plan-purpose"></p>
+      </div>
+      <section class="panel" id="preparation" aria-labelledby="preparation-title" hidden>
+        <h3 id="preparation-title">Before you begin</h3>
+        <ul class="prep-list" id="preparation-list"></ul>
+      </section>
+      <div class="panel plan-progress">
+        <progress id="step-progress" max="1" value="0" aria-label="Process completion"></progress>
+        <span id="progress-label">0 of 0 steps complete</span>
+      </div>
+      <section class="step-card" aria-labelledby="step-title" aria-live="polite">
+        <p class="step-phase" id="step-phase"></p>
+        <p class="step-count" id="step-count"></p>
+        <h3 id="step-title"></h3>
+        <p class="step-check" id="step-check" hidden></p>
+        <p class="step-meta" id="step-meta"></p>
+        <label class="complete-toggle">
+          <input type="checkbox" id="step-complete">
+          <span>Mark this step complete</span>
+        </label>
+      </section>
+      <p class="plan-finished" id="plan-finished" role="status" hidden></p>
+      <div class="step-actions">
+        <button type="button" id="previous-step">Previous step</button>
+        <button type="button" id="next-step">Next step</button>
+      </div>
+      <details class="panel plan-notes" id="plan-notes" hidden>
+        <summary>Gotchas and escalation guidance</summary>
+        <div id="plan-notes-content"></div>
+      </details>
+      <p class="status-message">This guide tracks progress in this browser only. It does not make changes in the ticketing, account, or device systems. Follow required approvals and escalation guidance before making changes.</p>
+    </section>
+  </main>
+  <script>
+    const planPicker = document.getElementById("plan-picker");
+    const planSelect = document.getElementById("plan-select");
+    const startButton = document.getElementById("start-plan");
+    const loadStatus = document.getElementById("load-status");
+    const wizard = document.getElementById("wizard");
+    const stepProgress = document.getElementById("step-progress");
+    const progressLabel = document.getElementById("progress-label");
+    const stepComplete = document.getElementById("step-complete");
+    const previousButton = document.getElementById("previous-step");
+    const nextButton = document.getElementById("next-step");
+    const planFinished = document.getElementById("plan-finished");
+    let plansById = new Map();
+    let activePlan;
+    let currentStep = 0;
+    let completedSteps = [];
+
+    function sectionText(markdown, sectionName) {
+      const lines = markdown.split(/\r?\n/);
+      const start = lines.findIndex(line => new RegExp(`^##\\s+${sectionName}\\s*$`, "i").test(line.trim()));
+      if (start < 0) return [];
+      const content = [];
+      for (let index = start + 1; index < lines.length && !/^##\\s+/.test(lines[index]); index++) {
+        content.push(lines[index]);
+      }
+      return content;
+    }
+
+    function listItems(lines) {
+      return lines
+        .map(line => line.match(/^\s*-\s+(?:\[[ xX]\]\s*)?(.+?)\s*$/)?.[1])
+        .filter(Boolean);
+    }
+
+    function parsePlan(plan) {
+      const lines = plan.content.split(/\r?\n/);
+      const title = lines.find(line => /^#\s+/.test(line))?.replace(/^#\s+/, "").trim() || plan.title;
+      const metadata = key => lines
+        .find(line => new RegExp(`^${key}:`, "i").test(line.trim()))
+        ?.replace(new RegExp(`^${key}:\\s*`, "i"), "").trim() || "";
+      const steps = [];
+      let phase = "Steps";
+      let inNumberedSteps = false;
+
+      for (let index = 0; index < lines.length; index++) {
+        const line = lines[index];
+        const phaseMatch = line.match(/^##\s+(Phase\s+\d+.*)\s*$/i);
+        if (phaseMatch) {
+          phase = phaseMatch[1].trim();
+          inNumberedSteps = false;
+          continue;
+        }
+        if (/^##\s+Steps\s*$/i.test(line)) {
+          phase = "Steps";
+          inNumberedSteps = true;
+          continue;
+        }
+        if (/^##\s+/.test(line)) {
+          inNumberedSteps = false;
+          continue;
+        }
+
+        const checklistMatch = line.match(/^\s*-\s+\[[ xX]\]\s+(.+?)(?:\s+\|\s+([^|]+)\s+\|\s+(.+))?\s*$/);
+        if (checklistMatch) {
+          steps.push({
+            phase,
+            title: checklistMatch[1].trim(),
+            timing: checklistMatch[2]?.trim() || "",
+            owner: checklistMatch[3]?.trim() || "",
+            check: ""
+          });
+          continue;
+        }
+
+        const numberedMatch = inNumberedSteps && line.match(/^\s*\d+\.\s+(.+?)\s*$/);
+        if (numberedMatch) {
+          const checkLine = lines.slice(index + 1, index + 4)
+            .find(candidate => /^\s*Check:\s*/i.test(candidate));
+          steps.push({
+            phase: "Steps",
+            title: numberedMatch[1].trim(),
+            timing: "",
+            owner: "",
+            check: checkLine ? checkLine.replace(/^\s*Check:\s*/i, "").trim() : ""
+          });
+        }
+      }
+      return {
+        title,
+        owner: metadata("owner"),
+        duration: metadata("duration"),
+        purpose: sectionText(plan.content, "Purpose").join(" ").trim(),
+        preparation: listItems(sectionText(plan.content, "Before you start")),
+        gotchas: listItems(sectionText(plan.content, "Gotchas")),
+        escalation: listItems(sectionText(plan.content, "Escalate when")),
+        steps
+      };
+    }
+
+    function renderNotes(parsedPlan) {
+      const notes = document.getElementById("plan-notes-content");
+      notes.replaceChildren();
+      for (const [heading, items] of [["Gotchas", parsedPlan.gotchas], ["Escalate when", parsedPlan.escalation]]) {
+        if (!items.length) continue;
+        const title = document.createElement("h3");
+        title.textContent = heading;
+        const list = document.createElement("ul");
+        for (const text of items) {
+          const item = document.createElement("li");
+          item.textContent = text;
+          list.append(item);
+        }
+        notes.append(title, list);
+      }
+      const section = document.getElementById("plan-notes");
+      section.hidden = notes.childElementCount === 0;
+      section.open = false;
+    }
+
+    function saveProgress() {
+      try {
+        const progress = JSON.parse(localStorage.getItem("omnicommand-process-progress") || "{}");
+        progress[activePlan.id] = completedSteps;
+        localStorage.setItem("omnicommand-process-progress", JSON.stringify(progress));
+      } catch {
+        loadStatus.textContent = "Progress is available for this visit but could not be saved in this browser.";
+      }
+    }
+
+    function renderStep() {
+      const step = activePlan.steps[currentStep];
+      document.getElementById("step-phase").textContent = step.phase;
+      document.getElementById("step-count").textContent = `Step ${currentStep + 1} of ${activePlan.steps.length}`;
+      document.getElementById("step-title").textContent = step.title;
+      const check = document.getElementById("step-check");
+      check.textContent = step.check ? `Check: ${step.check}` : "";
+      check.hidden = !step.check;
+      const details = [step.timing, step.owner && `Owner: ${step.owner}`].filter(Boolean).join(" · ");
+      const meta = document.getElementById("step-meta");
+      meta.textContent = details;
+      meta.hidden = !details;
+      stepComplete.checked = completedSteps[currentStep];
+      const completedCount = completedSteps.filter(Boolean).length;
+      stepProgress.max = activePlan.steps.length;
+      stepProgress.value = completedCount;
+      progressLabel.textContent = `${completedCount} of ${activePlan.steps.length} steps complete`;
+      previousButton.disabled = currentStep === 0;
+      nextButton.textContent = currentStep === activePlan.steps.length - 1 ? "Finish process" : "Next step";
+      planFinished.hidden = true;
+    }
+
+    function startPlan(plan) {
+      activePlan = { ...plan, ...parsePlan(plan) };
+      if (!activePlan.steps.length) {
+        loadStatus.textContent = `The selected process "${plan.title}" does not contain any recognized steps.`;
+        wizard.hidden = true;
+        return;
+      }
+      currentStep = 0;
+      try {
+        const progress = JSON.parse(localStorage.getItem("omnicommand-process-progress") || "{}");
+        const saved = progress[plan.id];
+        completedSteps = Array.isArray(saved) && saved.length === activePlan.steps.length
+          ? saved.map(value => value === true)
+          : Array(activePlan.steps.length).fill(false);
+      } catch {
+        completedSteps = Array(activePlan.steps.length).fill(false);
+        loadStatus.textContent = "Saved progress could not be read; starting a fresh checklist.";
+      }
+
+      document.getElementById("plan-title").textContent = activePlan.title;
+      document.getElementById("plan-purpose").textContent = activePlan.purpose;
+      document.getElementById("plan-kicker").textContent = [
+        activePlan.duration,
+        activePlan.owner && `Plan owner: ${activePlan.owner}`
+      ].filter(Boolean).join(" · ") || "Guided process";
+      const preparation = document.getElementById("preparation");
+      const preparationList = document.getElementById("preparation-list");
+      preparationList.replaceChildren();
+      for (const text of activePlan.preparation) {
+        const item = document.createElement("li");
+        item.textContent = text;
+        preparationList.append(item);
+      }
+      preparation.hidden = activePlan.preparation.length === 0;
+      renderNotes(activePlan);
+      wizard.hidden = false;
+      renderStep();
+    }
+
+    async function loadPlans() {
+      loadStatus.textContent = "Loading process plans…";
+      try {
+        const response = await fetch("http://127.0.0.1:8000/process-plans");
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.detail || `The request failed (${response.status}).`);
+        }
+        if (!Array.isArray(result.plans) || result.plans.length === 0) {
+          throw new Error("No process plans are available from the knowledge base.");
+        }
+        plansById = new Map(result.plans.map(plan => [plan.id, plan]));
+        planSelect.replaceChildren(new Option("Choose a process…", ""));
+        for (const plan of result.plans) {
+          planSelect.add(new Option(plan.title, plan.id));
+        }
+        planSelect.disabled = false;
+        startButton.disabled = false;
+        loadStatus.textContent = "";
+      } catch (error) {
+        loadStatus.textContent = `Unable to load process plans: ${error.message}`;
+      }
+    }
+
+    planPicker.addEventListener("submit", event => {
+      event.preventDefault();
+      const plan = plansById.get(planSelect.value);
+      if (plan) startPlan(plan);
+    });
+    stepComplete.addEventListener("change", () => {
+      completedSteps[currentStep] = stepComplete.checked;
+      saveProgress();
+      renderStep();
+    });
+    previousButton.addEventListener("click", () => {
+      if (currentStep > 0) {
+        currentStep--;
+        renderStep();
+      }
+    });
+    nextButton.addEventListener("click", () => {
+      if (currentStep < activePlan.steps.length - 1) {
+        currentStep++;
+        renderStep();
+        return;
+      }
+      const completedCount = completedSteps.filter(Boolean).length;
+      planFinished.textContent = completedCount === activePlan.steps.length
+        ? "All steps are marked complete."
+        : `You reached the end with ${completedCount} of ${activePlan.steps.length} steps marked complete. Go back to review any unfinished steps.`;
+      planFinished.hidden = false;
+    });
+    loadPlans();
+  </script>
 </body>
 </html>

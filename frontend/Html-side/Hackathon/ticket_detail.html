@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Ticket details in OmniCommand">
+  <title>Ticket details | OmniCommand</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f6;
+      --panel: #ffffff;
+      --line: #dedede;
+      --text: #333333;
+      --muted: #666666;
+      --accent: #ffa500;
+    }
+
+    * { box-sizing: border-box; }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    a { color: inherit; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+    header { border-bottom: 1px solid var(--line); background: #ffffff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font-size: 19px; font-weight: 750; letter-spacing: -.04em; }
+    .mark { display: block; flex: 0 0 auto; }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: flex; overflow-x: auto; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    .section-nav a:hover { background: #fff3dc; color: var(--text); }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+    main { padding-block: clamp(32px, 6vw, 64px) 72px; }
+    .back-link { display: inline-block; margin-bottom: 22px; color: #765000; font-weight: 650; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .eyebrow { margin: 0 0 8px; color: #765000; font-size: 11px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(30px, 5vw, 46px); line-height: 1.1; letter-spacing: -.05em; }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    .page-heading { margin-bottom: 28px; }
+    .ticket-id { margin: 0 0 8px; color: #765000; font-size: 14px; font-weight: 700; }
+    .description { margin: 10px 0 0; color: var(--muted); }
+    .ticket-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); gap: 16px; align-items: start; }
+    .panel { padding: clamp(18px, 3vw, 26px); border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .request-description { margin: 0; color: var(--muted); white-space: pre-wrap; }
+    .ticket-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; margin: 0; }
+    .ticket-facts div { min-width: 0; }
+    .ticket-facts dt { margin-bottom: 4px; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .ticket-facts dd { margin: 0; font-weight: 650; overflow-wrap: anywhere; }
+    .ticket-tasks { grid-column: 1 / -1; }
+    .client-context { grid-column: 1 / -1; }
+    .client-plans { grid-column: 1 / -1; }
+    .related-tasks { display: grid; gap: 10px; margin: 0 0 20px; padding: 0; list-style: none; }
+    .related-task { padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+    .related-task strong { display: block; }
+    .related-task p, .workflow-status { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .related-task .priority { margin-left: 6px; }
+    .task-create { border-top: 1px solid var(--line); padding-top: 16px; }
+    .task-create summary { color: #765000; cursor: pointer; font-weight: 700; }
+    .task-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+    .task-field { display: grid; gap: 6px; }
+    .task-field-wide { grid-column: 1 / -1; }
+    .task-form label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    .task-form input, .task-form select, .task-form textarea { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; color: var(--text); font: inherit; }
+    .task-form textarea { min-height: 84px; resize: vertical; }
+    .task-form button { justify-self: start; padding: 10px 18px; border: 0; border-radius: 8px; background: var(--accent); color: #242424; cursor: pointer; font: inherit; font-weight: 700; }
+    .task-form button:disabled { cursor: wait; opacity: .65; }
+    .status, .priority { display: inline-flex; align-items: center; padding: 4px 10px; border: 1px solid currentColor; border-radius: 999px; font-size: 12px; }
+    .status-new { background: #eff8f2; color: #24633d; }
+    .status-progress { background: #eff6fd; color: #245b8e; }
+    .status-resolved { background: #eff8f2; color: #24633d; }
+    .not-found { padding: 20px; border: 1px solid #e5a5a1; border-radius: 12px; background: #fff1f0; color: #a32922; }
+    @media (max-width: 700px) {
+      .ticket-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .bar { gap: 10px; }
+      .brand { gap: 7px; font-size: 16px; }
+      .mark img, .partner-brand { height: 40px; }
+      .ticket-facts { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <div class="brand">
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>
+        <span>OmniCommand</span>
+      </div>
+      <div class="header-tools">
+        <div class="theme-menu">
+          <button class="theme-toggle" type="button" aria-label="Choose color theme" aria-haspopup="menu" aria-expanded="false">
+            <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+            <svg class="theme-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg>
+          </button>
+          <div class="theme-options" role="menu" hidden>
+            <button class="theme-option" type="button" role="menuitem" data-theme-option="dark">
+              <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+              <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path></svg>
+              <span>Dark mode</span>
+            </button>
+          </div>
+        </div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
+      </div>
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="index.html">Command Center</a>
+        <a href="tickets.html" aria-current="page">Tickets</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="device_monitoring.html">Devices</a>
+        <a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell">
+    <a class="back-link" href="tickets.html">← Back to tickets</a>
+    <section class="page-heading" aria-labelledby="ticket-subject">
+      <div>
+        <p class="ticket-id" id="ticket-id"></p>
+        <h1 id="ticket-subject">Ticket details</h1>
+        <p class="description" id="ticket-company"></p>
+      </div>
+    </section>
+    <div class="ticket-layout" id="ticket-content" hidden>
+      <section class="panel" aria-labelledby="request-title">
+        <h2 id="request-title">Request details</h2>
+        <p class="request-description" id="ticket-description"></p>
+      </section>
+      <section class="panel" aria-labelledby="information-title">
+        <h2 id="information-title">Ticket information</h2>
+        <dl class="ticket-facts">
+          <div><dt>Requester</dt><dd id="ticket-requester"></dd></div>
+          <div><dt>Status</dt><dd id="ticket-status"></dd></div>
+          <div><dt>Priority</dt><dd id="ticket-priority"></dd></div>
+          <div><dt>Assignee</dt><dd id="ticket-assignee"></dd></div>
+          <div><dt>Last updated</dt><dd id="ticket-updated"></dd></div>
+        </dl>
+      </section>
+      <section class="panel client-context" id="client-context" aria-labelledby="client-context-title" hidden>
+        <h2 id="client-context-title">Client profile</h2>
+        <dl class="ticket-facts">
+          <div><dt>Industry</dt><dd id="client-industry"></dd></div>
+          <div><dt>Core service plan</dt><dd id="client-core-plan"></dd></div>
+          <div><dt>Employees</dt><dd id="client-employees"></dd></div>
+          <div><dt>Location</dt><dd id="client-city"></dd></div>
+          <div><dt>Parent company</dt><dd id="client-parent"></dd></div>
+          <div class="client-plans"><dt>Additional service plans</dt><dd id="client-service-plans"></dd></div>
+        </dl>
+      </section>
+      <section class="panel ticket-tasks" aria-labelledby="related-tasks-title">
+        <h2 id="related-tasks-title">Tasks for this ticket</h2>
+        <p class="workflow-status" id="task-list-status" role="status" aria-live="polite">Loading linked tasks…</p>
+        <ul class="related-tasks" id="related-tasks"></ul>
+        <details class="task-create">
+          <summary>Create Task</summary>
+          <form class="task-form" id="task-form">
+            <div class="task-field task-field-wide">
+              <button type="button" id="suggest-tasks-button">Suggest tasks with AI</button>
+              <p>When requested, this ticket's subject and description are sent to OpenRouter using the configured Gemini model. Review suggestions before use; they are not saved automatically.</p>
+              <p class="workflow-status" id="suggestion-status" role="status" aria-live="polite"></p>
+              <ul class="related-tasks" id="task-suggestions"></ul>
+            </div>
+            <div class="task-field task-field-wide">
+              <label for="task-title">Task title</label>
+              <input id="task-title" name="title" maxlength="160" required placeholder="For example: Create a new account">
+            </div>
+            <div class="task-field">
+              <label for="task-creator">Creating as</label>
+              <select id="task-creator" name="creator">
+                <option value="Morgan Chen" selected>Morgan Chen</option>
+                <option value="Taylor Brooks">Taylor Brooks</option>
+                <option value="Jamie Park">Jamie Park</option>
+                <option value="Alex Morgan">Alex Morgan</option>
+                <option value="Sam Rivera">Sam Rivera</option>
+              </select>
+            </div>
+            <div class="task-field">
+              <label for="task-assignee">Assignee</label>
+              <select id="task-assignee" name="assignee">
+                <option value="Unassigned">Unassigned</option>
+                <option value="Morgan Chen" selected>Morgan Chen</option>
+                <option value="Taylor Brooks">Taylor Brooks</option>
+                <option value="Jamie Park">Jamie Park</option>
+                <option value="Alex Morgan">Alex Morgan</option>
+                <option value="Sam Rivera">Sam Rivera</option>
+              </select>
+            </div>
+            <div class="task-field">
+              <label for="task-priority">Priority</label>
+              <select id="task-priority" name="priority">
+                <option value="Urgent">Urgent</option>
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div class="task-field">
+              <label for="task-due-date">Due date</label>
+              <input id="task-due-date" name="due_date" type="date" required>
+            </div>
+            <div class="task-field task-field-wide">
+              <label for="task-description">Details</label>
+              <textarea id="task-description" name="description" maxlength="4000" placeholder="Add steps or information needed to complete the task"></textarea>
+            </div>
+            <button type="submit" id="create-task-button">Create task</button>
+            <p class="workflow-status task-field-wide" id="task-form-status" role="status" aria-live="polite"></p>
+          </form>
+        </details>
+      </section>
+    </div>
+    <p class="not-found" id="not-found" role="status" hidden></p>
+  </main>
+  <script>
+    const tickets = {
+      "DEMO-1048": {
+        subject: "New starter can't access email",
+        requester: "Jordan Lee",
+        company: "Brightside Studio",
+        status: "New",
+        priority: "High",
+        assignee: "Morgan Chen",
+        updated: "18 min ago",
+        description: "A new employee is unable to sign in to their company email account. The requester says the account was set up for their first day, but the sign-in attempt is being rejected. Please verify account access and help the employee get connected."
+      },
+      "DEMO-1047": {
+        subject: "VPN disconnects during calls",
+        requester: "Sam Rivera",
+        company: "Harbor & Pine",
+        status: "In progress",
+        priority: "Medium",
+        assignee: "Taylor Brooks",
+        updated: "46 min ago",
+        description: "The VPN connection drops intermittently while the requester is on video calls. The issue has interrupted several meetings. Please investigate connection stability and check whether the disconnects are limited to the call sessions."
+      },
+      "DEMO-1046": {
+        subject: "Request for a shared project folder",
+        requester: "Casey Patel",
+        company: "Cedar Works",
+        status: "Resolved",
+        priority: "Low",
+        assignee: "Unassigned",
+        updated: "2 hr ago",
+        description: "The requester needed a shared folder for project files so the team could access the same documents. This request is marked resolved."
+      },
+      "DEMO-1045": {
+        subject: "Laptop running out of disk space",
+        requester: "Alex Morgan",
+        company: "Northstar Design",
+        status: "New",
+        priority: "Medium",
+        assignee: "Jamie Park",
+        updated: "3 hr ago",
+        description: "A laptop is reporting low available disk space. The requester needs help identifying what is using storage and recovering enough space for normal work."
+      },
+      "DEMO-1044": {
+        subject: "Unable to print from finance workstation",
+        requester: "Riley Thompson",
+        company: "Willow Accounting",
+        status: "In progress",
+        priority: "Urgent",
+        assignee: "Morgan Chen",
+        updated: "Yesterday",
+        description: "The finance workstation cannot print. The problem is blocking the team's normal finance workflow and needs urgent investigation."
+      }
+    };
+
+    const ticketId = new URLSearchParams(window.location.search).get("id");
+    let ticket = ticketId ? tickets[ticketId] : null;
+    const content = document.getElementById("ticket-content");
+    const taskForm = document.getElementById("task-form");
+    const taskTitle = document.getElementById("task-title");
+    const taskDescription = document.getElementById("task-description");
+    const taskCreator = document.getElementById("task-creator");
+    const taskAssignee = document.getElementById("task-assignee");
+    const taskPriority = document.getElementById("task-priority");
+    const taskDueDate = document.getElementById("task-due-date");
+    const createTaskButton = document.getElementById("create-task-button");
+    const taskFormStatus = document.getElementById("task-form-status");
+    const suggestTasksButton = document.getElementById("suggest-tasks-button");
+    const suggestionStatus = document.getElementById("suggestion-status");
+    const taskSuggestions = document.getElementById("task-suggestions");
+    const relatedTasks = document.getElementById("related-tasks");
+    const taskListStatus = document.getElementById("task-list-status");
+    let relatedTaskRecords = [];
+    let assigneeManuallyChanged = false;
+
+    function setDefaultDueDate() {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 2);
+      const localDate = new Date(
+        dueDate.getTime() - dueDate.getTimezoneOffset() * 60_000
+      ).toISOString().slice(0, 10);
+      taskDueDate.value = localDate;
+    }
+
+    setDefaultDueDate();
+    taskAssignee.addEventListener("change", () => {
+      assigneeManuallyChanged = taskAssignee.value !== taskCreator.value;
+    });
+    taskCreator.addEventListener("change", () => {
+      if (!assigneeManuallyChanged) {
+        taskAssignee.value = taskCreator.value;
+      }
+    });
+
+    function renderRelatedTasks(tasks) {
+      relatedTaskRecords = tasks;
+      relatedTasks.replaceChildren();
+      for (const task of tasks) {
+        const item = document.createElement("li");
+        item.className = "related-task";
+        const title = document.createElement("strong");
+        title.textContent = task.title;
+        const metadata = document.createElement("p");
+        metadata.textContent = `${task.id} · ${task.status} · Due ${task.due_date} · ${task.assignee}`;
+        const priority = document.createElement("span");
+        priority.className = `priority priority-${task.priority.toLowerCase()}`;
+        priority.textContent = task.priority;
+        metadata.append(" · ", priority);
+        item.append(title, metadata);
+        if (task.description) {
+          const description = document.createElement("p");
+          description.textContent = task.description;
+          item.append(description);
+        }
+        relatedTasks.append(item);
+      }
+      taskListStatus.textContent = tasks.length
+        ? `${tasks.length} linked ${tasks.length === 1 ? "task" : "tasks"}.`
+        : "No tasks have been started for this ticket yet.";
+    }
+
+    async function loadRelatedTasks() {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/v1/tickets/${encodeURIComponent(ticketId)}/tasks`
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.detail || `The request failed (${response.status}).`);
+      }
+      renderRelatedTasks(result);
+    }
+
+    function renderTicket(ticket) {
+      document.title = `${ticketId} | OmniCommand`;
+      document.getElementById("ticket-id").textContent = ticketId;
+      document.getElementById("ticket-subject").textContent = ticket.subject;
+      document.getElementById("ticket-company").textContent = ticket.company;
+      document.getElementById("ticket-description").textContent = ticket.description;
+      document.getElementById("ticket-requester").textContent = ticket.requester;
+      document.getElementById("ticket-assignee").textContent = ticket.assignee;
+      document.getElementById("ticket-updated").textContent = ticket.updated;
+
+      const statusClasses = {
+        New: "status-new",
+        "In progress": "status-progress",
+        Resolved: "status-resolved"
+      };
+      const status = document.createElement("span");
+      status.className = `status ${statusClasses[ticket.status]}`;
+      status.textContent = ticket.status;
+      document.getElementById("ticket-status").append(status);
+
+      const priority = document.createElement("span");
+      priority.className = `priority priority-${ticket.priority.toLowerCase()}`;
+      priority.textContent = ticket.priority;
+      document.getElementById("ticket-priority").append(priority);
+      if (ticket.client) {
+        const client = ticket.client;
+        const values = {
+          "client-industry": client.industry || "Not recorded",
+          "client-core-plan": client.core_plan || "Time and materials",
+          "client-employees": client.employee_count ?? "Not recorded",
+          "client-city": client.city || "Not recorded",
+          "client-parent": client.parent_company || "None listed",
+          "client-service-plans": Array.isArray(client.service_plans) && client.service_plans.length
+            ? client.service_plans.join(", ")
+            : "No additional plans listed"
+        };
+        for (const [id, value] of Object.entries(values)) {
+          document.getElementById(id).textContent = value;
+        }
+        document.getElementById("client-context").hidden = false;
+      }
+      content.hidden = false;
+      loadRelatedTasks().catch(error => {
+        taskListStatus.textContent = `Unable to load linked tasks: ${error.message}`;
+      });
+
+      suggestTasksButton.addEventListener("click", async () => {
+        suggestTasksButton.disabled = true;
+        suggestionStatus.textContent = "Generating suggestions…";
+        taskSuggestions.replaceChildren();
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/api/v1/tickets/${encodeURIComponent(ticketId)}/task-suggestions`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                subject: ticket.subject,
+                description: ticket.description
+              })
+            }
+          );
+          const result = await response.json();
+          if (!response.ok) {
+            const detail = Array.isArray(result.detail)
+              ? result.detail.map(error => error.msg).join(" ")
+              : result.detail;
+            throw new Error(detail || `The request failed (${response.status}).`);
+          }
+          if (!Array.isArray(result.suggestions) || result.suggestions.length === 0) {
+            suggestionStatus.textContent = "No task suggestions were returned.";
+            return;
+          }
+          for (const suggestion of result.suggestions) {
+            const item = document.createElement("li");
+            const useButton = document.createElement("button");
+            useButton.type = "button";
+            useButton.textContent = `Use: ${suggestion.title} (${suggestion.priority})`;
+            useButton.addEventListener("click", () => {
+              taskTitle.value = suggestion.title;
+              taskDescription.value = suggestion.description;
+              taskPriority.value = suggestion.priority;
+              taskFormStatus.textContent = "Suggestion added to the form. Review it, then create the task.";
+              taskTitle.focus();
+            });
+            item.append(useButton);
+            taskSuggestions.append(item);
+          }
+          suggestionStatus.textContent = "Choose a suggestion to review it in the form.";
+        } catch (error) {
+          suggestionStatus.textContent = `Unable to suggest tasks: ${error.message}`;
+        } finally {
+          suggestTasksButton.disabled = false;
+        }
+      });
+
+      taskForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (!taskForm.reportValidity()) return;
+
+        createTaskButton.disabled = true;
+        taskFormStatus.textContent = "Creating task…";
+        const formData = new FormData(taskForm);
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/api/v1/tickets/${encodeURIComponent(ticketId)}/tasks`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: formData.get("title"),
+                description: formData.get("description"),
+                assignee: formData.get("assignee"),
+                priority: formData.get("priority"),
+                due_date: formData.get("due_date")
+              })
+            }
+          );
+          const result = await response.json();
+          if (!response.ok) {
+            const detail = Array.isArray(result.detail)
+              ? result.detail.map(error => error.msg).join(" ")
+              : result.detail;
+            throw new Error(detail || `The request failed (${response.status}).`);
+          }
+          renderRelatedTasks([...relatedTaskRecords, result]);
+          const creator = taskCreator.value;
+          taskForm.reset();
+          taskCreator.value = creator;
+          taskAssignee.value = creator;
+          setDefaultDueDate();
+          assigneeManuallyChanged = false;
+          taskFormStatus.textContent = `Created ${result.id}; it is available in the Tasks section.`;
+        } catch (error) {
+          taskFormStatus.textContent = `Unable to create task: ${error.message}`;
+        } finally {
+          createTaskButton.disabled = false;
+        }
+      });
+    }
+
+    async function initializeTicket() {
+      if (!ticket && ticketId?.startsWith("ACC-")) {
+        document.getElementById("ticket-subject").textContent = "Loading ticket…";
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8000/api/v1/practice/tickets/${encodeURIComponent(ticketId)}`
+          );
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.detail || `The request failed (${response.status}).`);
+          }
+          ticket = result;
+        } catch (error) {
+          document.getElementById("ticket-subject").textContent = "Unable to load ticket";
+          document.getElementById("not-found").textContent =
+            `The connected ticket could not be loaded: ${error.message}`;
+          document.getElementById("not-found").hidden = false;
+          return;
+        }
+      }
+
+      if (!ticket) {
+        document.getElementById("ticket-subject").textContent = "Ticket not found";
+        document.getElementById("not-found").textContent = ticketId
+          ? `No ticket was found with ID ${ticketId}. Return to the ticket queue and choose a ticket.`
+          : "No ticket was selected. Return to the ticket queue and choose a ticket.";
+        document.getElementById("not-found").hidden = false;
+        return;
+      }
+      renderTicket(ticket);
+    }
+
+    initializeTicket();
+  </script>
+</body>
+</html>

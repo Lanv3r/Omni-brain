@@ -54,6 +54,108 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const menus = document.querySelectorAll(".theme-menu");
+    const sortOrders = {
+      severity: { critical: 0, warning: 1, info: 2 },
+      priority: { urgent: 0, high: 1, medium: 2, low: 3 },
+      status: { overdue: 0, urgent: 0, "in progress": 1, pending: 2, new: 2, open: 2, resolved: 3, offline: 0, online: 1 },
+    };
+
+    for (const table of document.querySelectorAll(".table-scroll table")) {
+      const headers = [...table.querySelectorAll("thead th")];
+      const body = table.querySelector("tbody");
+      if (!body) continue;
+
+      headers.forEach((header, columnIndex) => {
+        const label = header.textContent.trim();
+        const button = document.createElement("button");
+        button.className = "sortable-header";
+        button.type = "button";
+        button.textContent = label;
+        button.dataset.sortKey = label.toLocaleLowerCase();
+        button.setAttribute("aria-label", `Sort by ${label}`);
+        header.replaceChildren(button);
+
+        button.addEventListener("click", () => {
+          const currentDirection = button.getAttribute("aria-sort");
+          const direction = currentDirection === "ascending" ? "descending" : "ascending";
+          for (const otherButton of headers.map(item => item.firstElementChild)) {
+            if (otherButton !== button) otherButton.removeAttribute("aria-sort");
+          }
+          button.setAttribute("aria-sort", direction);
+
+          const rows = [...body.querySelectorAll("tr")].filter(row => row.id !== "empty-state");
+          rows.sort((left, right) => {
+            const leftValue = left.cells[columnIndex]?.textContent.trim().toLocaleLowerCase() || "";
+            const rightValue = right.cells[columnIndex]?.textContent.trim().toLocaleLowerCase() || "";
+            const sortOrder = sortOrders[button.dataset.sortKey];
+            const comparison = sortOrder
+              ? (sortOrder[leftValue] ?? Number.MAX_SAFE_INTEGER) - (sortOrder[rightValue] ?? Number.MAX_SAFE_INTEGER)
+              : leftValue.localeCompare(rightValue, undefined, { numeric: true, sensitivity: "base" });
+            return direction === "ascending" ? comparison : -comparison;
+          });
+          rows.forEach(row => body.append(row));
+        });
+      });
+    }
+
+    for (const notification of document.querySelectorAll(".notification-link")) {
+      const popup = document.createElement("div");
+      popup.className = "notification-popup";
+      popup.hidden = true;
+      popup.setAttribute("role", "dialog");
+      popup.innerHTML = `
+        <strong>Unread notifications</strong>
+        <ul>
+          <li><a href="alerts.html?severity=Critical">2 critical alerts need attention.</a></li>
+          <li><a href="alerts.html?severity=Warning">1 device is offline.</a></li>
+        </ul>
+        <a href="alerts.html">View all alerts</a>
+      `;
+      notification.append(popup);
+      notification.setAttribute("aria-expanded", "false");
+
+      function positionPopup() {
+        const bounds = notification.getBoundingClientRect();
+        popup.style.top = `${bounds.bottom + 8}px`;
+        popup.style.left = `${Math.max(8, bounds.right - 250)}px`;
+      }
+
+      notification.addEventListener("click", event => {
+        if (event.target.closest(".notification-popup")) return;
+        event.preventDefault();
+        const isOpen = !popup.hidden;
+        if (!isOpen) positionPopup();
+        popup.hidden = isOpen;
+        notification.setAttribute("aria-expanded", String(!isOpen));
+      });
+
+      notification.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        notification.click();
+      });
+    }
+
+    document.addEventListener("pointerdown", event => {
+      for (const notification of document.querySelectorAll(".notification-link")) {
+        if (notification.contains(event.target)) continue;
+        const popup = notification.querySelector(".notification-popup");
+        if (!popup) continue;
+        popup.hidden = true;
+        notification.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      for (const notification of document.querySelectorAll(".notification-link")) {
+        const popup = notification.querySelector(".notification-popup");
+        if (popup && !popup.hidden) {
+          const bounds = notification.getBoundingClientRect();
+          popup.style.top = `${bounds.bottom + 8}px`;
+          popup.style.left = `${Math.max(8, bounds.right - 250)}px`;
+        }
+      }
+    });
 
     function closeMenu(menu, returnFocus = false) {
       const toggle = menu.querySelector(".theme-toggle");

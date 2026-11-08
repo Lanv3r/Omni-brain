@@ -35,19 +35,39 @@
 5. Open <http://127.0.0.1:3000/Html-side/Hackathon/index.html> and choose
    **Knowledge Base**. Questions are answered using relevant Markdown documents
    from the practice API, with source paths shown below each answer.
+The Command Center's **Process plans** card opens guided checklists for
+general and CPA-firm client onboarding, new-user account setup, workstation
+setup, and employee offboarding. Their steps load from the practice API's
+Markdown guides; progress is saved in the current browser and does not
+change external systems.
+The ticket queue loads the latest 100 practice tickets and joins each ticket
+to its client record. Ticket details show client industry, plans, location,
+employee count, parent company, and requester. Connected tickets are synced
+into local SQLite when fetched so they can use the existing linked-task flow.
 
-   The backend also exposes read-only JSON endpoints for the dashboard data:
+   The backend exposes JSON endpoints for dashboard data:
 
    - `GET /api/v1/tickets`
    - `GET /api/v1/tasks`
+   - `GET /api/v1/tickets/{ticket_id}/tasks`
+   - `POST /api/v1/tickets/{ticket_id}/tasks` (creates a linked task)
    - `GET /api/v1/alerts`
    - `GET /api/v1/devices`
    - `GET /api/v1/summary`
    - `GET /api/v1/health`
+   - `GET /api/v1/practice/clients`
+   - `GET /api/v1/practice/tickets`
+   - `GET /api/v1/practice/tickets/{ticket_id}`
+   - `GET /process-plans`
 
-   These endpoints read from SQLite. The dashboard pages still display their
-   existing example rows; connecting the UI to these endpoints can be done as a
-   separate step.
+   Ticket detail pages can create tasks linked to their ticket. Linked tasks
+   appear in the ticket details and in the Tasks queue. This workflow requires
+   the backend to be running and the example database to have been seeded.
+   The ticket task form can also request up to three Gemini task suggestions.
+   The ticket subject and description are sent to OpenRouter only when the
+   user clicks **Suggest tasks with AI**; suggestions must be reviewed and
+   explicitly added to the form before a task is created.
+   - `POST /api/v1/tickets/{ticket_id}/task-suggestions`
 
 The root `.env` is ignored by Git. Never put API keys in frontend files or commit
 the `.env` file.
