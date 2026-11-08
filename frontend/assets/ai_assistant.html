@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="AI Assistant chat workspace in OmniCommand">
   <title>AI Assistant | OmniCommand</title>
+  <link rel="icon" type="image/png" href="assets/omnitechpro-fireball-transparent.png">
   <style>
     :root { color-scheme: light; --bg: #f6f6f6; --panel: #fff; --line: #dedede; --text: #333; --muted: #666; --accent: #ffa500; }
     * { box-sizing: border-box; }
@@ -93,6 +94,17 @@
     const chatInput = document.getElementById("chat-input");
     const chatMessages = document.querySelector(".chat-messages");
     const sendButton = chatForm.querySelector("button");
+    const chatStorageKey = "omni-ai-chat-v1";
+    const maxSavedMessages = 12;
+    let chatHistory = [];
+
+    function rememberMessage(entry) {
+      chatHistory.push(entry);
+      chatHistory = chatHistory.slice(-maxSavedMessages);
+      try {
+        sessionStorage.setItem(chatStorageKey, JSON.stringify(chatHistory));
+      } catch { /* Chat still works when browser storage is unavailable. */ }
+    }
 
     function addMessage(text, kind) {
       chatMessages.querySelector(".chat-empty")?.remove();
@@ -151,6 +163,46 @@
       if (tail.trim()) appendAnswer(message, tail);
     }
 
+    function renderAssistant(message, result) {
+      const answer = result.answer;
+      appendAnswer(message, answer);
+      const citedSources = (result.sources || []).filter(source => answer.includes(source.citation));
+      if (citedSources.length) {
+        appendParagraphs(message, "Sources:\n" + citedSources
+          .map(source => `${source.citation} ${source.document_title} (section ${source.chunk_index + 1})`)
+          .join("\n"));
+      }
+      if (result.process_plan) {
+        const action = document.createElement("button");
+        action.className = "plan-action";
+        action.type = "button";
+        action.textContent = "Create a process plan";
+        action.addEventListener("click", () => {
+          try {
+            sessionStorage.setItem("omni-ai-process-plan-draft", JSON.stringify(result.process_plan));
+            window.location.href = "process_plans.html?ai_draft=1";
+          } catch {
+            appendParagraphs(message, "Could not open the plan draft in this browser.");
+          }
+        });
+        message.append(action);
+      }
+    }
+
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(chatStorageKey) || "[]");
+      if (Array.isArray(saved)) {
+        chatHistory = saved.slice(-maxSavedMessages).filter(entry =>
+          ((entry?.kind === "user" || entry?.kind === "error") && typeof entry.text === "string")
+          || (entry?.kind === "assistant" && typeof entry.result?.answer === "string")
+        );
+        for (const entry of chatHistory) {
+          if (entry.kind === "assistant") renderAssistant(addMessage("", "assistant"), entry.result);
+          else addMessage(entry.text, entry.kind === "error" ? "assistant error" : "user");
+        }
+      }
+    } catch { /* Start with an empty chat if saved data is unavailable. */ }
+
     chatForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const question = chatInput.value.trim();
@@ -160,6 +212,7 @@
         return;
       }
       addMessage(question, "user");
+      rememberMessage({ kind: "user", text: question });
       chatInput.value = "";
       chatInput.disabled = true;
       sendButton.disabled = true;
@@ -173,31 +226,16 @@
         if (!response.ok) throw new Error("The AI service could not answer. Please try again.");
         const result = await response.json();
         pending.replaceChildren();
-        appendAnswer(pending, result.answer);
-        const citedSources = (result.sources || []).filter(source => result.answer.includes(source.citation));
-        if (citedSources.length) {
-          appendParagraphs(pending, "Sources:\n" + citedSources
-            .map(source => `${source.citation} ${source.document_title} (section ${source.chunk_index + 1})`)
-            .join("\n"));
-        }
-        if (result.process_plan) {
-          const action = document.createElement("button");
-          action.className = "plan-action";
-          action.type = "button";
-          action.textContent = "Create a process plan";
-          action.addEventListener("click", () => {
-            try {
-              sessionStorage.setItem("omni-ai-process-plan-draft", JSON.stringify(result.process_plan));
-              window.location.href = "process_plans.html?ai_draft=1";
-            } catch {
-              appendParagraphs(pending, "Could not open the plan draft in this browser.");
-            }
-          });
-          pending.append(action);
-        }
+        renderAssistant(pending, result);
+        rememberMessage({ kind: "assistant", result: {
+          answer: result.answer,
+          sources: result.sources || [],
+          process_plan: result.process_plan || null,
+        } });
       } catch (error) {
         pending.classList.add("error");
         pending.textContent = error.message || "The AI service could not answer. Please try again.";
+        rememberMessage({ kind: "error", text: pending.textContent });
       } finally {
         chatInput.disabled = false;
         sendButton.disabled = false;
