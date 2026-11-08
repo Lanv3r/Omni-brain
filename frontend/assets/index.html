@@ -15,6 +15,8 @@
     .brand { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
     .mark { display: block; flex: 0 0 auto; }
+    .chart-container { max-width: 500px; padding: 20px; background: #f6f6f6; border-radius: 12px;}
+    .chart-container canvas { width: 100%;}
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
     .section-nav-inner { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
@@ -49,6 +51,80 @@
     .summary-item.ticket-urgent, .summary-item.critical { border-color: #e5a5a1; background: #fff1f0; color: #a32922; }
     .summary-item.ticket-urgent:hover, .summary-item.critical:hover { border-color: #c43b33; }
     .summary-item.info { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+
+ 
+    .right-band {
+        font-size: 24px;
+        text-align: center;
+        font-weight: bold;
+        margin: 0 0 0 0;
+    }
+
+    .monitor-container {
+        position: relative;
+        width: 600px;
+        max-width: 100%;
+        margin-top: -100px;
+    }
+
+    .fark {
+        display: block;
+        width: 100%;
+    }
+
+    .fark img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .OfflineCount {
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    
+        color: rgb(183, 0, 0);
+        font-size: 80px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+    .dashboard-visuals {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 20px;
+    }
+
+    .monitor-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .chart-container {
+        flex: 1;
+        min-width: 0;
+    }
+
+    @media (max-width: 850px) {
+        .dashboard-visuals {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+
+    hr {
+      border: none;
+      border-top: 5px solid #000000;
+      margin: 100px 50px;
+    }
     .summary-item.info:hover { border-color: #4d83bb; }
     .general-stats { margin-top: 40px; }
     .general-stats h2 { margin: 0 0 16px; font-size: 23px; }
@@ -93,7 +169,7 @@
     <div class="intro">
       <p class="eyebrow">IT Operations Workspace</p>
       <h1>Command Center</h1>
-    </div>
+      <hr>
     <section aria-label="Operations summary">
       <div class="grid overview-grid">
         <article class="panel">
@@ -138,6 +214,33 @@
           </div>
         </article>
       </div>
+      <hr>
+     <div class="dashboard-visuals">
+
+    <div class="chart-container">
+        <h2>Ticket Data</h2>
+        <canvas id="alertsPieChart"></canvas>
+    </div>
+
+
+    <div class="monitor-section">
+
+        <h2 class="right-band">Offline Devices</h2>
+
+        <div class="monitor-container">
+            <span class="fark" aria-hidden="true">
+                <img src="assets/MonitorIcon.png" alt="">
+            </span>
+
+            <div class="OfflineCount">
+                <strong data-endpoint="offline-devices">—</strong>
+            </div>
+        </div>
+
+    </div>
+</div>
+<hr>
+</div>
     </section>
     <section class="general-stats" aria-labelledby="general-stats-heading">
       <h2 id="general-stats-heading">General stats</h2>
@@ -206,4 +309,68 @@
     loadGeneralStats();
   </script>
 </body>
+
+<script>
+async function loadAlertChart() {
+    try {
+        const baseURL = "http://127.0.0.1:8000";
+
+        const endpoints = [
+            "/high-priority-tickets",
+            "/urgent-tickets",
+            "/open-tickets"
+        ];
+
+        
+        const responses = await Promise.all(
+            endpoints.map(endpoint => fetch(baseURL + endpoint))
+        );
+
+        if (responses.some(response => !response.ok)) {
+            throw new Error("Could not retrieve alert counts");
+        }
+
+        const results = await Promise.all(
+            responses.map(response => response.json())
+        );
+
+        const counts = results.map(result => result.total);
+
+        
+        const canvas = document.getElementById("alertsPieChart");
+
+        new Chart(canvas, {
+            type: "doughnut",
+            data: {
+                labels: ["High-Priority", "Urgent", "Open"],
+                datasets: [{
+                    data: counts,
+                    backgroundColor: [
+                        "#a32922",
+                        "#e5a000",
+                        "#245b8e"
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Chart loading failed:", error);
+    }
+}
+
+
+loadAlertChart();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </html>
