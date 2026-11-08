@@ -181,6 +181,7 @@
     <div class="intro">
       <p class="eyebrow">IT Operations Workspace</p>
       <h1>Command Center</h1>
+      <hr>
     <section aria-label="Operations summary">
       <div class="grid overview-grid">
         <article class="panel">
@@ -225,8 +226,32 @@
           </div>
         </article>
       </div>
-     
+      <hr>
+     <div class="dashboard-visuals">
+
+    <div class="chart-container">
+        <h2>Ticket Data</h2>
+        <canvas id="alertsPieChart"></canvas>
+    </div>
+
+
+    <div class="monitor-section">
+
+        <h2 class="right-band">Offline Devices</h2>
+
+        <div class="monitor-container">
+            <span class="fark" aria-hidden="true">
+                <img src="assets/MonitorIcon.png" alt="">
+            </span>
+
+            <div class="OfflineCount">
+                <strong data-endpoint="offline-devices">—</strong>
+            </div>
+        </div>
+
+    </div>
 </div>
+<hr>
 </div>
     </section>
     <section class="general-stats" aria-labelledby="general-stats-heading">
@@ -366,13 +391,7 @@ async function loadAlertChart() {
                 responsive: true,
                 plugins: {
                     legend: {
-                        position: "bottom",
-                        labels: {
-                          font: {
-                              size: 18,
-                              weight: "bold"
-                          }
-                        }
+                        position: "bottom"
                     }
                 }
             }
