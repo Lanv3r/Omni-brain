@@ -5,7 +5,7 @@ const { basename, extname, join } = require("node:path");
 createServer((request, response) => {
   const path = new URL(request.url, "http://localhost").pathname;
   const filename = path === "/" ? "index.html" : basename(path);
-  const type = { ".html": "text/html; charset=utf-8", ".png": "image/png", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" }[extname(filename)];
+  const type = { ".html": "text/html; charset=utf-8", ".png": "image/png", ".jpeg": "image/jpeg", ".jpg": "image/jpeg", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" }[extname(filename)];
   if (!type) {
     response.writeHead(404).end();
     return;

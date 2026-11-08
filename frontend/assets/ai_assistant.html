@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AI Assistant chat workspace in OmniCommand">
+  <title>AI Assistant | OmniCommand</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #fff; --line: #dedede; --text: #333; --muted: #666; --accent: #ffa500; }
+    * { box-sizing: border-box; }
+    body { min-height: 100dvh; display: flex; flex-direction: column; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    header { border-bottom: 1px solid var(--line); background: #fff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 12px; color: var(--text); font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    main { width: 100%; max-width: 1160px; flex: 1; display: flex; flex-direction: column; gap: 14px; margin-inline: auto; padding: 24px clamp(18px, 5vw, 56px); }
+    .chat-panel { flex: 1; min-height: 420px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .chat-messages { flex: 1; display: grid; place-items: center; min-height: 0; padding: 24px; overflow-y: auto; }
+    .chat-empty { max-width: 360px; margin: 0; color: var(--muted); text-align: center; }
+    .chat-composer { display: flex; align-items: flex-end; gap: 12px; padding: 16px; border-top: 1px solid var(--line); }
+    textarea { flex: 1; min-height: 58px; max-height: 180px; padding: 12px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit; }
+    textarea::placeholder { color: var(--muted); }
+    button.send { min-height: 44px; padding: 10px 18px; border: 0; border-radius: 10px; background: var(--accent); color: #222; font: inherit; font-weight: 700; }
+    button.send:disabled { opacity: .55; cursor: not-allowed; }
+    @media (max-width: 520px) {
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      main { padding-block: 18px; }
+      .chat-panel { min-height: 360px; }
+    }
+  </style>
+  <link rel="stylesheet" href="theme.css?v=8">
+  <script src="theme.js?v=4"></script>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="brand" href="index.html" aria-label="OmniCommand home"><span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" width="128" height="163" alt=""></span>OmniCommand</a>
+      <div class="current-employee"><select id="current-employee" aria-label="Current employee"><option value="">Loading employees...</option></select></div>
+      <script src="assets/current_user.js?v=4"></script>
+      <div class="theme-menu">
+        <button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Choose color theme">
+          <span class="theme-icon-wrap" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-current theme-light-label">Light mode</span><span class="theme-current theme-dark-label">Dark mode</span>
+          <svg class="theme-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div class="theme-options" hidden><button class="theme-option" type="button">
+          <span class="theme-option-icon" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-option-label theme-dark-label">Dark mode</span><span class="theme-option-label theme-light-label">Light mode</span>
+        </button></div>
+      </div>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" width="355" height="163" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation"><div class="section-nav-inner">
+      <a href="index.html">Dashboard</a>
+      <a href="tickets.html">Tickets</a>
+      <a href="tasks.html">Tasks</a>
+      <a href="my_assignments.html">My Assignments</a>
+      <a href="process_plans.html">Process plans</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="device_monitoring.html">Device monitoring</a>
+      <a class="ai-tab" href="ai_assistant.html" aria-current="page"><img class="ai-tab-icon" src="assets/ai-icon.jpeg" width="20" height="20" alt="">AI Assistant</a>
+    </div></nav>
+  </header>
+  <main>
+    <section class="chat-panel" aria-label="AI Assistant chat">
+      <div class="chat-messages" role="log" aria-live="polite">
+        <p class="chat-empty">Chat messages will appear here.</p>
+      </div>
+      <div class="chat-composer">
+        <textarea aria-label="Message" placeholder="Ask the AI Assistant..." disabled></textarea>
+        <button class="send" type="button" disabled>Send</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
