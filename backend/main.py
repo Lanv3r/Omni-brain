@@ -57,11 +57,11 @@ def fetch_pages(url, limit, filters):
         page += 1
 
 
-def fetch_ncentral_pages(url, filters):
+def fetch_ncentral_pages(url, filters, page_size=50):
     items = []
     page = 1
     while True:
-        query = urlencode({**filters, "pageNumber": page, "pageSize": 50})
+        query = urlencode({**filters, "pageNumber": page, "pageSize": page_size})
         data = read_json(f"{url}?{query}")
         batch = data["data"]
         items.extend(batch)
@@ -199,6 +199,39 @@ def companies():
 def alerts():
     items = fetch_ncentral_pages(alerts_url, {"active": "true"})
     return {"total": len(items), "alerts": items}
+
+
+@app.get("/alerts/page")
+def alert_page(
+    page: int = 0,
+    active: bool | None = None,
+    severity: str | None = None,
+    q: str | None = None,
+):
+    if page < 0:
+        raise HTTPException(422, "page must be 0 or greater")
+
+    filters = {}
+    if active is not None:
+        filters["active"] = str(active).lower()
+    if severity:
+        severity = severity.lower().strip()
+        if severity not in {"critical", "warning", "info"}:
+            raise HTTPException(422, "Invalid severity")
+        filters["severity"] = severity
+
+    if q and q.strip():
+        query = q.strip().casefold()
+        matches = [
+            alert for alert in fetch_ncentral_pages(alerts_url, filters, page_size=500)
+            if any(query in str(alert.get(field) or "").casefold() for field in (
+                "alertId", "message", "deviceName", "customerName", "serviceName"
+            ))
+        ]
+        return {"page": page, "page_size": 10, "total": len(matches), "alerts": matches[page * 10 : (page + 1) * 10]}
+
+    data = read_json(f"{alerts_url}?{urlencode({**filters, 'pageNumber': page + 1, 'pageSize': 10})}")
+    return {"page": page, "page_size": 10, "total": data["totalItems"], "alerts": data["data"]}
 
 
 @app.get("/offline-devices")

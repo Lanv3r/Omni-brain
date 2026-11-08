@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Review and filter device alerts in OmniCommand">
+  <meta name="description" content="Review and filter alerts in OmniCommand">
   <title>Alerts | OmniCommand</title>
   <style>
     :root {
@@ -60,27 +60,6 @@
       letter-spacing: -.04em;
     }
 
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
-    }
-
-    .pagination button {
-      padding: 8px 16px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: white;
-      cursor: pointer;
-    }
-
-    .pagination button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
     .mark {
       display: block;
       flex: 0 0 auto;
@@ -105,47 +84,8 @@
       text-transform: uppercase;
     }
 
-    .page-heading {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 24px;
-      margin-bottom: 30px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(34px, 5vw, 48px);
-      line-height: 1.08;
-      letter-spacing: -.05em;
-    }
-
-    .description { margin: 10px 0 0; color: var(--muted); }
-
-    .demo-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      flex: 0 0 auto;
-      padding: 7px 11px;
-      border: 1px solid #e2bd65;
-      border-radius: 999px;
-      background: #fff9e9;
-      color: #765000;
-      font-size: 12px;
-    }
-
-    .demo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-
-    .queue-summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .queue-summary h2 { margin: 0; font-size: 18px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
     .result-count { margin: 0; color: var(--muted); font-size: 13px; }
 
     .alert-panel {
@@ -167,9 +107,12 @@
 
     .field { display: grid; gap: 6px; }
     .search-field { flex: 1 1 250px; }
-    .filter-field { flex: 0 1 190px; }
-
-    label { color: var(--muted); font-size: 12px; font-weight: 650; }
+    .filter-field { flex: 0 1 170px; }
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
 
     input, select {
       width: 100%;
@@ -183,6 +126,7 @@
     }
 
     input::placeholder { color: #777777; }
+
     .table-scroll { overflow-x: auto; }
 
     table {
@@ -208,24 +152,33 @@
     tbody tr:hover { background: #fff8eb; }
 
     .alert-id { color: var(--accent); font-weight: 650; }
+    .subject { color: var(--text); font-weight: 600; }
     .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
 
-    .severity {
+    .pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       padding: 4px 9px;
-      border: 1px solid currentColor;
+      border: 1px solid transparent;
       border-radius: 999px;
       font-size: 11px;
       font-weight: 650;
     }
 
-    .severity::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
-    .severity-critical { background: #fff1f0; color: #a32922; }
-    .severity-warning { background: #fff9e9; color: #765000; }
-    .severity-info { background: #eff6fd; color: #245b8e; }
-    .alert-state { color: #65438f; }
+    .pill::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    .severity-critical { border-color: #e8a39f; background: #fff0ef; color: #a32922; }
+    .severity-warning { border-color: #e8c47e; background: #fff5df; color: #875000; }
+    .severity-info { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .state-active { border-color: #c8b7e5; background: #f5f0fb; color: #65438f; }
+    .state-cleared { border-color: var(--line); background: #f5f5f5; color: var(--muted); }
 
     .empty-state {
       padding: 32px 16px;
@@ -234,19 +187,15 @@
       white-space: normal;
     }
 
-    .empty-state strong { display: block; margin-bottom: 5px; color: var(--text); }
-
-    .table-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
-
-    @media (max-width: 820px) {
-      .page-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
-    }
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+    .pagination button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; }
+    .pagination button:disabled { opacity: .5; cursor: default; }
 
     @media (max-width: 560px) {
       .shell { width: min(100% - 32px, 1160px); }
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
       .toolbar { align-items: stretch; }
       .search-field, .filter-field { flex-basis: 100%; }
-      .queue-summary { align-items: flex-start; flex-direction: column; gap: 4px; }
       th, td { padding-inline: 12px; }
       .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -272,19 +221,13 @@
   </header>
 
   <main class="shell">
-    <section class="page-heading" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow">N-central · Monitoring</p>
-        <h1 id="page-title">Alerts</h1>
-        <p class="description">Review active alerts by severity and affected device.</p>
-      </div>
-      <span class="demo-badge"><span class="demo-dot" aria-hidden="true"></span>Example data · API not connected</span>
-    </section>
-
-    <section aria-labelledby="alerts-title">
-      <div class="queue-summary">
-        <h2 id="alerts-title">Alert queue</h2>
-        <p class="result-count" id="result-count" aria-live="polite">Showing 6 example alerts</p>
+    <section aria-labelledby="page-title">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">N-central</p>
+          <h1 id="page-title">Alerts</h1>
+        </div>
+        <p class="result-count" id="result-count" aria-live="polite">Loading alerts...</p>
       </div>
       <div class="alert-panel">
         <form class="toolbar" role="search" onsubmit="return false">
@@ -296,9 +239,17 @@
             <label for="severity-filter">Severity</label>
             <select id="severity-filter">
               <option value="all">All severities</option>
-              <option value="Critical">Critical</option>
-              <option value="Warning">Warning</option>
-              <option value="Info">Info</option>
+              <option value="critical">Critical</option>
+              <option value="warning">Warning</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+          <div class="field filter-field">
+            <label for="state-filter">State</label>
+            <select id="state-filter">
+              <option value="all">All states</option>
+              <option value="true">Active</option>
+              <option value="false">Cleared</option>
             </select>
           </div>
         </form>
@@ -316,227 +267,145 @@
               </tr>
             </thead>
             <tbody id="alert-rows">
-              <tr>
-                <td colspan="6" class="empty-state">Loading alerts...</td>
-              </tr>
+              <tr><td class="empty-state" colspan="6">Loading alerts...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div class="pagination">
-      <button id="previous-page" type="button">Previous</button>
-    <span id="page-number">Page 1</span>
-    <button id="next-page" type="button">Next</button>
-  </div>
-      <p class="table-note">These fictional alerts are for layout preview only; live monitoring data will appear when the N-central connection is added.</p>
+      <nav class="pagination" aria-label="Alert pages">
+        <button type="button" id="previous-page" disabled>Previous</button>
+        <span id="page-label" aria-live="polite">Page 1</span>
+        <button type="button" id="next-page" disabled>Next</button>
+      </nav>
     </section>
   </main>
 
   <script>
+    const searchInput = document.getElementById("alert-search");
+    const severityFilter = document.getElementById("severity-filter");
+    const stateFilter = document.getElementById("state-filter");
+    const alertRowsContainer = document.getElementById("alert-rows");
+    const resultCount = document.getElementById("result-count");
+    const previousPage = document.getElementById("previous-page");
+    const nextPage = document.getElementById("next-page");
+    const pageLabel = document.getElementById("page-label");
+    const searchParams = new URLSearchParams(window.location.search);
+    let currentPage = 0;
+    let requestId = 0;
+    let searchTimer;
 
-  const searchInput = document.getElementById("alert-search");
-  const severityFilter = document.getElementById("severity-filter");
-  const alertRowsContainer = document.getElementById("alert-rows");
-  const resultCount = document.getElementById("result-count");
+    function element(tag, value, className) {
+      const item = document.createElement(tag);
+      item.textContent = value == null || value === "" ? "—" : String(value);
+      if (className) item.className = className;
+      return item;
+    }
 
-  const previousButton = document.getElementById("previous-page");
-  const nextButton = document.getElementById("next-page");
-  const pageNumber = document.getElementById("page-number");
+    function cell(...children) {
+      const item = document.createElement("td");
+      item.append(...children);
+      return item;
+    }
 
-  let allAlerts = [];
-  let currentPage = 1;
-  const pageSize = 10;
-
-  const requestedSeverity =
-      new URLSearchParams(window.location.search).get("severity");
-
-  if ([...severityFilter.options].some(
-      option => option.value === requestedSeverity
-  )) {
-      severityFilter.value = requestedSeverity;
-  }
-
-  // Create an HTML table cell safely
-  function addCell(row, value, className = "") {
-      const td = document.createElement("td");
-
-      if (className) {
-          const span = document.createElement("span");
-          span.className = className;
-          span.textContent = value ?? "—";
-          td.appendChild(span);
-      } else {
-          td.textContent = value ?? "—";
-      }
-
-      row.appendChild(td);
-      return td;
-  }
-
-  // Create one table row from an alert object
-  function createAlertRow(alert) {
+    function showMessage(message) {
       const row = document.createElement("tr");
-      const severity = String(alert.severity || "info").toLowerCase();
+      const item = element("td", message, "empty-state");
+      item.colSpan = 6;
+      row.append(item);
+      alertRowsContainer.replaceChildren(row);
+    }
 
-      row.dataset.severity = severity;
+    function renderAlerts(alerts) {
+      if (!alerts.length) {
+        showMessage("No matching alerts");
+        return;
+      }
 
-      // Alert ID and description
-      const alertCell = document.createElement("td");
-
-      const id = document.createElement("span");
-      id.className = "alert-id";
-      id.textContent = alert.alertId ?? "N/A";
-
-      const message = document.createElement("span");
-      message.className = "secondary";
-      message.textContent = alert.message ?? "";
-
-      alertCell.append(id, message);
-      row.appendChild(alertCell);
-
-      // Severity badge
-      const severityName =
-          severity.charAt(0).toUpperCase() + severity.slice(1);
-
-      addCell(
-          row,
-          severityName,
-          `severity severity-${severity}`
-      );
-
-      // Device and company
-      addCell(row, alert.deviceName);
-      addCell(row, alert.customerName);
-
-      // State
-      addCell(
-          row,
-          alert.state === "active" ? "Active" : "Cleared",
-          "alert-state"
-      );
-
-      // Detection time
-      const date = alert.triggeredAt
-          ? new Date(alert.triggeredAt).toLocaleString()
-          : "Unknown";
-
-      addCell(row, date);
-
-      return row;
-  }
-
-  // Filter alerts and display only the current page
-  function renderAlerts() {
-      const query = searchInput.value.trim().toLowerCase();
-      const severity = severityFilter.value.toLowerCase();
-
-      const filtered = allAlerts.filter(alert => {
-          const matchesSeverity =
-              severity === "all" ||
-              String(alert.severity).toLowerCase() === severity;
-
-          const searchableText = [
-              alert.alertId,
-              alert.message,
-              alert.deviceName,
-              alert.customerName,
-              alert.serviceName
-          ].join(" ").toLowerCase();
-
-          return matchesSeverity && searchableText.includes(query);
+      const rows = alerts.map(alert => {
+        const severity = String(alert.severity || "").toLowerCase();
+        const state = alert.active ? "active" : "cleared";
+        const detected = alert.triggeredAt ? new Date(alert.triggeredAt) : null;
+        const detectedText = detected && !Number.isNaN(detected.getTime()) ? detected.toLocaleString() : "—";
+        const row = document.createElement("tr");
+        row.append(
+          cell(element("span", "#" + alert.alertId, "alert-id"), element("span", alert.message, "secondary subject")),
+          cell(element("span", severity ? severity[0].toUpperCase() + severity.slice(1) : "", "pill severity-" + severity)),
+          cell(element("span", alert.deviceName), element("span", alert.serviceName, "secondary")),
+          cell(element("span", alert.customerName)),
+          cell(element("span", state === "active" ? "Active" : "Cleared", "pill state-" + state)),
+          cell(element("span", detectedText))
+        );
+        return row;
       });
+      alertRowsContainer.replaceChildren(...rows);
+    }
 
-      const totalPages = Math.max(
-          1,
-          Math.ceil(filtered.length / pageSize)
-      );
+    async function loadAlerts() {
+      const thisRequest = ++requestId;
+      const params = new URLSearchParams({ page: String(currentPage) });
+      if (severityFilter.value !== "all") params.set("severity", severityFilter.value);
+      if (stateFilter.value !== "all") params.set("active", stateFilter.value);
+      if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
 
-      currentPage = Math.min(currentPage, totalPages);
+      resultCount.textContent = "Loading alerts...";
+      showMessage("Loading alerts...");
+      previousPage.disabled = true;
+      nextPage.disabled = true;
+      pageLabel.textContent = "Page " + (currentPage + 1);
 
-      const start = (currentPage - 1) * pageSize;
-      const visibleAlerts = filtered.slice(start, start + pageSize);
-
-      // Remove previous table rows
-      alertRowsContainer.replaceChildren();
-
-      if (visibleAlerts.length === 0) {
-          const row = document.createElement("tr");
-          addCell(row, "No matching alerts found", "empty-state")
-              .colSpan = 6;
-          alertRowsContainer.appendChild(row);
-      } else {
-          for (const alert of visibleAlerts) {
-              alertRowsContainer.appendChild(createAlertRow(alert));
-          }
-      }
-
-      resultCount.textContent =
-          `Showing ${visibleAlerts.length} of ${filtered.length} matching alerts`;
-
-      pageNumber.textContent =
-          `Page ${currentPage} of ${totalPages}`;
-
-      previousButton.disabled = currentPage === 1;
-      nextButton.disabled = currentPage >= totalPages;
-  }
-
-  // Fetch alerts from your team's FastAPI backend
-  async function loadAlerts() {
       try {
-          const response = await fetch(
-              "http://127.0.0.1:8000/alerts"
-          );
-
-          if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
-          }
-
-          const result = await response.json();
-
-          allAlerts = result.alerts;
-          renderAlerts();
-
+        const response = await fetch("http://127.0.0.1:8000/alerts/page?" + params);
+        if (!response.ok) throw new Error("Could not load alerts (HTTP " + response.status + ")");
+        const data = await response.json();
+        if (thisRequest !== requestId) return;
+        renderAlerts(data.alerts);
+        const totalPages = Math.max(1, Math.ceil(data.total / 10));
+        const first = data.total ? currentPage * 10 + 1 : 0;
+        const last = data.total ? Math.min(currentPage * 10 + data.alerts.length, data.total) : 0;
+        resultCount.textContent = "Showing " + first + "–" + last + " of " + data.total + " alerts";
+        pageLabel.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+        previousPage.disabled = currentPage === 0;
+        nextPage.disabled = currentPage + 1 >= totalPages;
       } catch (error) {
-          console.error("Failed to load alerts:", error);
-          resultCount.textContent = "Could not load alerts";
-          alertRowsContainer.replaceChildren();
-
-          const row = document.createElement("tr");
-          const td = addCell(
-              row,
-              "Unable to connect to the alerts API."
-          );
-          td.colSpan = 6;
-          alertRowsContainer.appendChild(row);
-          previousButton.disabled = true;
-          nextButton.disabled = true;
+        if (thisRequest !== requestId) return;
+        showMessage(error.message);
+        resultCount.textContent = "Could not load alerts";
+        previousPage.disabled = currentPage === 0;
       }
-  }
+    }
 
-  // Pagination
-  nextButton.addEventListener("click", () => {
-      currentPage++;
-      renderAlerts();
-  });
+    const requestedSeverity = (searchParams.get("severity") || "").toLowerCase();
+    if ([...severityFilter.options].some(option => option.value === requestedSeverity)) {
+      severityFilter.value = requestedSeverity;
+    }
+    const requestedActive = (searchParams.get("active") || "").toLowerCase();
+    if (requestedActive === "true" || requestedActive === "false") {
+      stateFilter.value = requestedActive;
+    }
 
-  previousButton.addEventListener("click", () => {
-      currentPage--;
-      renderAlerts();
-  });
+    loadAlerts();
 
-  // Searching or filtering starts at page 1
-  searchInput.addEventListener("input", () => {
-      currentPage = 1;
-      renderAlerts();
-  });
+    function filtersChanged() {
+      currentPage = 0;
+      loadAlerts();
+    }
 
-  severityFilter.addEventListener("change", () => {
-      currentPage = 1;
-      renderAlerts();
-  });
-
-  // Start!
-  loadAlerts();
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(filtersChanged, 300);
+    });
+    severityFilter.addEventListener("change", filtersChanged);
+    stateFilter.addEventListener("change", filtersChanged);
+    previousPage.addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage -= 1;
+        loadAlerts();
+      }
+    });
+    nextPage.addEventListener("click", () => {
+      currentPage += 1;
+      loadAlerts();
+    });
   </script>
 </body>
 </html>
