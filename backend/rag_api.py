@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from backend.ai_client import make_client, model_name
+from backend.live_data import LiveDataError, answer_live_question
 from backend.semantic_search import search_documents
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -283,6 +284,16 @@ def answer_question(request: AskRequest) -> AskResponse:
     if len(question) < 3:
         raise ValueError("Question must contain at least 3 non-space characters")
 
+    live_answer = answer_live_question(question)
+    if live_answer is not None:
+        return AskResponse(
+            question=question,
+            answer=live_answer,
+            sources=[],
+            related_references=[],
+            status="live_data",
+        )
+
     # Semantic search already separates primary and Related chunks.
     hits = search_documents(
         question,
@@ -395,6 +406,8 @@ def ask(request: AskRequest) -> AskResponse:
         return answer_question(request)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except LiveDataError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     except Exception as exc:
         logger.exception("RAG request failed")
         raise HTTPException(
