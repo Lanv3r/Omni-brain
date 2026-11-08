@@ -17,16 +17,16 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from openai import OpenAI
 from pydantic import BaseModel, Field
 
+from backend.ai_client import make_client, model_name
 from backend.semantic_search import search_documents
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
 logger = logging.getLogger("omni_brain_rag")
-MODEL = os.getenv("RAG_MODEL", "gpt-5.4-mini")
+MODEL = model_name(os.getenv("RAG_MODEL", "gpt-5.4-mini"))
 MAX_CHUNK_CHARS = 3500
 MAX_TOTAL_CONTEXT_CHARS = 16000
 
@@ -158,7 +158,7 @@ def answer_question(request: AskRequest) -> AskResponse:
             status="insufficient_evidence",
         )
 
-    client = OpenAI(timeout=45.0, max_retries=2)
+    client = make_client(timeout=45.0, max_retries=2)
     response = client.responses.create(
         model=MODEL,
         instructions=INSTRUCTIONS,

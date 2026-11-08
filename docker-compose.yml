@@ -2,23 +2,93 @@ services:
   postgres:
     image: pgvector/pgvector:0.8.7-pg18-trixie
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "127.0.0.1:5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-omni_brain}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-omni_brain_local}
+      POSTGRES_DB: ${POSTGRES_DB:-omni_brain}
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  db-init:
+    image: pgvector/pgvector:0.8.7-pg18-trixie
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-omni_brain}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-omni_brain_local}
+      PGDATABASE: ${POSTGRES_DB:-omni_brain}
+    volumes:
+      - ./backend/ai_schema.sql:/ai_schema.sql:ro
+    command: ["psql", "-v", "ON_ERROR_STOP=1", "-f", "/ai_schema.sql"]
+
   omni-brain-mock:
     image: ghcr.io/jeremyheslop/omni-brain-mock:latest
+
+  knowledge-index:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      omni-brain-mock:
+        condition: service_healthy
+    environment: &backend-environment
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Create .env and set OPENAI_API_KEY}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      RAG_MODEL: ${RAG_MODEL:-gpt-5.4-mini}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-omni_brain}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-omni_brain_local}
+      POSTGRES_DB: ${POSTGRES_DB:-omni_brain}
+      OMNI_API_BASE: http://omni-brain-mock:8080
+    command: ["sh", "-c", "python -m backend.ingest_documents --all && python -m backend.embed_chunks --all"]
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      knowledge-index:
+        condition: service_completed_successfully
+    environment:
+      <<: *backend-environment
+      ISSUES_URL: http://omni-brain-mock:8080/api/v0/issues
+      COMPANIES_URL: http://omni-brain-mock:8080/api/v0/companies
+      ALERTS_URL: http://omni-brain-mock:8080/ncentral/alerts
+      DEVICES_URL: http://omni-brain-mock:8080/ncentral/devices
+      TASKS_URL: http://omni-brain-mock:8080/api/v0/tasks
+      JOBS_URL: http://omni-brain-mock:8080/api/v0/jobs
+      MILESTONES_URL: http://omni-brain-mock:8080/api/v0/milestones
+      STAFF_URL: http://omni-brain-mock:8080/api/v0/staff
+      ADMIN_STATS_URL: http://omni-brain-mock:8080/admin/stats
+      PROCESS_PLAN_DB: /data/process_plans.sqlite3
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - process_plan_data:/data
+      - ./backend:/source-backend:ro
+    command: ["sh", "-c", "if [ ! -e /data/process_plans.sqlite3 ] && [ -f /source-backend/process_plans.sqlite3 ]; then cp /source-backend/process_plans.sqlite3 /data/process_plans.sqlite3; fi; exec python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000"]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    environment:
+      FRONTEND_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:3000:3000"
 
 volumes:
   postgres_data:
+  process_plan_data:

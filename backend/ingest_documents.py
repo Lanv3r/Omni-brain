@@ -13,6 +13,7 @@ import argparse
 import hashlib
 import os
 import re
+import time
 from pathlib import Path
 
 import psycopg
@@ -154,9 +155,15 @@ def api_headers() -> dict[str, str]:
 
 
 def get_index() -> list[dict]:
-    r = requests.get(f"{API_URL}/kb/index", headers=api_headers(), timeout=20)
-    r.raise_for_status()
-    return r.json()["files"]
+    for attempt in range(30):
+        try:
+            r = requests.get(f"{API_URL}/kb/index", headers=api_headers(), timeout=20)
+            r.raise_for_status()
+            return r.json()["files"]
+        except (requests.ConnectionError, requests.Timeout):
+            if attempt == 29:
+                raise
+            time.sleep(2)
 
 
 def get_document(path: str) -> str:

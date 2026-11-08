@@ -21,14 +21,15 @@ from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
-from openai import OpenAI
 from pgvector import Vector
 from pgvector.psycopg import register_vector
+
+from backend.ai_client import make_client, model_name
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
-EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_MODEL = model_name("text-embedding-3-small")
 EMBEDDING_DIMENSIONS = 1536
 PAGE_SIZE = 100
 MAX_CANDIDATES = 2000
@@ -46,7 +47,7 @@ def is_related_chunk(content: str) -> bool:
     return bool(RELATED_HEADING.search(content))
 
 
-def embed_question(client: OpenAI, question: str) -> Vector:
+def embed_question(client, question: str) -> Vector:
     """Embed a question with the *same* model/dimensions used for chunks."""
     response = client.embeddings.create(
         model=EMBEDDING_MODEL,
@@ -82,7 +83,7 @@ def search_documents(
     if min_similarity is not None and not -1 <= min_similarity <= 1:
         raise ValueError("min_similarity must be between -1 and 1")
 
-    client = OpenAI(timeout=30.0, max_retries=2)
+    client = make_client(timeout=30.0, max_retries=2)
     question_vector = embed_question(client, question)
 
     primary: list[dict] = []

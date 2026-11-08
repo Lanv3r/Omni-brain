@@ -6,28 +6,29 @@ from pathlib import Path
 import psycopg
 import tiktoken
 from dotenv import load_dotenv
-from openai import OpenAI
 from pgvector import Vector
 from pgvector.psycopg import register_vector
+
+from backend.ai_client import make_client, model_name
 
 # ---------------- CONFIGURATION ----------------
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
-MODEL = "text-embedding-3-small"
+MODEL = model_name("text-embedding-3-small")
 DIMENSIONS = 1536
 MAX_INPUT_TOKENS = 8192
 
-encoder = tiktoken.encoding_for_model(MODEL)
+encoder = tiktoken.encoding_for_model("text-embedding-3-small")
 
 
 # ---------------- DATABASE CONNECTION ----------------
 
 def connect_db():
     conn = psycopg.connect(
-        host="127.0.0.1",
-        port=5432,
+        host=os.getenv("POSTGRES_HOST", "127.0.0.1"),
+        port=int(os.getenv("POSTGRES_PORT", "5432")),
         dbname=os.getenv("POSTGRES_DB"),
         user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
@@ -147,6 +148,10 @@ def main():
         "--dry-run", action="store_true"
     )
 
+    parser.add_argument(
+        "--all", action="store_true", help="Embed every unembedded chunk"
+    )
+
     args = parser.parse_args()
 
     if args.limit < 1 or args.batch_size < 1:
@@ -155,7 +160,7 @@ def main():
     client = None
 
     if not args.dry_run:
-        client = OpenAI(
+        client = make_client(
             timeout=30.0,
             max_retries=2,
         )
@@ -164,38 +169,26 @@ def main():
     total_tokens = 0
 
     with connect_db() as conn:
-        chunks = get_chunks(conn, args.limit)
-
-        if not chunks:
-            print("No unembedded chunks found.")
-            return
-
-        print(f"Found {len(chunks)} chunks.")
-
-        for start in range(0, len(chunks), args.batch_size):
-            batch = chunks[start:start + args.batch_size]
+        while True:
+            remaining = args.limit - processed
+            if not args.all and remaining <= 0:
+                break
+            batch = get_chunks(conn, args.batch_size if args.all else min(args.batch_size, remaining))
+            if not batch:
+                break
 
             validate_chunks(batch)
-
-            print(
-                f"Processing batch of {len(batch)} chunks..."
-            )
+            print(f"Processing batch of {len(batch)} chunks...")
 
             if args.dry_run:
                 for chunk_id, content in batch:
-                    tokens = len(encoder.encode(content))
-                    print(f"Chunk {chunk_id}: {tokens} tokens")
-                continue
+                    print(f"Chunk {chunk_id}: {len(encoder.encode(content))} tokens")
+                break
 
-            vectors, used_tokens = generate_embeddings(
-                client, batch
-            )
-
+            vectors, used_tokens = generate_embeddings(client, batch)
             saved = save_embeddings(conn, batch, vectors)
-
             processed += saved
             total_tokens += used_tokens
-
             print(f"Saved {saved} embeddings.")
 
     print("\nFinished!")
