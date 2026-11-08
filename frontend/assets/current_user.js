@@ -1,19 +1,14 @@
 (() => {
   const key = "omni.currentEmployeeId";
+  const staffCacheKey = "omni.staffCache";
   const select = document.getElementById("current-employee");
   if (!select) return;
 
-  const style = document.createElement("style");
-  style.textContent = `
-    .current-employee { display: grid; gap: 4px; margin-left: auto; min-width: 180px; }
-    .current-employee label { color: #666; font: 600 12px/1.2 system-ui, sans-serif; }
-    .current-employee select { width: 100%; min-height: 36px; padding: 6px 9px; border: 1px solid #dedede; border-radius: 8px; background: #fff; color: #333; font: 14px system-ui, sans-serif; }
-  `;
-  document.head.append(style);
-
-  select.disabled = true;
-
   let staff = [];
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(staffCacheKey) || "null");
+    if (Array.isArray(cached)) staff = cached.filter(member => member && member.id != null && typeof member.name === "string");
+  } catch { /* Load the staff list normally. */ }
   let error = null;
   const storedId = () => {
     try { return localStorage.getItem(key) || ""; } catch { return ""; }
@@ -24,6 +19,18 @@
       else localStorage.removeItem(key);
     } catch { /* The selector still works for this page. */ }
   };
+  const showStaff = (verifyId = false) => {
+    select.replaceChildren(
+      new Option("Choose employee", ""),
+      ...staff.map(member => new Option(member.name, String(member.id)))
+    );
+    const id = storedId();
+    select.value = staff.some(member => String(member.id) === id) ? id : "";
+    if (verifyId && id && !select.value) saveId("");
+    select.disabled = false;
+  };
+  if (staff.length) showStaff();
+  else select.disabled = true;
   const changed = () => window.dispatchEvent(new CustomEvent("omni:employee-changed", {
     detail: { id: select.value || null, name: select.selectedOptions[0]?.textContent || null }
   }));
@@ -41,7 +48,10 @@
       try {
         const response = await fetch("http://127.0.0.1:8000" + path);
         if (!response.ok) continue;
-        staff = (await response.json()).staff;
+        const fetchedStaff = (await response.json()).staff;
+        if (!Array.isArray(fetchedStaff) || !fetchedStaff.length) continue;
+        staff = fetchedStaff;
+        try { sessionStorage.setItem(staffCacheKey, JSON.stringify(staff)); } catch { /* Continue without a cache. */ }
         break;
       } catch { /* Try the other staff route. */ }
     }
@@ -49,18 +59,15 @@
     return staff;
   })()
     .then(() => {
-      select.replaceChildren(
-        new Option("Choose employee", ""),
-        ...staff.map(member => new Option(member.name, String(member.id)))
-      );
-      const id = storedId();
-      select.value = staff.some(member => String(member.id) === id) ? id : "";
-      if (id && !select.value) saveId("");
-      select.disabled = false;
+      showStaff(true);
       changed();
       return staff;
     })
     .catch(reason => {
+      if (staff.length) {
+        changed();
+        return staff;
+      }
       error = reason.message;
       select.replaceChildren(new Option("Employees unavailable", ""));
       return [];

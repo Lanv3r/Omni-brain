@@ -38,20 +38,11 @@
       const option = menu.querySelector(".theme-option");
       toggle.setAttribute("aria-label", `Choose color theme. Current theme: ${currentTheme}`);
       toggle.title = `Current theme: ${currentTheme}`;
-      toggle.querySelector(".theme-current").textContent = `${isDark ? "Dark" : "Light"} mode`;
       option.dataset.themeOption = nextTheme;
-      option.querySelector("span").textContent = `${nextTheme === "dark" ? "Dark" : "Light"} mode`;
     }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    const bar = document.querySelector("header .bar");
-    if (bar) {
-      const menu = document.createElement("div");
-      menu.className = "theme-menu";
-      menu.innerHTML = '<button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false"><span class="theme-current">Light mode</span><span aria-hidden="true">▾</span></button><div class="theme-options" hidden><button class="theme-option" type="button"><span>Dark mode</span></button></div>';
-      bar.insertBefore(menu, bar.querySelector(".partner-brand"));
-    }
     const menus = document.querySelectorAll(".theme-menu");
 
     function closeMenu(menu, returnFocus = false) {
