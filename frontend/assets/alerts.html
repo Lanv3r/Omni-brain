@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Review and filter alerts in OmniCommand">
+  <title>Alerts | OmniCommand</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f6;
+      --panel: #ffffff;
+      --panel-raised: #f5f5f5;
+      --line: #dedede;
+      --text: #333333;
+      --muted: #666666;
+      --accent: #ffa500;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    a { color: inherit; }
+    a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 75px;
+      padding-block: 14px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      flex: 0 0 auto;
+      text-decoration: none;
+      font-size: 19px;
+      font-weight: 750;
+      letter-spacing: -.04em;
+    }
+
+    .mark {
+      display: block;
+      flex: 0 0 auto;
+    }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
+    .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .alert-panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 170px; }
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    input::placeholder { color: #777777; }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+
+    th {
+      background: #f5f5f5;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+
+    .alert-id { color: var(--accent); font-weight: 650; }
+    .subject { color: var(--text); font-weight: 600; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .pill::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    .severity-critical { border-color: #e8a39f; background: #fff0ef; color: #a32922; }
+    .severity-warning { border-color: #e8c47e; background: #fff5df; color: #875000; }
+    .severity-info { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+    .state-active { border-color: #c8b7e5; background: #f5f0fb; color: #65438f; }
+    .state-cleared { border-color: var(--line); background: #f5f5f5; color: var(--muted); }
+
+    .empty-state {
+      padding: 32px 16px;
+      color: var(--muted);
+      text-align: center;
+      white-space: normal;
+    }
+
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+    .pagination button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; }
+    .pagination button:disabled { opacity: .5; cursor: default; }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .toolbar { align-items: stretch; }
+      .search-field, .filter-field { flex-basis: 100%; }
+      th, td { padding-inline: 12px; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+  <link rel="stylesheet" href="theme.css?v=8">
+  <script src="theme.js?v=4"></script>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html" aria-label="OmniCommand home">
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" width="128" height="163" alt=""></span>
+        <span>OmniCommand</span>
+      </a>
+      <div class="current-employee"><select id="current-employee" aria-label="Current employee"><option value="">Loading employees...</option></select></div>
+      <script src="assets/current_user.js?v=4"></script>
+      <div class="theme-menu">
+        <button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Choose color theme">
+          <span class="theme-icon-wrap" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-current theme-light-label">Light mode</span><span class="theme-current theme-dark-label">Dark mode</span>
+          <svg class="theme-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div class="theme-options" hidden><button class="theme-option" type="button">
+          <span class="theme-option-icon" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-option-label theme-dark-label">Dark mode</span><span class="theme-option-label theme-light-label">Light mode</span>
+        </button></div>
+      </div>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" width="355" height="163" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="index.html">Dashboard</a>
+        <a href="tickets.html">Tickets</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="my_assignments.html">My Assignments</a>
+        <a href="process_plans.html">Process plans</a>
+        <a href="alerts.html" aria-current="page">Alerts</a>
+        <a href="device_monitoring.html">Device monitoring</a>
+        <a class="ai-tab" href="ai_assistant.html"><img class="ai-tab-icon" src="assets/ai-icon.jpeg" width="20" height="20" alt="">AI Assistant</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section aria-labelledby="page-title">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">N-central</p>
+          <h1 id="page-title">Alerts</h1>
+        </div>
+        <p class="result-count" id="result-count" aria-live="polite">Loading alerts...</p>
+      </div>
+      <div class="alert-panel">
+        <form class="toolbar" role="search" onsubmit="return false">
+          <div class="field search-field">
+            <label for="alert-search">Search alerts</label>
+            <input id="alert-search" type="search" placeholder="Search alert, device, or company">
+          </div>
+          <div class="field filter-field">
+            <label for="severity-filter">Severity</label>
+            <select id="severity-filter">
+              <option value="all">All severities</option>
+              <option value="critical">Critical</option>
+              <option value="warning">Warning</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+          <div class="field filter-field">
+            <label for="state-filter">State</label>
+            <select id="state-filter">
+              <option value="all">All states</option>
+              <option value="true">Active</option>
+              <option value="false">Cleared</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Alert</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Device</th>
+                <th scope="col">Company</th>
+                <th scope="col">State</th>
+                <th scope="col">Last detected</th>
+              </tr>
+            </thead>
+            <tbody id="alert-rows">
+              <tr><td class="empty-state" colspan="6">Loading alerts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <nav class="pagination" aria-label="Alert pages">
+        <button type="button" id="previous-page" disabled>Previous</button>
+        <span id="page-label" aria-live="polite">Page 1</span>
+        <button type="button" id="next-page" disabled>Next</button>
+      </nav>
+    </section>
+  </main>
+
+  <script>
+    const searchInput = document.getElementById("alert-search");
+    const severityFilter = document.getElementById("severity-filter");
+    const stateFilter = document.getElementById("state-filter");
+    const alertRowsContainer = document.getElementById("alert-rows");
+    const resultCount = document.getElementById("result-count");
+    const previousPage = document.getElementById("previous-page");
+    const nextPage = document.getElementById("next-page");
+    const pageLabel = document.getElementById("page-label");
+    const searchParams = new URLSearchParams(window.location.search);
+    let currentPage = 0;
+    let requestId = 0;
+    let searchTimer;
+
+    function element(tag, value, className) {
+      const item = document.createElement(tag);
+      item.textContent = value == null || value === "" ? "—" : String(value);
+      if (className) item.className = className;
+      return item;
+    }
+
+    function cell(...children) {
+      const item = document.createElement("td");
+      item.append(...children);
+      return item;
+    }
+
+    function showMessage(message) {
+      const row = document.createElement("tr");
+      const item = element("td", message, "empty-state");
+      item.colSpan = 6;
+      row.append(item);
+      alertRowsContainer.replaceChildren(row);
+    }
+
+    function renderAlerts(alerts) {
+      if (!alerts.length) {
+        showMessage("No matching alerts");
+        return;
+      }
+
+      const rows = alerts.map(alert => {
+        const severity = String(alert.severity || "").toLowerCase();
+        const state = alert.active ? "active" : "cleared";
+        const detected = alert.triggeredAt ? new Date(alert.triggeredAt) : null;
+        const detectedText = detected && !Number.isNaN(detected.getTime()) ? detected.toLocaleString() : "—";
+        const row = document.createElement("tr");
+        row.append(
+          cell(element("span", "#" + alert.alertId, "alert-id"), element("span", alert.message, "secondary subject")),
+          cell(element("span", severity ? severity[0].toUpperCase() + severity.slice(1) : "", "pill severity-" + severity)),
+          cell(element("span", alert.deviceName), element("span", alert.serviceName, "secondary")),
+          cell(element("span", alert.customerName)),
+          cell(element("span", state === "active" ? "Active" : "Cleared", "pill state-" + state)),
+          cell(element("span", detectedText))
+        );
+        return row;
+      });
+      alertRowsContainer.replaceChildren(...rows);
+    }
+
+    async function loadAlerts() {
+      const thisRequest = ++requestId;
+      const params = new URLSearchParams({ page: String(currentPage) });
+      if (severityFilter.value !== "all") params.set("severity", severityFilter.value);
+      if (stateFilter.value !== "all") params.set("active", stateFilter.value);
+      if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
+
+      resultCount.textContent = "Loading alerts...";
+      showMessage("Loading alerts...");
+      previousPage.disabled = true;
+      nextPage.disabled = true;
+      pageLabel.textContent = "Page " + (currentPage + 1);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/alerts/page?" + params);
+        if (!response.ok) throw new Error("Could not load alerts (HTTP " + response.status + ")");
+        const data = await response.json();
+        if (thisRequest !== requestId) return;
+        renderAlerts(data.alerts);
+        const totalPages = Math.max(1, Math.ceil(data.total / 10));
+        const first = data.total ? currentPage * 10 + 1 : 0;
+        const last = data.total ? Math.min(currentPage * 10 + data.alerts.length, data.total) : 0;
+        resultCount.textContent = "Showing " + first + "–" + last + " of " + data.total + " alerts";
+        pageLabel.textContent = "Page " + (currentPage + 1) + " of " + totalPages;
+        previousPage.disabled = currentPage === 0;
+        nextPage.disabled = currentPage + 1 >= totalPages;
+      } catch (error) {
+        if (thisRequest !== requestId) return;
+        showMessage(error.message);
+        resultCount.textContent = "Could not load alerts";
+        previousPage.disabled = currentPage === 0;
+      }
+    }
+
+    const requestedSeverity = (searchParams.get("severity") || "").toLowerCase();
+    if ([...severityFilter.options].some(option => option.value === requestedSeverity)) {
+      severityFilter.value = requestedSeverity;
+    }
+    const requestedActive = (searchParams.get("active") || "").toLowerCase();
+    if (requestedActive === "true" || requestedActive === "false") {
+      stateFilter.value = requestedActive;
+    }
+
+    loadAlerts();
+
+    function filtersChanged() {
+      currentPage = 0;
+      loadAlerts();
+    }
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(filtersChanged, 300);
+    });
+    severityFilter.addEventListener("change", filtersChanged);
+    stateFilter.addEventListener("change", filtersChanged);
+    previousPage.addEventListener("click", () => {
+      if (currentPage > 0) {
+        currentPage -= 1;
+        loadAlerts();
+      }
+    });
+    nextPage.addEventListener("click", () => {
+      currentPage += 1;
+      loadAlerts();
+    });
+  </script>
+</body>
+</html>

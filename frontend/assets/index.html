@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Omnicommand IT operations workspace">
+  <title>OmniCommand | Command Center</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.55 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { border-bottom: 1px solid var(--line); background: #ffffff; }
+    .bar, main { max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .bar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-block: 14px; }
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--text); font-size: 21px; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+    .mark { display: block; flex: 0 0 auto; }
+    .chart-container { max-width: 500px; padding: 20px; background: #f6f6f6; border-radius: 12px;}
+    .chart-container canvas { width: 100%;}
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
+    main { padding-block: clamp(36px, 7vw, 78px); }
+    .eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
+    h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.05; letter-spacing: -.055em; margin: 12px 0; }
+    h3 { font-size: 16px; margin: 0; }
+    p { color: var(--muted); margin: 0; }
+    .intro { margin-bottom: 36px; text-align: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr)); gap: 14px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+    .metric { display: block; margin: 10px 0 6px; font-size: 29px; font-weight: 700; }
+    .panel p { font-size: 14px; }
+    .overview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .summary-heading { display: flex; align-items: baseline; justify-content: center; gap: 12px; text-align: center; }
+    .summary-heading a { color: var(--accent); text-decoration: none; }
+    .summary-heading h3 { font-size: 19px; }
+    .summary-heading p { font-size: 12px; }
+    .summary-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
+    .summary-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; }
+    .summary-item:hover { border-color: var(--accent); }
+    .summary-item strong { font-size: 21px; }
+    .summary-item span { font-size: 14px; }
+    .summary-item.urgent, .summary-item.warning, .summary-item.pending { border-color: #e2bd65; background: #fff9e9; color: #765000; }
+    .summary-item.urgent:hover, .summary-item.warning:hover, .summary-item.pending:hover { border-color: #bd8100; }
+    .summary-item.new-ticket, .summary-item.online { border-color: #a7d2b7; background: #eff8f2; color: #24633d; }
+    .summary-item.new-ticket:hover, .summary-item.online:hover { border-color: #43885b; }
+    .summary-item.ticket-urgent, .summary-item.critical, .summary-item.overdue, .summary-item.offline { border-color: #e5a5a1; background: #fff1f0; color: #a32922; }
+    .summary-item.ticket-urgent:hover, .summary-item.critical:hover, .summary-item.overdue:hover, .summary-item.offline:hover { border-color: #c43b33; }
+    .summary-item.info { border-color: #a7c7e9; background: #eff6fd; color: #245b8e; }
+
+ 
+    .right-band {
+        font-size: 24px;
+        text-align: center;
+        font-weight: bold;
+        margin: 0 0 0 0;
+    }
+
+    .monitor-container {
+        position: relative;
+        width: 600px;
+        max-width: 100%;
+        margin-top: -100px;
+    }
+
+    .fark {
+        display: block;
+        width: 100%;
+    }
+
+    .fark img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .OfflineCount {
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    
+        color: rgb(183, 0, 0);
+        font-size: 80px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+    .dashboard-visuals {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 20px;
+    }
+
+    .monitor-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .chart-container {
+        flex: 1;
+        min-width: 0;
+    }
+
+    @media (max-width: 850px) {
+        .dashboard-visuals {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+
+    hr {
+      border: none;
+      border-top: 5px solid #000000;
+      margin: 100px 50px;
+    }
+    .summary-item.info:hover { border-color: #4d83bb; }
+    .general-stats { margin-top: 40px; }
+    .general-stats h2 { margin: 0 0 16px; font-size: 23px; }
+    .stats-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+    .stat-card { display: grid; gap: 6px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .stat-card span { color: var(--muted); font-size: 13px; }
+    .stat-card strong { font-size: 25px; line-height: 1.2; }
+    .stats-message { color: var(--muted); }
+    @media (max-width: 760px) {
+      .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .overview-grid { grid-template-columns: 1fr; }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; }
+    }
+  </style>
+  <link rel="stylesheet" href="theme.css?v=8">
+  <script src="theme.js?v=4"></script>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="brand" href="index.html" aria-label="OmniCommand home">
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" width="128" height="163" alt=""></span>OmniCommand
+      </a>
+      <div class="current-employee"><select id="current-employee" aria-label="Current employee"><option value="">Loading employees...</option></select></div>
+      <script src="assets/current_user.js?v=4"></script>
+      <div class="theme-menu">
+        <button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Choose color theme">
+          <span class="theme-icon-wrap" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-current theme-light-label">Light mode</span><span class="theme-current theme-dark-label">Dark mode</span>
+          <svg class="theme-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div class="theme-options" hidden><button class="theme-option" type="button">
+          <span class="theme-option-icon" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-option-label theme-dark-label">Dark mode</span><span class="theme-option-label theme-light-label">Light mode</span>
+        </button></div>
+      </div>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" width="355" height="163" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner">
+        <a href="index.html" aria-current="page">Dashboard</a>
+        <a href="tickets.html">Tickets</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="my_assignments.html">My Assignments</a>
+        <a href="process_plans.html">Process plans</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="device_monitoring.html">Device monitoring</a>
+        <a class="ai-tab" href="ai_assistant.html"><img class="ai-tab-icon" src="assets/ai-icon.jpeg" width="20" height="20" alt="">AI Assistant</a>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <div class="intro">
+      <p class="eyebrow">IT Operations Workspace</p>
+      <h1>Command Center</h1>
+      <hr>
+    <section aria-label="Operations summary">
+      <div class="grid overview-grid">
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="tickets.html">Tickets</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item new-ticket" href="tickets.html"><span>New</span><strong data-endpoint="new-tickets">—</strong></a>
+            <a class="summary-item ticket-urgent" href="tickets.html?status=open&amp;priority=urgent"><span>Urgent</span><strong data-endpoint="urgent-tickets">—</strong></a>
+            <a class="summary-item urgent" href="tickets.html?status=open&amp;priority=high"><span>High priority</span><strong data-endpoint="high-priority-tickets">—</strong></a>
+            <a class="summary-item" href="tickets.html?status=open"><span>Open</span><strong data-endpoint="open-tickets">—</strong></a>
+            <a class="summary-item" href="tickets.html?status=inprogress"><span>In progress</span><strong data-endpoint="in-progress-tickets">—</strong></a>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="tasks.html">Tasks</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item overdue" href="tasks.html?overdue=true"><span>Overdue</span><strong data-endpoint="overdue-tasks">—</strong></a>
+            <a class="summary-item pending" href="tasks.html?status=pending"><span>Pending</span><strong data-endpoint="pending-tasks">—</strong></a>
+            <a class="summary-item" href="tasks.html?status=inprogress"><span>In progress</span><strong data-endpoint="in-progress-tasks">—</strong></a>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="alerts.html?active=true">Alerts</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item critical" href="alerts.html?active=true&amp;severity=critical"><span>Critical</span><strong data-endpoint="critical-alerts">—</strong></a>
+            <a class="summary-item warning" href="alerts.html?active=true&amp;severity=warning"><span>Warning</span><strong data-endpoint="warning-alerts">—</strong></a>
+            <a class="summary-item info" href="alerts.html?active=true&amp;severity=info"><span>Info</span><strong data-endpoint="info-alerts">—</strong></a>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="summary-heading">
+            <h3><a href="device_monitoring.html">Device monitoring</a></h3>
+          </div>
+          <div class="summary-list">
+            <a class="summary-item online" href="device_monitoring.html?online=true"><span>Online</span><strong data-endpoint="online-devices">—</strong></a>
+            <a class="summary-item offline" href="device_monitoring.html?online=false"><span>Offline</span><strong data-endpoint="offline-devices">—</strong></a>
+          </div>
+        </article>
+      </div>
+      <hr>
+     <div class="dashboard-visuals">
+
+    <div class="chart-container">
+        <h2>Ticket Data</h2>
+        <canvas id="alertsPieChart"></canvas>
+    </div>
+
+
+    <div class="monitor-section">
+
+        <h2 class="right-band">Offline Devices</h2>
+
+        <div class="monitor-container">
+            <span class="fark" aria-hidden="true">
+                <img src="assets/MonitorIcon.png" alt="">
+            </span>
+
+            <div class="OfflineCount">
+                <strong data-endpoint="offline-devices">—</strong>
+            </div>
+        </div>
+
+    </div>
+</div>
+<hr>
+</div>
+    </section>
+    <section class="general-stats" aria-labelledby="general-stats-heading">
+      <h2 id="general-stats-heading">General stats</h2>
+      <div class="grid stats-grid" id="general-stats" aria-live="polite">
+        <p class="stats-message">Loading stats...</p>
+      </div>
+    </section>
+  </main>
+  <script>
+    async function loadMetric(metric) {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/${metric.dataset.endpoint}`);
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        metric.textContent = data.total;
+      } catch (error) {
+        metric.textContent = "Error";
+        metric.title = error.message;
+      }
+    }
+    document.querySelectorAll("[data-endpoint]").forEach(loadMetric);
+
+    const statLabels = [
+      ["companies", "Companies"],
+      ["contacts", "Contacts"],
+      ["issues", "Issues"],
+      ["activities", "Activities"],
+      ["jobs", "Jobs"],
+      ["milestones", "Milestones"],
+      ["tasks", "Tasks"],
+      ["requests", "Requests"],
+      ["assets", "Assets"],
+      ["staff", "Staff"],
+      ["ncentral_customers", "N-central customers"],
+      ["ncentral_sites", "N-central sites"],
+      ["ncentral_devices", "N-central devices"],
+      ["ncentral_alerts_total", "N-central alerts total"],
+      ["ncentral_alerts_active", "N-central alerts active"]
+    ];
+
+    async function loadGeneralStats() {
+      const container = document.getElementById("general-stats");
+      try {
+        const response = await fetch("http://127.0.0.1:8000/admin/stats");
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+        if (!data.counts || typeof data.counts !== "object") throw new Error("Stats response has no counts");
+        const cards = statLabels.map(([key, label]) => {
+          const card = document.createElement("div");
+          card.className = "stat-card";
+          const name = document.createElement("span");
+          name.textContent = label;
+          const count = document.createElement("strong");
+          const value = data.counts[key];
+          count.textContent = typeof value === "number" && Number.isFinite(value) ? value.toLocaleString() : "—";
+          card.append(name, count);
+          return card;
+        });
+        container.replaceChildren(...cards);
+      } catch (error) {
+        container.textContent = "Could not load general stats";
+        container.title = error.message;
+      }
+    }
+    loadGeneralStats();
+  </script>
+</body>
+
+<script>
+async function loadAlertChart() {
+    try {
+        const baseURL = "http://127.0.0.1:8000";
+
+        const endpoints = [
+            "/high-priority-tickets",
+            "/urgent-tickets",
+            "/open-tickets"
+        ];
+
+        
+        const responses = await Promise.all(
+            endpoints.map(endpoint => fetch(baseURL + endpoint))
+        );
+
+        if (responses.some(response => !response.ok)) {
+            throw new Error("Could not retrieve alert counts");
+        }
+
+        const results = await Promise.all(
+            responses.map(response => response.json())
+        );
+
+        const counts = results.map(result => result.total);
+
+        
+        const canvas = document.getElementById("alertsPieChart");
+
+        new Chart(canvas, {
+            type: "doughnut",
+            data: {
+                labels: ["High-Priority", "Urgent", "Open"],
+                datasets: [{
+                    data: counts,
+                    backgroundColor: [
+                        "#a32922",
+                        "#e5a000",
+                        "#245b8e"
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Chart loading failed:", error);
+    }
+}
+
+
+loadAlertChart();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</html>

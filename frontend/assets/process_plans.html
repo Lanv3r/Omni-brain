@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Manage client process plans and tasks in OmniCommand">
+  <title>Process plans | OmniCommand</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #fff; --line: #dedede; --text: #333; --muted: #666; --accent: #ffa500; }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    a { color: inherit; }
+    button, input, select { font: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+    header { border-bottom: 1px solid var(--line); background: #fff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font-size: 19px; font-weight: 750; letter-spacing: -.04em; }
+    .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+    main { padding-block: clamp(36px, 6vw, 64px) 72px; }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 0 0 30px; font-size: clamp(34px, 5vw, 48px); line-height: 1.08; letter-spacing: -.05em; }
+    h2, h3, p { margin: 0; }
+    h2 { font-size: 21px; }
+    h3 { font-size: 16px; }
+    .muted, .task-meta, .plan-company { color: var(--muted); }
+    .panel { min-width: 0; margin-bottom: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .panel-content { padding: 20px; }
+    .toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; padding: 16px; border-bottom: 1px solid var(--line); background: #fafafa; }
+    .field { display: grid; gap: 6px; }
+    .search-field { flex: 1 1 250px; }
+    .filter-field { flex: 0 1 220px; }
+    label { font-size: 12px; font-weight: 650; color: var(--muted); }
+    input:not([type="checkbox"]), select { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--text); }
+    button { cursor: pointer; }
+    button:disabled { cursor: default; opacity: .5; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); }
+    th { background: #f5f5f5; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    td { font-size: 13px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fff8eb; }
+    tbody tr.selected { background: #fff8eb; }
+    .plan-link { padding: 0; border: 0; background: none; color: var(--text); font-weight: 650; text-align: left; text-decoration: underline; text-decoration-color: var(--accent); }
+    .plan-link:hover { color: #9a6200; }
+    .status { color: var(--muted); }
+    .unsaved-tag { margin-left: 8px; color: #875000; font-size: 11px; }
+    .mini-progress { display: inline-block; width: 100px; height: 9px; margin-right: 8px; accent-color: var(--accent); }
+    .empty-state { padding: 32px 16px; color: var(--muted); text-align: center; white-space: normal; }
+    .list-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 12px 0 24px; }
+    .list-footer p { color: var(--muted); font-size: 13px; }
+    .pagination { display: flex; align-items: center; gap: 12px; }
+    .pagination button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); }
+    .new-plan-form h2 { margin-bottom: 14px; }
+    .new-plan-fields { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 12px; }
+    .new-plan-form .muted { margin-top: 10px; font-size: 12px; }
+    .detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .progress-line { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: var(--muted); font-size: 13px; }
+    progress { accent-color: var(--accent); }
+    #plan-progress { display: block; width: 100%; height: 13px; }
+    .milestones { display: grid; gap: 22px; margin-block: 28px; }
+    .milestone { border-top: 1px solid var(--line); padding-top: 16px; }
+    .milestone h3 { margin-bottom: 8px; }
+    .milestone-form { border-top: 1px solid var(--line); padding-top: 20px; }
+    .milestone-form h3 { margin-bottom: 14px; }
+    .milestone-fields { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
+    .milestone-fields .field { flex: 1 1 250px; }
+    .milestone-form .muted { margin-top: 10px; font-size: 12px; }
+    .checklist { list-style: none; margin: 0; padding: 0; }
+    .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .checklist li:last-child { border-bottom: 0; }
+    .checklist input { flex: 0 0 auto; width: 17px; height: 17px; margin-top: 3px; accent-color: var(--accent); cursor: pointer; }
+    .task-title { color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
+    .completed .task-title { color: var(--muted); text-decoration: line-through; }
+    .task-meta { display: block; margin-top: 3px; font-size: 12px; }
+    .task-form { border-top: 1px solid var(--line); padding-top: 20px; }
+    .task-form h3 { margin-bottom: 14px; }
+    .task-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .task-fields .field:first-child { grid-column: 1 / -1; }
+    .primary-button { min-height: 42px; padding: 9px 16px; border: 1px solid #c87e00; border-radius: 8px; background: var(--accent); color: #222; font-weight: 650; }
+    .primary-button:hover { background: #f3a000; }
+    .message { min-height: 22px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .error { color: #a32922; }
+    @media (max-width: 700px) {
+      .new-plan-fields { grid-template-columns: 1fr 1fr; }
+      .new-plan-fields button { grid-column: 1 / -1; }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 32px, 1160px); }
+      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .new-plan-fields, .task-fields { grid-template-columns: 1fr; }
+      .task-fields .field:first-child, .new-plan-fields button { grid-column: auto; }
+      .detail-heading { flex-direction: column; }
+      .search-field, .filter-field { flex-basis: 100%; }
+    }
+  </style>
+  <link rel="stylesheet" href="theme.css?v=8">
+  <script src="theme.js?v=4"></script>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html" aria-label="OmniCommand home">
+        <span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" width="128" height="163" alt=""></span>
+        <span>OmniCommand</span>
+      </a>
+      <div class="current-employee"><select id="current-employee" aria-label="Current employee"><option value="">Loading employees...</option></select></div>
+      <script src="assets/current_user.js?v=4"></script>
+      <div class="theme-menu">
+        <button class="theme-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Choose color theme">
+          <span class="theme-icon-wrap" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-current theme-light-label">Light mode</span><span class="theme-current theme-dark-label">Dark mode</span>
+          <svg class="theme-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </button>
+        <div class="theme-options" hidden><button class="theme-option" type="button">
+          <span class="theme-option-icon" aria-hidden="true"><svg class="theme-icon theme-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon theme-moon" viewBox="0 0 24 24"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path></svg></span>
+          <span class="theme-option-label theme-dark-label">Dark mode</span><span class="theme-option-label theme-light-label">Light mode</span>
+        </button></div>
+      </div>
+      <img class="partner-brand" src="assets/omnitechpro-logo.png" width="355" height="163" alt="OmniTechPro">
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="index.html">Dashboard</a>
+        <a href="tickets.html">Tickets</a>
+        <a href="tasks.html">Tasks</a>
+        <a href="my_assignments.html">My Assignments</a>
+        <a href="process_plans.html" aria-current="page">Process plans</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="device_monitoring.html">Device monitoring</a>
+        <a class="ai-tab" href="ai_assistant.html"><img class="ai-tab-icon" src="assets/ai-icon.jpeg" width="20" height="20" alt="">AI Assistant</a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell">
+    <p class="eyebrow">Accelo</p>
+    <h1>Process plans</h1>
+
+    <section class="panel" aria-label="Plans">
+      <div class="toolbar">
+        <div class="field search-field">
+          <label for="plan-search">Find a plan</label>
+          <input id="plan-search" type="search" placeholder="Plan or company">
+        </div>
+        <div class="field filter-field">
+          <label for="company-filter">Company</label>
+          <select id="company-filter"><option value="all">All companies</option></select>
+        </div>
+        <div class="field filter-field">
+          <label for="status-filter">Status</label>
+          <select id="status-filter">
+            <option value="all">All statuses</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Plan</th><th scope="col">Company</th><th scope="col">Status</th><th scope="col">Progress</th></tr></thead>
+          <tbody id="plan-rows"><tr><td class="empty-state" colspan="4">Loading plans...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <div class="list-footer">
+      <p id="list-status" aria-live="polite">Loading plans...</p>
+      <nav class="pagination" aria-label="Plan pages">
+        <button id="previous-page" type="button" disabled>Previous</button>
+        <span id="page-label" aria-live="polite">Page 1</span>
+        <button id="next-page" type="button" disabled>Next</button>
+      </nav>
+    </div>
+
+    <section class="panel" aria-labelledby="new-plan-heading">
+      <form id="new-plan-form" class="new-plan-form panel-content">
+        <h2 id="new-plan-heading">New plan</h2>
+        <div class="new-plan-fields">
+          <div class="field">
+            <label for="new-plan-name">Plan name</label>
+            <input id="new-plan-name" required maxlength="200">
+          </div>
+          <div class="field">
+            <label for="new-plan-company">Company</label>
+            <select id="new-plan-company" required>
+              <option value="">Choose a company</option>
+              <option value="new">New company</option>
+            </select>
+            <label id="new-plan-company-name-label" for="new-plan-company-name" hidden>New company name</label>
+            <input id="new-plan-company-name" maxlength="200" hidden>
+          </div>
+          <button id="create-plan" class="primary-button" type="submit">Create plan</button>
+        </div>
+        <p class="muted">New plans and their tasks disappear when you refresh this page.</p>
+        <p id="new-plan-status" class="message" role="status"></p>
+      </form>
+    </section>
+
+    <section id="plan-detail" class="panel panel-content" aria-labelledby="selected-plan-title">
+      <p id="plan-empty" class="muted">Loading plan...</p>
+      <div id="plan-content" hidden>
+        <div class="detail-heading">
+          <div>
+            <h2 id="selected-plan-title"></h2>
+            <p id="plan-company" class="plan-company"></p>
+          </div>
+          <button id="save-plan" class="primary-button" type="button" disabled>Save changes</button>
+        </div>
+        <div class="progress-line"><span>Plan progress</span><span id="progress-text"></span></div>
+        <progress id="plan-progress" max="100" value="0" aria-label="Plan progress"></progress>
+        <p id="save-status" class="message" role="status"></p>
+        <div id="milestones" class="milestones"></div>
+        <form id="milestone-form" class="milestone-form">
+          <h3>Add milestone</h3>
+          <div class="milestone-fields">
+            <div class="field"><label for="milestone-title">Milestone name</label><input id="milestone-title" required maxlength="200"></div>
+            <button id="add-milestone" class="primary-button" type="submit">Add to plan</button>
+          </div>
+          <p class="muted">New milestones are saved here; their tasks are created in Accelo under the job.</p>
+          <p id="milestone-status" class="message" role="status"></p>
+        </form>
+        <form id="task-form" class="task-form">
+          <h3>Add task</h3>
+          <div class="task-fields">
+            <div class="field"><label for="task-title">Task name</label><input id="task-title" required maxlength="200"></div>
+            <div class="field"><label for="task-milestone">Milestone</label><select id="task-milestone" required></select></div>
+            <div class="field"><label for="task-assignee">Assignee</label><select id="task-assignee"><option value="">Unassigned</option></select></div>
+            <div class="field"><label for="task-due">Deadline</label><input id="task-due" type="date"></div>
+          </div>
+          <button id="add-task" class="primary-button" type="submit">Add to plan</button>
+          <p id="form-status" class="message" role="status"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script>
+    const apiBase = "http://127.0.0.1:8000";
+    const planSearch = document.getElementById("plan-search");
+    const companyFilter = document.getElementById("company-filter");
+    const statusFilter = document.getElementById("status-filter");
+    const planRows = document.getElementById("plan-rows");
+    const listStatus = document.getElementById("list-status");
+    const previousPage = document.getElementById("previous-page");
+    const nextPage = document.getElementById("next-page");
+    const pageLabel = document.getElementById("page-label");
+    const newPlanForm = document.getElementById("new-plan-form");
+    const newPlanName = document.getElementById("new-plan-name");
+    const newPlanCompany = document.getElementById("new-plan-company");
+    const newPlanCompanyNameLabel = document.getElementById("new-plan-company-name-label");
+    const newPlanCompanyName = document.getElementById("new-plan-company-name");
+    const createPlanButton = document.getElementById("create-plan");
+    const newPlanStatus = document.getElementById("new-plan-status");
+    const planEmpty = document.getElementById("plan-empty");
+    const planDetail = document.getElementById("plan-detail");
+    const planContent = document.getElementById("plan-content");
+    const planTitle = document.getElementById("selected-plan-title");
+    const planCompany = document.getElementById("plan-company");
+    const progressText = document.getElementById("progress-text");
+    const planProgress = document.getElementById("plan-progress");
+    const saveButton = document.getElementById("save-plan");
+    const saveStatus = document.getElementById("save-status");
+    const milestoneList = document.getElementById("milestones");
+    const milestoneForm = document.getElementById("milestone-form");
+    const milestoneTitle = document.getElementById("milestone-title");
+    const addMilestoneButton = document.getElementById("add-milestone");
+    const milestoneStatus = document.getElementById("milestone-status");
+    const taskForm = document.getElementById("task-form");
+    const taskTitle = document.getElementById("task-title");
+    const taskMilestone = document.getElementById("task-milestone");
+    const taskAssignee = document.getElementById("task-assignee");
+    const taskDue = document.getElementById("task-due");
+    const addTaskButton = document.getElementById("add-task");
+    const formStatus = document.getElementById("form-status");
+    let plans = [];
+    let companies = [];
+    const localCompanies = [];
+    const draftPlans = [];
+    const details = new Map();
+    const pending = new Map();
+    let draftNumber = 0;
+    let draftMilestoneNumber = 0;
+    let draftTaskNumber = 0;
+    let selectedPlanId = null;
+    let tablePage = 0;
+    let detailRequestId = 0;
+    let saving = false;
+
+    async function api(path, options) {
+      const response = await fetch(apiBase + path, options);
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        let detail = data && data.detail;
+        if (typeof detail === "string") {
+          try { detail = JSON.parse(detail).detail || detail; } catch { /* Keep the message. */ }
+        }
+        throw new Error(typeof detail === "string" ? detail : "Request failed (HTTP " + response.status + ")");
+      }
+      return data;
+    }
+
+    function element(tag, value, className) {
+      const item = document.createElement(tag);
+      item.textContent = value == null || value === "" ? "—" : String(value);
+      if (className) item.className = className;
+      return item;
+    }
+
+    function editsFor(id) {
+      if (!pending.has(id)) pending.set(id, { checks: new Map(), milestones: [], tasks: [] });
+      return pending.get(id);
+    }
+
+    function hasEdits(id) {
+      const edits = pending.get(id);
+      return Boolean(edits && (edits.checks.size || edits.milestones.length || edits.tasks.length));
+    }
+
+    function needsSync(id) {
+      return typeof id === "number" && Boolean(details.get(id)?.tasks.some(task => String(task.id).startsWith("local-task-")));
+    }
+
+    function allPlans() {
+      return [...draftPlans, ...plans];
+    }
+
+    function statusText(status) {
+      return { active: "Active", completed: "Completed", on_hold: "On hold" }[status] || status;
+    }
+
+    function updateStatusOptions() {
+      const selected = statusFilter.value;
+      const statuses = [...new Set(plans.map(plan => plan.status).filter(Boolean))].sort();
+      const options = [
+        new Option("All statuses", "all"),
+        ...statuses.map(status => new Option(statusText(status), status))
+      ];
+      if (draftPlans.length) options.push(new Option("Temporary", "temporary"));
+      statusFilter.replaceChildren(...options);
+      statusFilter.value = options.some(option => option.value === selected) ? selected : "all";
+    }
+
+    function updateNewCompanyField() {
+      const isNew = newPlanCompany.value === "new";
+      newPlanCompanyNameLabel.hidden = !isNew;
+      newPlanCompanyName.hidden = !isNew;
+      newPlanCompanyName.required = isNew;
+      if (!isNew) newPlanCompanyName.value = "";
+    }
+
+    function updateCompanyOptions() {
+      const selectedFilter = companyFilter.value;
+      const selectedNewPlanCompany = newPlanCompany.value;
+      const options = [...companies, ...localCompanies];
+      companyFilter.replaceChildren(
+        new Option("All companies", "all"),
+        ...options.map(company => new Option(company.name, String(company.id)))
+      );
+      companyFilter.value = options.some(company => String(company.id) === selectedFilter) ? selectedFilter : "all";
+      newPlanCompany.replaceChildren(
+        new Option("Choose a company", ""),
+        ...options.map(company => new Option(company.name, String(company.id))),
+        new Option("New company", "new")
+      );
+      newPlanCompany.value = selectedNewPlanCompany === "new" || options.some(company => String(company.id) === selectedNewPlanCompany)
+        ? selectedNewPlanCompany : "";
+      updateNewCompanyField();
+    }
+
+    function draftDetail(draft) {
+      const completed = draft.tasks.filter(task => task.status === "complete").length;
+      return {
+        job: draft,
+        milestones: [{ id: "draft", title: "Checklist" }, ...draft.milestones],
+        tasks: draft.tasks,
+        progress: { completed: completed, total: draft.tasks.length, percent: draft.tasks.length ? Math.round(completed * 100 / draft.tasks.length) : 0 }
+      };
+    }
+
+    function milestonesFor(id, data) {
+      return [...data.milestones, ...editsFor(id).milestones];
+    }
+
+    function tasksFor(id, data) {
+      const edits = editsFor(id);
+      return data.tasks.map(task => ({
+        ...task,
+        status: edits.checks.has(task.id) ? (edits.checks.get(task.id) ? "complete" : "pending") : task.status
+      })).concat(edits.tasks);
+    }
+
+    function renderTable() {
+      const query = planSearch.value.trim().toLocaleLowerCase();
+      const companyId = companyFilter.value;
+      const status = statusFilter.value;
+      const filtered = allPlans().filter(plan =>
+        (companyId === "all" || String(plan.company_id) === companyId) &&
+        (status === "all" || (plan.draft ? "temporary" : plan.status) === status) &&
+        (plan.title + " " + plan.company_name).toLocaleLowerCase().includes(query)
+      );
+      const totalPages = Math.max(1, Math.ceil(filtered.length / 10));
+      tablePage = Math.min(tablePage, totalPages - 1);
+      const pagePlans = filtered.slice(tablePage * 10, tablePage * 10 + 10);
+      if (!pagePlans.length) {
+        const row = document.createElement("tr");
+        const cell = element("td", "No matching plans", "empty-state");
+        cell.colSpan = 4;
+        row.append(cell);
+        planRows.replaceChildren(row);
+      } else {
+        planRows.replaceChildren(...pagePlans.map(plan => {
+          const row = document.createElement("tr");
+          if (plan.id === selectedPlanId) row.className = "selected";
+          const nameCell = document.createElement("td");
+          const link = element("button", plan.title, "plan-link");
+          link.type = "button";
+          link.addEventListener("click", () => selectPlan(plan.id, true));
+          nameCell.append(link);
+          if (hasEdits(plan.id) || needsSync(plan.id)) {
+            nameCell.append(element("span", hasEdits(plan.id) ? "Unsaved" : "Needs sync", "unsaved-tag"));
+          }
+          const detail = details.get(plan.id);
+          const tasks = detail ? tasksFor(plan.id, detail) : null;
+          const progress = tasks
+            ? Math.round(tasks.filter(task => task.status === "complete").length * 100 / (tasks.length || 1))
+            : Number(plan.percent_complete || 0);
+          const progressCell = document.createElement("td");
+          const bar = document.createElement("progress");
+          bar.className = "mini-progress";
+          bar.max = 100;
+          bar.value = progress;
+          bar.setAttribute("aria-label", plan.title + " progress");
+          progressCell.append(bar, element("span", progress + "%"));
+          row.append(
+            nameCell,
+            element("td", plan.company_name),
+            element("td", plan.draft ? "Temporary" : statusText(plan.status), "status"),
+            progressCell
+          );
+          return row;
+        }));
+      }
+      const first = filtered.length ? tablePage * 10 + 1 : 0;
+      const last = Math.min((tablePage + 1) * 10, filtered.length);
+      listStatus.textContent = "Showing " + first + "–" + last + " of " + filtered.length + " plans";
+      pageLabel.textContent = "Page " + (tablePage + 1) + " of " + totalPages;
+      previousPage.disabled = tablePage === 0;
+      nextPage.disabled = tablePage + 1 >= totalPages;
+    }
+
+    function selectPlan(id, scroll = false) {
+      if (saving) return;
+      selectedPlanId = id;
+      const url = new URL(window.location.href);
+      if (typeof id === "string") url.searchParams.delete("job_id");
+      else url.searchParams.set("job_id", String(id));
+      history.replaceState(null, "", url);
+      taskForm.reset();
+      milestoneForm.reset();
+      formStatus.textContent = "";
+      milestoneStatus.textContent = "";
+      renderTable();
+      loadPlan(id);
+      if (scroll) planDetail.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function dateText(value) {
+      if (!value) return "";
+      const date = new Date(value + "T00:00:00");
+      return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+    }
+
+    function taskRow(task, id) {
+      const row = document.createElement("li");
+      if (task.status === "complete") row.className = "completed";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = "task-" + task.id;
+      checkbox.checked = task.status === "complete";
+      checkbox.disabled = saving;
+      const content = document.createElement("div");
+      const label = element("label", task.title, "task-title");
+      label.htmlFor = checkbox.id;
+      const parts = [];
+      if (task.assignee_name) parts.push(task.assignee_name);
+      if (task.date_due) parts.push("Due " + dateText(task.date_due));
+      if (task.status !== "complete" && task.date_due && task.date_due < new Date().toISOString().slice(0, 10)) parts.push("Overdue");
+      content.append(label);
+      if (parts.length) content.append(element("span", parts.join(" · "), "task-meta"));
+      row.append(checkbox, content);
+      checkbox.addEventListener("change", () => {
+        const edits = editsFor(id);
+        const pendingTask = edits.tasks.find(item => item.id === task.id);
+        if (pendingTask) {
+          pendingTask.status = checkbox.checked ? "complete" : "pending";
+        } else {
+          const base = details.get(id).tasks.find(item => item.id === task.id);
+          if (checkbox.checked === (base.status === "complete")) edits.checks.delete(task.id);
+          else edits.checks.set(task.id, checkbox.checked);
+        }
+        renderDetail(details.get(id));
+        renderTable();
+        saveStatus.textContent = "Unsaved changes";
+      });
+      return row;
+    }
+
+    function renderDetail(data) {
+      const id = data.job.id;
+      const milestones = milestonesFor(id, data);
+      const tasks = tasksFor(id, data);
+      const completed = tasks.filter(task => task.status === "complete").length;
+      const percent = tasks.length ? Math.round(completed * 100 / tasks.length) : 0;
+      planEmpty.hidden = true;
+      planContent.hidden = false;
+      planTitle.textContent = data.job.title;
+      planCompany.textContent = data.job.company_name + (data.job.draft ? " · Temporary" : "");
+      planProgress.value = percent;
+      progressText.textContent = completed + " of " + tasks.length + " tasks complete (" + percent + "%)";
+      saveButton.disabled = (!hasEdits(id) && !needsSync(id)) || saving;
+      saveStatus.textContent = hasEdits(id) ? "Unsaved changes" : needsSync(id) ? "Save to sync local tasks with Accelo" : "";
+      saveStatus.classList.remove("error");
+      const selectedMilestone = taskMilestone.value;
+      taskMilestone.replaceChildren(...milestones.map(milestone => new Option(milestone.title, String(milestone.id))));
+      if (milestones.some(milestone => String(milestone.id) === selectedMilestone)) taskMilestone.value = selectedMilestone;
+      addMilestoneButton.disabled = saving;
+      addTaskButton.disabled = saving || milestones.length === 0;
+
+      const groups = milestones.map(milestone => {
+        const section = document.createElement("section");
+        section.className = "milestone";
+        section.append(element("h3", milestone.title));
+        const groupTasks = tasks.filter(task => String(task.milestone_id) === String(milestone.id));
+        if (groupTasks.length) {
+          const list = document.createElement("ul");
+          list.className = "checklist";
+          list.append(...groupTasks.map(task => taskRow(task, id)));
+          section.append(list);
+        } else {
+          section.append(element("p", "No tasks yet", "muted"));
+        }
+        return section;
+      });
+      const other = tasks.filter(task => !milestones.some(milestone => String(milestone.id) === String(task.milestone_id)));
+      if (other.length) {
+        const section = document.createElement("section");
+        section.className = "milestone";
+        section.append(element("h3", "Other tasks"));
+        const list = document.createElement("ul");
+        list.className = "checklist";
+        list.append(...other.map(task => taskRow(task, id)));
+        section.append(list);
+        groups.push(section);
+      }
+      milestoneList.replaceChildren(...groups);
+    }
+
+    async function loadPlan(id) {
+      const requestId = ++detailRequestId;
+      planEmpty.hidden = false;
+      planEmpty.textContent = "Loading plan...";
+      planEmpty.classList.remove("error");
+      planContent.hidden = true;
+      try {
+        const data = typeof id === "string"
+          ? draftDetail(draftPlans.find(plan => plan.id === id))
+          : await api("/process-plans/" + id);
+        if (requestId !== detailRequestId || selectedPlanId !== id) return;
+        details.set(id, data);
+        renderDetail(data);
+        renderTable();
+      } catch (error) {
+        if (requestId !== detailRequestId || selectedPlanId !== id) return;
+        planEmpty.textContent = error.message;
+        planEmpty.classList.add("error");
+      }
+    }
+
+    async function loadPlans() {
+      try {
+        const data = await api("/process-plans");
+        plans = data.plans;
+        updateStatusOptions();
+        renderTable();
+        if (selectedPlanId === null && plans.length) {
+          const requested = Number(new URLSearchParams(window.location.search).get("job_id"));
+          const initial = plans.find(plan => plan.id === requested) || plans[0];
+          const index = allPlans().findIndex(plan => plan.id === initial.id);
+          tablePage = Math.floor(index / 10);
+          renderTable();
+          selectPlan(initial.id);
+        } else if (selectedPlanId === null && !draftPlans.length) {
+          planEmpty.textContent = "No process plans found";
+        }
+      } catch (error) {
+        listStatus.textContent = error.message;
+        listStatus.classList.add("error");
+        if (selectedPlanId === null) planEmpty.textContent = "Could not load plans";
+      }
+    }
+
+    async function loadCompanies() {
+      try {
+        companies = await api("/companies");
+        updateCompanyOptions();
+      } catch {
+        newPlanStatus.textContent = "Could not load existing companies. You can still enter a new one.";
+        newPlanStatus.classList.add("error");
+      }
+    }
+
+    async function loadStaff() {
+      try {
+        const staff = await OmniEmployee.ready;
+        if (OmniEmployee.getError()) throw new Error(OmniEmployee.getError());
+        taskAssignee.replaceChildren(
+          new Option("Unassigned", ""),
+          ...staff.map(member => new Option(member.name, String(member.id)))
+        );
+      } catch {
+        taskAssignee.title = "Could not load staff";
+      }
+    }
+
+    function stageMilestone(event) {
+      event.preventDefault();
+      if (selectedPlanId === null || saving) return;
+      const title = milestoneTitle.value.trim();
+      if (!title) return;
+      const id = selectedPlanId;
+      const milestone = { id: "draft-milestone-" + ++draftMilestoneNumber, title: title };
+      editsFor(id).milestones.push(milestone);
+      milestoneForm.reset();
+      renderDetail(details.get(id));
+      taskMilestone.value = milestone.id;
+      renderTable();
+      milestoneStatus.textContent = "Milestone added to unsaved changes";
+    }
+
+    function stageTask(event) {
+      event.preventDefault();
+      if (selectedPlanId === null || saving) return;
+      const title = taskTitle.value.trim();
+      if (!title) return;
+      const id = selectedPlanId;
+      const milestoneId = taskMilestone.value;
+      if (!milestoneId) return;
+      editsFor(id).tasks.push({
+        id: "draft-task-" + ++draftTaskNumber,
+        title: title,
+        milestone_id: milestoneId.startsWith("draft") || milestoneId.startsWith("local-milestone-")
+          ? milestoneId : Number(milestoneId),
+        assignee: taskAssignee.value ? Number(taskAssignee.value) : null,
+        assignee_name: taskAssignee.value ? taskAssignee.selectedOptions[0].textContent : null,
+        date_due: taskDue.value || null,
+        status: "pending"
+      });
+      taskForm.reset();
+      renderDetail(details.get(id));
+      taskMilestone.value = milestoneId;
+      renderTable();
+      formStatus.textContent = "Task added to unsaved changes";
+    }
+
+    async function savePlan() {
+      const id = selectedPlanId;
+      if (id === null || (!hasEdits(id) && !needsSync(id)) || saving) return;
+      saving = true;
+      saveButton.disabled = true;
+      addMilestoneButton.disabled = true;
+      addTaskButton.disabled = true;
+      createPlanButton.disabled = true;
+      for (const checkbox of milestoneList.querySelectorAll('input[type="checkbox"]')) checkbox.disabled = true;
+      saveStatus.textContent = "Saving changes...";
+      saveStatus.classList.remove("error");
+      const edits = editsFor(id);
+      try {
+        if (typeof id === "string") {
+          const draft = draftPlans.find(plan => plan.id === id);
+          for (const [taskId, complete] of edits.checks) {
+            const task = draft.tasks.find(item => item.id === taskId);
+            if (task) task.status = complete ? "complete" : "pending";
+          }
+          draft.milestones.push(...edits.milestones);
+          draft.tasks.push(...edits.tasks);
+          edits.checks.clear();
+          edits.milestones.length = 0;
+          edits.tasks.length = 0;
+          details.set(id, draftDetail(draft));
+        } else {
+          for (const task of details.get(id).tasks.filter(item => String(item.id).startsWith("local-task-"))) {
+            const created = await api("/process-plans/" + id + "/local-tasks/" + task.id + "/sync", {
+              method: "POST"
+            });
+            if (edits.checks.has(task.id)) {
+              edits.checks.set(created.id, edits.checks.get(task.id));
+              edits.checks.delete(task.id);
+            }
+          }
+          for (const milestone of [...edits.milestones]) {
+            const created = await api("/process-plans/" + id + "/milestones", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title: milestone.title })
+            });
+            edits.milestones.splice(edits.milestones.indexOf(milestone), 1);
+            for (const task of edits.tasks) {
+              if (task.milestone_id === milestone.id) task.milestone_id = created.id;
+            }
+          }
+          for (const task of [...edits.tasks]) {
+            const payload = { title: task.title, milestone_id: task.milestone_id };
+            if (task.assignee !== null) payload.assignee = task.assignee;
+            if (task.date_due) payload.date_due = task.date_due;
+            if (typeof task.milestone_id === "string") payload.assignee_name = task.assignee_name;
+            const path = typeof task.milestone_id === "string" ? "/local-tasks" : "/tasks";
+            const created = await api("/process-plans/" + id + path, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            edits.tasks.splice(edits.tasks.indexOf(task), 1);
+            if (task.status === "complete") edits.checks.set(created.id, true);
+          }
+          for (const [taskId, complete] of [...edits.checks]) {
+            const path = String(taskId).startsWith("local-task-") ? "/local-tasks/" : "/tasks/";
+            await api("/process-plans/" + id + path + taskId, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ complete: complete })
+            });
+            edits.checks.delete(taskId);
+          }
+          const data = await api("/process-plans/" + id);
+          details.set(id, data);
+          await loadPlans();
+        }
+        if (selectedPlanId === id) {
+          renderDetail(details.get(id));
+          milestoneStatus.textContent = "";
+          formStatus.textContent = "";
+          saveStatus.textContent = typeof id === "string" ? "Saved for this session" : "Changes saved";
+        }
+      } catch (error) {
+        if (typeof id === "number") {
+          try { details.set(id, await api("/process-plans/" + id)); } catch { /* Keep the last loaded plan. */ }
+        }
+        if (selectedPlanId === id) {
+          renderDetail(details.get(id));
+          saveStatus.textContent = error.message;
+          saveStatus.classList.add("error");
+        }
+      } finally {
+        saving = false;
+        renderTable();
+        createPlanButton.disabled = false;
+        if (selectedPlanId === id) {
+          saveButton.disabled = !hasEdits(id) && !needsSync(id);
+          addMilestoneButton.disabled = false;
+          addTaskButton.disabled = taskMilestone.options.length === 0;
+          for (const checkbox of milestoneList.querySelectorAll('input[type="checkbox"]')) checkbox.disabled = false;
+        }
+      }
+    }
+
+    newPlanForm.addEventListener("submit", event => {
+      event.preventDefault();
+      if (saving) return;
+      const title = newPlanName.value.trim();
+      const isNewCompany = newPlanCompany.value === "new";
+      const companyName = isNewCompany ? newPlanCompanyName.value.trim() : newPlanCompany.selectedOptions[0]?.textContent;
+      if (!title || !newPlanCompany.value || !companyName) return;
+      let companyId = newPlanCompany.value;
+      if (isNewCompany) {
+        let company = localCompanies.find(item => item.name.toLocaleLowerCase() === companyName.toLocaleLowerCase());
+        if (!company) {
+          company = { id: "local-company-" + (localCompanies.length + 1), name: companyName };
+          localCompanies.push(company);
+        }
+        companyId = company.id;
+      }
+      const draft = {
+        id: "draft-" + ++draftNumber,
+        draft: true,
+        title: title,
+        company_id: companyId,
+        company_name: companyName,
+        milestones: [],
+        tasks: []
+      };
+      draftPlans.unshift(draft);
+      updateStatusOptions();
+      newPlanForm.reset();
+      updateCompanyOptions();
+      planSearch.value = "";
+      companyFilter.value = "all";
+      statusFilter.value = "all";
+      tablePage = 0;
+      newPlanStatus.textContent = "Temporary plan created";
+      newPlanStatus.classList.remove("error");
+      renderTable();
+      selectPlan(draft.id, true);
+    });
+
+    planSearch.addEventListener("input", () => { tablePage = 0; renderTable(); });
+    companyFilter.addEventListener("change", () => { tablePage = 0; renderTable(); });
+    statusFilter.addEventListener("change", () => { tablePage = 0; renderTable(); });
+    newPlanCompany.addEventListener("change", updateNewCompanyField);
+    previousPage.addEventListener("click", () => { if (tablePage > 0) { tablePage--; renderTable(); } });
+    nextPage.addEventListener("click", () => { tablePage++; renderTable(); });
+    milestoneForm.addEventListener("submit", stageMilestone);
+    taskForm.addEventListener("submit", stageTask);
+    saveButton.addEventListener("click", savePlan);
+    loadPlans();
+    loadCompanies();
+    loadStaff();
+  </script>
+</body>
+</html>
