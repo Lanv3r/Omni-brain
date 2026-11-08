@@ -67,8 +67,8 @@
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
 
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav-inner { display: flex; overflow-x: auto; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
@@ -287,7 +287,6 @@
       .search-field, .filter-field, .priority-dropdown { flex-basis: 100%; }
       .queue-summary { align-items: flex-start; flex-direction: column; gap: 4px; }
       th, td { padding-inline: 12px; }
-      .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
   </style>
   <link rel="stylesheet" href="assets/theme.css">
@@ -320,10 +319,11 @@
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">
-        <a href="tickets.html" aria-current="page">Tickets</a>
+        <a href="index.html">Command Center</a>
         <a href="tasks.html">Tasks</a>
         <a href="alerts.html">Alerts</a>
-        <a href="device_monitoring.html">Device monitoring</a>
+        <a href="device_monitoring.html">Devices</a>
+        <a href="knowledge_base.html">Knowledge Base</a>
       </div>
     </nav>
   </header>

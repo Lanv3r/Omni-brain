@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import json
 import math
@@ -17,9 +19,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from backend.data_api import router as data_router
+from backend.database import initialize_database
+
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 app = FastAPI()
+app.include_router(data_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
@@ -45,6 +51,11 @@ knowledge_cache_lock = threading.Lock()
 CACHE_SECONDS = 300
 MAX_KB_FILES = 200
 MAX_CHUNK_CHARS = 4000
+
+
+@app.on_event("startup")
+def initialize_app_database() -> None:
+    initialize_database()
 
 
 class KnowledgeQuestion(BaseModel):

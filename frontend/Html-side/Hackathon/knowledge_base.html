@@ -17,8 +17,8 @@
     .mark img { display: block; width: auto; height: 48px; object-fit: contain; }
     .partner-brand { display: block; width: auto; height: 48px; max-width: min(160px, 35vw); object-fit: contain; }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1160px; margin: auto; padding-inline: clamp(18px, 5vw, 56px); }
-    .section-nav a { padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; }
+    .section-nav-inner { display: flex; max-width: 1160px; margin: auto; overflow-x: auto; padding-inline: clamp(18px, 5vw, 56px); }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--muted); font-size: 14px; font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
     .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
     .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
     .badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
@@ -54,7 +54,7 @@
     .sources h2 { font-size: 16px; }
     .source-list { display: grid; gap: 8px; margin: 0; padding-left: 22px; color: var(--muted); font-size: 14px; }
     .source-list code { overflow-wrap: anywhere; }
-    @media (max-width: 520px) { .section-nav-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-inline: 16px; } }
+    @media (max-width: 520px) { .section-nav-inner { padding-inline: 16px; } }
   </style>
   <link rel="stylesheet" href="assets/theme.css">
   <script src="assets/theme.js"></script>
@@ -85,10 +85,12 @@
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">
+        <a href="index.html">Command Center</a>
         <a href="tickets.html">Tickets</a>
         <a href="tasks.html">Tasks</a>
         <a href="alerts.html">Alerts</a>
-        <a href="device_monitoring.html">Device monitoring</a>
+        <a href="device_monitoring.html">Devices</a>
+        <a href="knowledge_base.html" aria-current="page">Knowledge Base</a>
       </div>
     </nav>
   </header>
@@ -177,6 +179,12 @@
         askButton.disabled = false;
       }
     });
+
+    const initialQuestion = new URLSearchParams(window.location.search).get("question");
+    if (initialQuestion) {
+      questionField.value = initialQuestion;
+      form.requestSubmit();
+    }
   </script>
 </body>
 </html>
