@@ -261,6 +261,29 @@
         <p class="stats-message">Loading stats...</p>
       </div>
     </section>
+      <div class="dashboard-visuals">
+
+    <div class="chart-container">
+        <h2 class="right-band">Ticket Data</h2>
+        <canvas id="alertsPieChart"></canvas>
+    </div>
+
+
+    <div class="monitor-section">
+
+        <h2 class="right-band">Offline Devices</h2>
+
+        <div class="monitor-container">
+            <span class="fark" aria-hidden="true">
+                <img src="assets/MonitorIcon.png" alt="">
+            </span>
+
+            <div class="OfflineCount">
+                <strong data-endpoint="offline-devices">—</strong>
+            </div>
+        </div>
+
+    </div>
   </main>
   <script>
     async function loadMetric(metric) {
