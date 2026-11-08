@@ -66,6 +66,17 @@ html[data-theme="dark"] {
   color: var(--text);
 }
 .section-nav a[aria-current="page"] { box-shadow: inset 0 -2px var(--accent); }
+.unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #e5b526;
+  vertical-align: middle;
+}
+.clickable-row { cursor: pointer; }
+.clickable-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .section-nav-inner.shell { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .page-heading {
@@ -190,6 +201,13 @@ main { padding-top: clamp(4.5px, 0.9375vw, 12px); }
   color: var(--text);
   font-size: 13px;
   text-align: left;
+  overflow: hidden;
+}
+.notification-popup.is-empty {
+  width: max-content;
+  min-width: 0;
+  padding: 10px 12px;
+  white-space: nowrap;
 }
 .notification-popup::before {
   position: absolute;
@@ -204,18 +222,31 @@ main { padding-top: clamp(4.5px, 0.9375vw, 12px); }
   transform: rotate(45deg);
 }
 .notification-popup strong { display: block; margin-bottom: 10px; font-size: 14px; }
+.notification-popup.is-empty strong { margin-bottom: 0; font-size: 13px; }
 .notification-popup ul { display: grid; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; }
 .notification-popup .notification-type { display: block; margin-bottom: 2px; color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
-.notification-popup a {
+.section-nav .notification-popup a {
+  flex: 0 0 auto;
   display: block;
   padding: 9px 10px;
   border-radius: 7px;
   color: var(--text);
+  text-align: left;
   text-decoration: none;
 }
-.notification-popup a:hover,
-.notification-popup a:focus-visible { background: var(--panel-raised); color: var(--accent); }
-.notification-popup .notification-all {
+.section-nav .notification-popup a:not(.notification-all) {
+  line-height: 1.35;
+}
+.section-nav .notification-popup a:not(.notification-all) .notification-title {
+  max-height: 2.7em;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.section-nav .notification-popup a:hover,
+.section-nav .notification-popup a:focus-visible { background: var(--panel-raised); color: var(--accent); }
+.section-nav .notification-popup .notification-all {
   padding: 8px 0 0;
   border-top: 1px solid var(--line);
   border-radius: 0;

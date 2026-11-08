@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Task details in OmniCommand">
+  <title>Task details | OmniCommand</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #b45309; }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    a { color: inherit; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+    header { border-bottom: 1px solid var(--line); background: #ffffff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font-size: 19px; font-weight: 750; letter-spacing: -.04em; }
+    .mark img, .partner-brand { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { max-width: min(160px, 35vw); }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: flex; overflow-x: auto; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    main { padding-block: 12px 24px; }
+    .back-link { display: inline-block; margin-bottom: 14px; color: var(--muted); font-weight: 650; text-decoration: none; }
+    .back-link:hover { color: var(--accent); text-decoration: underline; }
+    .page-heading { margin-bottom: 18px; text-align: center; }
+    .page-heading h1 { margin: 0; color: var(--accent); font-size: clamp(34px, 5vw, 48px); }
+    .task-id { margin: 0 0 4px; color: var(--accent); font-size: 14px; font-weight: 700; }
+    .description { margin: 6px 0 0; color: var(--muted); font-size: 18px; font-weight: 650; }
+    .task-panel { padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .task-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
+    .task-facts dt { margin-bottom: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .task-facts dd { margin: 0; font-weight: 650; }
+    .task-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 650; }
+    .task-status::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .task-status.overdue { background: #fff1f0; color: #a32922; }
+    .task-status.pending { background: #fff9e9; color: #765000; }
+    .task-status.in-progress { background: #eff6fd; color: #245b8e; }
+    .not-found { padding: 20px; border: 1px solid #e5a5a1; border-radius: 12px; background: #fff1f0; color: #a32922; }
+    @media (max-width: 560px) { .shell { width: min(100% - 32px, 1160px); } .task-facts { grid-template-columns: 1fr; } }
+  </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html"><span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand</a>
+      <div class="header-tools">
+        <div class="theme-menu"><button class="theme-toggle" type="button" aria-label="Choose color theme">
+          <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+          <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20.2 15.4A8.5 8.5 0 1 1 8.6 3.8 8.5 8.5 0 0 0 20.2 15.4Z"></path></svg>
+        </button></div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
+      </div>
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="index.html">Command Center</a><a href="tickets.html">Tickets</a><a href="tasks.html" aria-current="page">Tasks</a><a href="alerts.html">Alerts</a><a href="device_monitoring.html">Devices</a><a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="notifications.html" aria-label="Notifications, 3 unread"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg><span class="notification-count" aria-hidden="true">3</span></a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell">
+    <a class="back-link" href="tasks.html">← Back to tasks</a>
+    <section class="page-heading">
+      <div><p class="task-id" id="task-id"></p><h1 id="task-title">Task details</h1><p class="description" id="task-company"></p></div>
+    </section>
+    <section class="task-panel" id="task-panel" hidden>
+      <dl class="task-facts">
+        <div><dt>Status</dt><dd><span class="task-status" id="task-status"></span></dd></div>
+        <div><dt>Due date</dt><dd id="task-due"></dd></div>
+        <div><dt>Assignee</dt><dd id="task-assignee"></dd></div>
+      </dl>
+    </section>
+    <p class="not-found" id="not-found" role="status" hidden>Task not found.</p>
+  </main>
+  <script>
+    const tasks = {
+      "DEMO-T312": ["Review failed nightly backup", "Brightside Studio", "Overdue", "Nov 5, 2026", "Morgan Chen"],
+      "DEMO-T311": ["Replace finance workstation", "Willow Accounting", "Overdue", "Nov 6, 2026", "Jamie Park"],
+      "DEMO-T310": ["Restore shared folder permissions", "Cedar Works", "Overdue", "Nov 6, 2026", "Taylor Brooks"],
+      "DEMO-T309": ["Prepare new employee laptop", "Northstar Design", "Pending", "Nov 8, 2026", "Alex Morgan"],
+      "DEMO-T308": ["Schedule network maintenance", "Harbor & Pine", "Pending", "Nov 9, 2026", "Sam Rivera"],
+      "DEMO-T307": ["Configure secure remote access", "Willow Accounting", "In progress", "Nov 10, 2026", "Morgan Chen"],
+      "DEMO-T306": ["Apply workstation security updates", "Brightside Studio", "In progress", "Nov 11, 2026", "Jamie Park"]
+    };
+    const id = new URLSearchParams(window.location.search).get("id");
+    const task = tasks[id];
+    window.omniMarkItemRead?.("tasks", id);
+    if (task) {
+      document.title = `${id} | OmniCommand`;
+      document.getElementById("task-id").textContent = id;
+      document.getElementById("task-title").textContent = task[0];
+      document.getElementById("task-company").textContent = task[1];
+      document.getElementById("task-status").textContent = task[2];
+      document.getElementById("task-status").classList.add(task[2].toLowerCase().replaceAll(" ", "-"));
+      document.getElementById("task-due").textContent = task[3];
+      document.getElementById("task-assignee").textContent = task[4];
+      document.getElementById("task-panel").hidden = false;
+    } else {
+      document.getElementById("not-found").hidden = false;
+    }
+  </script>
+</body>
+</html>

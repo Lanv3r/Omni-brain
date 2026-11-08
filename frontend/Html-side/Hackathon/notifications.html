@@ -18,16 +18,27 @@
     .mark img, .partner-brand { display: block; width: auto; height: 48px; object-fit: contain; }
     .partner-brand { max-width: min(160px, 35vw); }
     .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
-    .section-nav-inner { display: flex; overflow-x: auto; }
-    .section-nav a { flex: 0 0 auto; padding: 12px 8px; color: var(--accent); font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
-    main { padding-block: 28px 48px; }
-    h1 { margin: 0; color: var(--accent); text-align: center; }
-    .description { margin: 8px 0 22px; color: var(--muted); text-align: center; }
-    .notifications-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
-    .notifications-list { display: grid; margin: 0; padding: 0; list-style: none; }
-    .notifications-list a { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; }
+    .section-nav-inner { display: flex; justify-content: center; overflow-x: auto; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    .section-nav a:hover, .section-nav a[aria-current="page"] { background: #fff3dc; color: var(--text); }
+    main { padding-block: 12px 24px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: center; gap: 24px; margin-bottom: 20px; text-align: center; }
+    h1 { margin: 0; color: var(--text); font-size: clamp(34px, 5vw, 48px); line-height: 1.08; }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    .description { margin: 10px 0 0; color: var(--muted); }
+    .queue-summary { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; text-align: center; }
+    .queue-summary h2 { margin: 0; color: var(--accent); font-size: 18px; }
+    .result-count { margin: 0; color: var(--muted); font-size: 13px; }
+    .notifications-panel { width: min(900px, 100%); margin-inline: auto; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .notifications-list { display: grid; gap: 12px; margin: 0; padding: 16px; list-style: none; }
+    .notifications-list li { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .notifications-list a { display: block; padding: 16px 18px; color: var(--text); text-decoration: none; }
     .notifications-list a:hover { background: var(--panel-raised, #f5f5f5); }
-    .notification-type { color: var(--accent); font-size: 12px; font-weight: 750; text-transform: uppercase; }
+    .notification-type { display: block; margin-bottom: 5px; color: var(--accent); font-size: 12px; font-weight: 750; text-transform: uppercase; }
+    .notification-title { display: block; margin-bottom: 8px; font-size: 17px; font-weight: 700; }
+    .notification-detail { display: block; color: var(--muted); }
+    .notification-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    .notification-action { display: inline-block; margin-top: 12px; color: var(--accent); font-weight: 700; }
     .empty-notifications { padding: 28px; color: var(--muted); text-align: center; }
     html[data-theme="dark"] header { background: var(--panel); }
     html[data-theme="dark"] .section-nav { background: var(--panel-raised); }
@@ -43,21 +54,57 @@
     </div>
     <nav class="section-nav" aria-label="Main navigation"><div class="section-nav-inner shell">
       <a href="index.html">Command Center</a><a href="tickets.html">Tickets</a><a href="tasks.html">Tasks</a><a href="alerts.html">Alerts</a><a href="device_monitoring.html">Devices</a><a href="knowledge_base.html">Knowledge Base</a>
-      <a class="notification-link" href="notifications.html" aria-label="Notifications, 3 unread"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg><span class="notification-count" aria-hidden="true">3</span></a>
+      <a class="notification-link" href="notifications.html" aria-label="Notifications, 3 unread" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg><span class="notification-count" aria-hidden="true">3</span></a>
     </div></nav>
   </header>
   <main class="shell">
-    <h1>Notifications</h1>
-    <p class="description">Recent alerts and offline devices.</p>
+    <div class="page-heading">
+      <div><p class="eyebrow">Activity center</p><h1>Notifications</h1><p class="description">Review unread tickets, tasks, alerts, and device events.</p></div>
+    </div>
+    <div class="queue-summary"><h2>Unread activity</h2><p class="result-count" id="notification-count"></p></div>
     <section class="notifications-panel" aria-label="All notifications"><ul class="notifications-list" id="notifications-list"></ul></section>
   </main>
   <script>
-    const alertNotifications = [["DEMO-A203", "Server not responding", "alert_detail.html?id=DEMO-A203"], ["DEMO-A202", "Backup job failed", "alert_detail.html?id=DEMO-A202"], ["DEMO-A201", "Disk space below 15%", "alert_detail.html?id=DEMO-A201"], ["DEMO-A200", "Endpoint protection needs attention", "alert_detail.html?id=DEMO-A200"], ["DEMO-A199", "Device has pending updates", "alert_detail.html?id=DEMO-A199"], ["DEMO-A198", "Scheduled maintenance completed", "alert_detail.html?id=DEMO-A198"]];
+    const alertNotifications = [
+      ["DEMO-A203", "Server not responding", "HQ-FILE-01", "Brightside Studio", "Critical", "The file server is not responding to health checks.", "alert_detail.html?id=DEMO-A203"],
+      ["DEMO-A202", "Backup job failed", "BACKUP-02", "Willow Accounting", "Critical", "The scheduled backup job failed and needs review.", "alert_detail.html?id=DEMO-A202"],
+      ["DEMO-A201", "DESIGN-WS-14 is running out of disk space", "DESIGN-WS-14", "Northstar Design", "Warning", "Available disk space is below the warning threshold.", "alert_detail.html?id=DEMO-A201"],
+      ["DEMO-A200", "Endpoint protection needs attention", "CEDAR-LT-08", "Cedar Works", "Warning", "Review endpoint protection status on this workstation.", "alert_detail.html?id=DEMO-A200"],
+      ["DEMO-A199", "Device has pending updates", "HARBOR-WS-03", "Harbor & Pine", "Warning", "Review pending updates and schedule installation.", "alert_detail.html?id=DEMO-A199"],
+      ["DEMO-A198", "Scheduled maintenance completed", "WILLOW-SQL-01", "Willow Accounting", "Info", "Scheduled maintenance completed successfully.", "alert_detail.html?id=DEMO-A198"]
+    ];
+    const ticketNotifications = [["DEMO-1048", "New starter can't access email", "Brightside Studio", "New", "The requester needs help accessing email.", "ticket_detail.html?id=DEMO-1048"]];
+    const taskNotifications = [
+      ["DEMO-T312", "Review failed nightly backup", "Willow Accounting", "Overdue", "Review the failed backup and confirm the recovery path.", "task_detail.html?id=DEMO-T312"],
+      ["DEMO-T311", "Replace finance workstation", "Willow Accounting", "Pending", "Replace the workstation and complete the device setup.", "task_detail.html?id=DEMO-T311"],
+      ["DEMO-T310", "Restore shared folder permissions", "Northstar Design", "In progress", "Restore access and verify the team can open the shared folder.", "task_detail.html?id=DEMO-T310"],
+      ["DEMO-T309", "Prepare new employee laptop", "Cedar Works", "Pending", "Prepare the laptop and complete the required onboarding checks.", "task_detail.html?id=DEMO-T309"],
+      ["DEMO-T308", "Schedule network maintenance", "Harbor & Pine", "In progress", "Coordinate the maintenance window with the client.", "task_detail.html?id=DEMO-T308"],
+      ["DEMO-T307", "Configure secure remote access", "Willow Accounting", "In progress", "Configure secure remote access for the assigned user.", "task_detail.html?id=DEMO-T307"],
+      ["DEMO-T306", "Apply workstation security updates", "Brightside Studio", "Pending", "Apply the approved workstation security updates.", "task_detail.html?id=DEMO-T306"]
+    ];
     const offlineNotifications = [["WILLOW-WS-07", "Willow Accounting"], ["CEDAR-LT-08", "Cedar Works"]];
     function renderNotificationPage() {
       const cleared = new Set(JSON.parse(localStorage.getItem("omni-cleared-alerts") || "[]"));
-      const items = [...alertNotifications.filter(([id]) => !cleared.has(id)).map(([, title, href]) => ["Alerts", title, href]), ...offlineNotifications.map(([id, company]) => ["Offline", `${id} · ${company}`, `device_detail.html?id=${id}&from=notifications`])];
-      document.getElementById("notifications-list").innerHTML = items.length ? items.map(([type, title, href]) => `<li><a href="${href}"><span class="notification-type">${type}</span><span>${title}</span></a></li>`).join("") : '<li class="empty-notifications">No new notifications</li>';
+      let readItems = {};
+      try { readItems = JSON.parse(localStorage.getItem("omni-read-items") || "{}"); } catch {}
+      const isUnread = (section, id) => !(readItems[section] || []).includes(id);
+      const items = [
+        ...ticketNotifications.filter(([id]) => isUnread("tickets", id)).map(([id, title, company, status, detail, href]) => ({ section: "tickets", id, type: "Ticket", title, context: company, status, detail, href })),
+        ...taskNotifications.filter(([id]) => isUnread("tasks", id)).map(([id, title, company, status, detail, href]) => ({ section: "tasks", id, type: "Task", title, context: company, status, detail, href })),
+        ...alertNotifications.filter(([id]) => !cleared.has(id) && isUnread("alerts", id)).map(([id, title, device, company, status, detail, href]) => ({ section: "alerts", id, type: "Alert", title, context: `${device} · ${company}`, status, detail, href })),
+        ...offlineNotifications.filter(([id]) => isUnread("devices", id)).map(([id, company]) => ({ section: "devices", id, type: "Device", title: `${id} is down`, context: company, status: "Offline", detail: "The device is not currently checking in.", href: `device_detail.html?id=${id}&from=notifications` }))
+      ];
+      document.getElementById("notification-count").textContent = `${items.length} unread`;
+      document.getElementById("notifications-list").innerHTML = items.length ? items.map(item => `<li><a href="${item.href}" data-section="${item.section}" data-id="${item.id}"><span class="notification-type">${item.type}</span><span class="notification-title">${item.title}</span><span class="notification-detail">${item.detail}</span><span class="notification-meta"><span><strong>ID:</strong> ${item.id}</span><span><strong>Status:</strong> ${item.status}</span><span><strong>Context:</strong> ${item.context}</span></span><span class="notification-action">Open details →</span></a></li>`).join("") : '<li class="empty-notifications">No new notifications</li>';
+      document.querySelectorAll("#notifications-list a[data-section]").forEach(link => {
+        link.addEventListener("click", () => {
+          let current = {};
+          try { current = JSON.parse(localStorage.getItem("omni-read-items") || "{}"); } catch {}
+          current[link.dataset.section] = [...new Set([...(current[link.dataset.section] || []), link.dataset.id])];
+          localStorage.setItem("omni-read-items", JSON.stringify(current));
+        });
+      });
     }
     renderNotificationPage();
     window.addEventListener("storage", renderNotificationPage);

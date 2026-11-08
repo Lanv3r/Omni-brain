@@ -57,7 +57,7 @@
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">
         <a href="index.html">Command Center</a><a href="tickets.html">Tickets</a><a href="tasks.html">Tasks</a><a href="alerts.html">Alerts</a><a href="device_monitoring.html" aria-current="page">Devices</a><a href="knowledge_base.html">Knowledge Base</a>
-        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+        <a class="notification-link" href="notifications.html" aria-label="Notifications, 3 unread">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
           <span class="notification-count" aria-hidden="true">3</span>
         </a>
@@ -98,6 +98,7 @@
     const id = new URLSearchParams(window.location.search).get("id");
     const from = new URLSearchParams(window.location.search).get("from");
     const device = devices[id];
+    window.omniMarkItemRead?.("devices", id);
     if (from === "alerts") {
       const backLink = document.getElementById("back-link");
       backLink.href = "alerts.html";
