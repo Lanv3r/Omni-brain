@@ -6,7 +6,7 @@
   <meta name="description" content="Alert details in OmniCommand">
   <title>Alert details | OmniCommand</title>
   <style>
-    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #ffa500; }
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #b45309; }
     * { box-sizing: border-box; }
     body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
     a { color: inherit; }
@@ -20,15 +20,30 @@
     .section-nav-inner { display: flex; overflow-x: auto; }
     .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
     main { padding-block: 12px 24px; }
-    .back-link { display: inline-block; margin-bottom: 14px; color: #765000; font-weight: 650; text-decoration: none; }
+    .back-link { display: inline-block; margin-bottom: 14px; color: var(--muted); font-weight: 650; text-decoration: none; }
+    .back-link:hover { color: var(--accent); text-decoration: underline; }
     .page-heading { margin-bottom: 18px; text-align: center; }
-    .page-heading h1 { margin: 0; color: var(--accent); font-size: clamp(34px, 5vw, 48px); }
-    .alert-panel { padding: 24px; border: 1px solid #e5a5a1; border-radius: 14px; background: #fff1f0; }
+    .page-heading h1 { grid-column: 1 / -1; margin: 0; color: var(--accent); font-size: clamp(34px, 5vw, 48px); }
+    .alert-name { grid-column: 1 / -1; margin: 6px 0 0; color: var(--muted); font-size: 18px; font-weight: 650; }
+    .alert-panel { padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .alert-panel.critical { border-color: #e5a5a1; background: #fff1f0; }
+    .alert-panel.warning { border-color: #e2bd65; background: #fff9e9; }
+    .alert-panel.info { border-color: #a9c8e5; background: #eff6fd; }
     .alert-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
-    .alert-facts dt { margin-bottom: 4px; color: #765000; font-size: 12px; font-weight: 700; }
+    .alert-facts dt { margin-bottom: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
     .alert-facts dd { margin: 0; font-weight: 650; }
-    .alert-description { margin: 24px 0 0; padding-top: 18px; border-top: 1px solid #e5a5a1; color: var(--muted); }
-    .severity { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; color: #a32922; font-size: 11px; font-weight: 650; }
+    .alert-facts a { color: var(--accent); }
+    .alert-description { margin: 24px 0 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); }
+    .alert-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+    .clear-alert { padding: 9px 14px; border: 1px solid #a32922; border-radius: 8px; background: transparent; color: #a32922; cursor: pointer; font: inherit; font-weight: 650; }
+    .clear-alert:disabled { cursor: default; opacity: .6; }
+    .alert-panel.critical .alert-description { border-top-color: #e5a5a1; }
+    .alert-panel.warning .alert-description { border-top-color: #e2bd65; }
+    .alert-panel.info .alert-description { border-top-color: #a9c8e5; }
+    .severity { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; color: var(--muted); font-size: 11px; font-weight: 650; }
+    .severity.critical { color: #a32922; }
+    .severity.warning { color: #765000; }
+    .severity.info { color: var(--muted); }
     .severity::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
     @media (max-width: 560px) { .shell { width: min(100% - 32px, 1160px); } .alert-facts { grid-template-columns: 1fr; } }
   </style>
@@ -39,49 +54,90 @@
   <header>
     <div class="bar shell">
       <a class="brand" href="index.html"><span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand</a>
-      <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
+      <div class="header-tools">
+        <div class="theme-menu">
+          <button class="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false">
+            <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 1 1 8.6 3.8 8.5 8.5 0 0 0 20.2 15.4Z"></path></svg>
+          </button>
+        </div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
+      </div>
     </div>
     <nav class="section-nav" aria-label="Main navigation">
       <div class="section-nav-inner shell">
         <a href="index.html">Command Center</a><a href="tickets.html">Tickets</a><a href="tasks.html">Tasks</a><a href="alerts.html" aria-current="page">Alerts</a><a href="device_monitoring.html">Devices</a><a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
       </div>
     </nav>
   </header>
   <main class="shell">
     <a class="back-link" href="alerts.html">← Back to alerts</a>
-    <section class="page-heading"><h1 id="alert-title">Alert details</h1></section>
+    <section class="page-heading">
+      <h1 id="alert-id-heading">Alert details</h1>
+      <p class="alert-name" id="alert-title"></p>
+    </section>
     <section class="alert-panel" id="alert-panel" hidden>
       <dl class="alert-facts">
         <div><dt>Alert ID</dt><dd id="alert-id"></dd></div>
-        <div><dt>Severity</dt><dd><span class="severity">Critical</span></dd></div>
-        <div><dt>Device</dt><dd id="alert-device"></dd></div>
+        <div><dt>Severity</dt><dd><span class="severity" id="alert-severity"></span></dd></div>
+        <div><dt>Device</dt><dd><a id="alert-device" href="device_monitoring.html"></a></dd></div>
         <div><dt>Company</dt><dd id="alert-company"></dd></div>
         <div><dt>State</dt><dd id="alert-state"></dd></div>
         <div><dt>Last detected</dt><dd id="alert-detected"></dd></div>
       </dl>
       <p class="alert-description" id="alert-description"></p>
+      <div class="alert-actions"><button class="clear-alert" id="clear-alert" type="button">Clear alert</button></div>
     </section>
   </main>
   <script>
     const alerts = {
-      "DEMO-A203": ["Server not responding", "HQ-FILE-01", "Brightside Studio", "Active", "4 min ago", "The file server is not responding to health checks. Verify connectivity and review the server event logs."],
-      "DEMO-A202": ["Backup job failed", "BACKUP-02", "Willow Accounting", "Active", "12 min ago", "The scheduled backup job failed. Check the backup target and retry the job after confirming available storage."],
-      "DEMO-A201": ["Disk space below 15%", "DESIGN-WS-14", "Northstar Design", "Active", "19 min ago", "Available disk space is below the warning threshold. Review large files and schedule cleanup before capacity is exhausted."],
-      "DEMO-A200": ["Endpoint protection needs attention", "CEDAR-LT-08", "Cedar Works", "Active", "31 min ago", "Endpoint protection needs attention on this workstation. Open the device record and review the protection status."],
-      "DEMO-A199": ["Device has pending updates", "HARBOR-WS-03", "Harbor & Pine", "Active", "52 min ago", "This device has pending updates. Review the update list and schedule installation during an approved maintenance window."],
-      "DEMO-A198": ["Scheduled maintenance completed", "WILLOW-SQL-01", "Willow Accounting", "Active", "1 hr ago", "Scheduled maintenance completed successfully. No additional action is currently required."]
+      "DEMO-A203": ["Server not responding", "HQ-FILE-01", "Brightside Studio", "Active", "4 min ago", "The file server is not responding to health checks. Verify connectivity and review the server event logs.", "Critical"],
+      "DEMO-A202": ["Backup job failed", "BACKUP-02", "Willow Accounting", "Active", "12 min ago", "The scheduled backup job failed. Check the backup target and retry the job after confirming available storage.", "Critical"],
+      "DEMO-A201": ["Disk space below 15%", "DESIGN-WS-14", "Northstar Design", "Active", "19 min ago", "Available disk space is below the warning threshold. Review large files and schedule cleanup before capacity is exhausted.", "Warning"],
+      "DEMO-A200": ["Endpoint protection needs attention", "CEDAR-LT-08", "Cedar Works", "Active", "31 min ago", "Endpoint protection needs attention on this workstation. Open the device record and review the protection status.", "Warning"],
+      "DEMO-A199": ["Device has pending updates", "HARBOR-WS-03", "Harbor & Pine", "Active", "52 min ago", "This device has pending updates. Review the update list and schedule installation during an approved maintenance window.", "Warning"],
+      "DEMO-A198": ["Scheduled maintenance completed", "WILLOW-SQL-01", "Willow Accounting", "Active", "1 hr ago", "Scheduled maintenance completed successfully. No additional action is currently required.", "Info"]
     };
     const id = new URLSearchParams(window.location.search).get("id");
     const alert = alerts[id];
+    const clearedAlertsKey = "omni-cleared-alerts";
     if (alert) {
       document.title = `${id} | OmniCommand`;
+      document.getElementById("alert-id-heading").textContent = id;
       document.getElementById("alert-title").textContent = alert[0];
+      const severity = alert[6].toLowerCase();
+      document.getElementById("alert-severity").textContent = alert[6];
+      document.getElementById("alert-severity").classList.add(severity);
+      document.getElementById("alert-panel").classList.add(severity);
       document.getElementById("alert-id").textContent = id;
-      document.getElementById("alert-device").textContent = alert[1];
+      const deviceLink = document.getElementById("alert-device");
+      deviceLink.textContent = alert[1];
+      deviceLink.href = `device_detail.html?id=${encodeURIComponent(alert[1])}&from=alerts&omni-theme=${document.documentElement.dataset.theme || "light"}`;
       document.getElementById("alert-company").textContent = alert[2];
       document.getElementById("alert-state").textContent = alert[3];
       document.getElementById("alert-detected").textContent = alert[4];
       document.getElementById("alert-description").textContent = alert[5];
+      const clearButton = document.getElementById("clear-alert");
+      const clearedAlerts = JSON.parse(localStorage.getItem(clearedAlertsKey) || "[]");
+      if (clearedAlerts.includes(id)) {
+        document.getElementById("alert-state").textContent = "Cleared";
+        clearButton.disabled = true;
+        clearButton.textContent = "Alert cleared";
+      }
+      clearButton.addEventListener("click", () => {
+        const currentClearedAlerts = JSON.parse(localStorage.getItem(clearedAlertsKey) || "[]");
+        if (currentClearedAlerts.includes(id)) return;
+        currentClearedAlerts.push(id);
+        localStorage.setItem(clearedAlertsKey, JSON.stringify(currentClearedAlerts));
+        document.getElementById("alert-state").textContent = "Cleared";
+        clearButton.disabled = true;
+        clearButton.textContent = "Alert cleared";
+        window.omniMarkNotificationRead();
+      });
       document.getElementById("alert-panel").hidden = false;
     }
   </script>

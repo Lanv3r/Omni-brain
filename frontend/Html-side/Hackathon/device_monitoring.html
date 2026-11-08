@@ -13,7 +13,7 @@
       --line: #dedede;
       --text: #333333;
       --muted: #666666;
-      --accent: #ffa500;
+      --accent: #b45309;
     }
 
     * { box-sizing: border-box; }
@@ -39,7 +39,7 @@
     .description { margin: 10px 0 0; color: var(--muted); }
     .demo-badge { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 7px 11px; border: 1px solid #e2bd65; border-radius: 999px; background: #fff9e9; color: #765000; font-size: 12px; }
     .demo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-    .queue-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .queue-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     .queue-summary h2 { margin: 0; font-size: 18px; }
     .result-count { margin: 0; color: var(--muted); font-size: 13px; }
     .result-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
@@ -58,6 +58,8 @@
     td { font-size: 13px; }
     tbody tr:last-child td { border-bottom: 0; }
     tbody tr:hover { background: #fff8eb; }
+    tbody tr[data-device] { cursor: pointer; }
+    tbody tr[data-device]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
     tbody tr.device-row-offline td { background: #fff1f0; border-top: 1px solid #e5a5a1; border-bottom: 1px solid #e5a5a1; }
     tbody tr.device-row-offline td:first-child { border-left: 1px solid #e5a5a1; }
     tbody tr.device-row-offline td:last-child { border-right: 1px solid #e5a5a1; }
@@ -113,6 +115,7 @@
         <a href="tickets.html">Tickets</a>
         <a href="tasks.html">Tasks</a>
         <a href="alerts.html">Alerts</a>
+        <a href="device_monitoring.html" aria-current="page">Devices</a>
         <a href="knowledge_base.html">Knowledge Base</a>
         <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
@@ -133,7 +136,7 @@
 
     <section aria-label="Device data">
       <div class="queue-summary">
-        <p class="result-count" id="result-count" aria-live="polite">Showing 7 devices</p>
+        <p class="result-count" id="result-count" aria-live="polite">Showing 11 devices</p>
       </div>
       <div class="device-panel">
         <form class="toolbar" role="search" onsubmit="return false">
@@ -174,54 +177,82 @@
               </tr>
             </thead>
             <tbody id="device-rows">
-              <tr data-company="Brightside Studio" data-status="Online">
+              <tr data-device="HQ-FILE-01" data-company="Brightside Studio" data-status="Online">
+                <td><span class="device-id">HQ-FILE-01</span><span class="secondary">Windows Server 2022</span></td>
+                <td>Brightside Studio</td>
+                <td>Server</td>
+                <td><span class="pill status-online">Online</span></td>
+                <td>4 min ago</td>
+              </tr>
+              <tr data-device="BACKUP-02" data-company="Willow Accounting" data-status="Online">
+                <td><span class="device-id">BACKUP-02</span><span class="secondary">Windows Server 2022</span></td>
+                <td>Willow Accounting</td>
+                <td>Server</td>
+                <td><span class="pill status-online">Online</span></td>
+                <td>12 min ago</td>
+              </tr>
+              <tr data-device="DESIGN-WS-14" data-company="Northstar Design" data-status="Online">
+                <td><span class="device-id">DESIGN-WS-14</span><span class="secondary">Windows 11 Pro</span></td>
+                <td>Northstar Design</td>
+                <td>Workstation</td>
+                <td><span class="pill status-online">Online</span></td>
+                <td>19 min ago</td>
+              </tr>
+              <tr data-device="BRIGHT-HQ-01" data-company="Brightside Studio" data-status="Online">
                 <td><span class="device-id">BRIGHT-HQ-01</span><span class="secondary">Windows Server 2022</span></td>
                 <td>Brightside Studio</td>
                 <td>Server</td>
                 <td><span class="pill status-online">Online</span></td>
                 <td>2 min ago</td>
               </tr>
-              <tr class="device-row-offline" data-company="Willow Accounting" data-status="Offline">
+              <tr class="device-row-offline" data-device="WILLOW-WS-07" data-company="Willow Accounting" data-status="Offline">
                 <td><span class="device-id">WILLOW-WS-07</span><span class="secondary">Windows 11 Pro</span></td>
                 <td>Willow Accounting</td>
                 <td>Workstation</td>
                 <td><span class="pill status-offline">Offline</span></td>
                 <td>43 min ago</td>
               </tr>
-              <tr data-company="Northstar Design" data-status="Online">
+              <tr data-device="NORTHSTAR-NAS-01" data-company="Northstar Design" data-status="Online">
                 <td><span class="device-id">NORTHSTAR-NAS-01</span><span class="secondary">Synology DSM</span></td>
                 <td>Northstar Design</td>
                 <td>Storage</td>
                 <td><span class="pill status-online">Online</span></td>
                 <td>4 min ago</td>
               </tr>
-              <tr data-company="Harbor &amp; Pine" data-status="Online">
+              <tr data-device="HARBOR-FW-01" data-company="Harbor &amp; Pine" data-status="Online">
                 <td><span class="device-id">HARBOR-FW-01</span><span class="secondary">FortiGate 80F</span></td>
                 <td>Harbor &amp; Pine</td>
                 <td>Firewall</td>
                 <td><span class="pill status-online">Online</span></td>
                 <td>1 min ago</td>
               </tr>
-              <tr class="device-row-offline" data-company="Cedar Works" data-status="Offline">
+              <tr class="device-row-offline" data-device="CEDAR-LT-08" data-company="Cedar Works" data-status="Offline">
                 <td><span class="device-id">CEDAR-LT-08</span><span class="secondary">Windows 11 Pro</span></td>
                 <td>Cedar Works</td>
                 <td>Laptop</td>
                 <td><span class="pill status-offline">Offline</span></td>
                 <td>1 hr ago</td>
               </tr>
-              <tr data-company="Willow Accounting" data-status="Online">
+              <tr data-device="WILLOW-SQL-01" data-company="Willow Accounting" data-status="Online">
                 <td><span class="device-id">WILLOW-SQL-01</span><span class="secondary">Windows Server 2022</span></td>
                 <td>Willow Accounting</td>
                 <td>Server</td>
                 <td><span class="pill status-online">Online</span></td>
                 <td>3 min ago</td>
               </tr>
-              <tr data-company="Brightside Studio" data-status="Online">
+              <tr data-device="BRIGHT-WS-14" data-company="Brightside Studio" data-status="Online">
                 <td><span class="device-id">BRIGHT-WS-14</span><span class="secondary">Windows 11 Pro</span></td>
                 <td>Brightside Studio</td>
                 <td>Workstation</td>
                 <td><span class="pill status-online">Online</span></td>
                 <td>5 min ago</td>
+              </tr>
+              <tr data-device="HARBOR-WS-03" data-company="Harbor &amp; Pine" data-status="Online">
+                <td><span class="device-id">HARBOR-WS-03</span><span class="secondary">Windows 11 Pro</span></td>
+                <td>Harbor &amp; Pine</td>
+                <td>Workstation</td>
+                <td><span class="pill status-online">Online</span></td>
+                <td>52 min ago</td>
               </tr>
               <tr id="empty-state" hidden>
                 <td class="empty-state" colspan="5"><strong>No matching devices</strong>Try another search or change the selected filters.</td>
@@ -240,8 +271,30 @@
     const deviceRowsContainer = document.getElementById("device-rows");
     const resultCount = document.getElementById("result-count");
     const emptyState = document.getElementById("empty-state");
-    const requestedStatus = new URLSearchParams(window.location.search).get("status");
-    const deviceRows = [...deviceRowsContainer.querySelectorAll("tr[data-status]")];
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedDevice = searchParams.get("device");
+    const requestedStatus = searchParams.get("status");
+    const deviceRows = [...deviceRowsContainer.querySelectorAll("tr[data-device]")];
+
+    for (const row of deviceRows) {
+      row.tabIndex = 0;
+      row.setAttribute("role", "link");
+      row.setAttribute("aria-label", `View device ${row.dataset.device}`);
+      const openDevice = () => {
+        window.location.href = `device_detail.html?id=${encodeURIComponent(row.dataset.device)}&from=devices&omni-theme=${document.documentElement.dataset.theme || "light"}`;
+      };
+      row.addEventListener("click", openDevice);
+      row.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDevice();
+        }
+      });
+    }
+
+    if (requestedDevice) {
+      searchInput.value = requestedDevice;
+    }
 
     if ([...statusFilter.options].some(option => option.value === requestedStatus)) {
       statusFilter.value = requestedStatus;

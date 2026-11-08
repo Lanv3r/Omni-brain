@@ -6,6 +6,14 @@
   const savedTheme = fileTheme === "dark" || fileTheme === "light"
     ? fileTheme
     : localStorage.getItem("omni-theme");
+  const unreadStorageKey = "omni-unread-notifications";
+
+  window.omniMarkNotificationRead = () => {
+    const currentCount = Number.parseInt(localStorage.getItem(unreadStorageKey) || "3", 10);
+    const nextCount = Math.max(0, Number.isFinite(currentCount) ? currentCount - 1 : 0);
+    localStorage.setItem(unreadStorageKey, String(nextCount));
+    window.dispatchEvent(new CustomEvent("omni-unread-updated"));
+  };
 
   if (savedTheme === "dark" || savedTheme === "light") {
     root.dataset.theme = savedTheme;
@@ -33,17 +41,14 @@
 
     for (const menu of document.querySelectorAll(".theme-menu")) {
       const toggle = menu.querySelector(".theme-toggle");
-      const option = menu.querySelector(".theme-option");
-      toggle.setAttribute("aria-label", `Choose color theme. Current theme: ${currentTheme}`);
+      toggle.setAttribute("aria-label", `Switch to ${nextTheme} theme`);
       toggle.title = `Current theme: ${currentTheme}`;
-      option.dataset.themeOption = nextTheme;
-      option.querySelector("span").textContent = `${nextTheme === "dark" ? "Dark" : "Light"} mode`;
+      toggle.setAttribute("aria-pressed", String(isDark));
 
       for (const icon of menu.querySelectorAll("[data-theme-icon]")) {
-        const visibleTheme = icon.closest(".theme-option") ? nextTheme : currentTheme;
-        const isVisible = icon.dataset.themeIcon === visibleTheme;
         icon.removeAttribute("hidden");
-        icon.style.setProperty("display", isVisible ? "block" : "none", "important");
+        icon.style.setProperty("display", "block", "important");
+        icon.dataset.active = String(icon.dataset.themeIcon === currentTheme);
       }
     }
 
@@ -54,6 +59,11 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const menus = document.querySelectorAll(".theme-menu");
+    const initialUnreadCount = 3;
+    const storedUnreadCount = Number.parseInt(localStorage.getItem(unreadStorageKey) || "", 10);
+    let unreadCount = Number.isFinite(storedUnreadCount)
+      ? Math.max(0, storedUnreadCount)
+      : initialUnreadCount;
     const sortOrders = {
       severity: { critical: 0, warning: 1, info: 2 },
       priority: { urgent: 0, high: 1, medium: 2, low: 3 },
@@ -102,23 +112,80 @@
       const popup = document.createElement("div");
       popup.className = "notification-popup";
       popup.hidden = true;
-      popup.setAttribute("role", "dialog");
-      popup.innerHTML = `
-        <strong>Unread notifications</strong>
-        <ul>
-          <li><a href="alerts.html?severity=Critical">2 critical alerts need attention.</a></li>
-          <li><a href="alerts.html?severity=Warning">1 device is offline.</a></li>
-        </ul>
-        <a href="alerts.html">View all alerts</a>
-      `;
+      popup.setAttribute("role", "menu");
       notification.append(popup);
       notification.setAttribute("aria-expanded", "false");
+
+      const count = notification.querySelector(".notification-count");
+      const knownAlertIds = ["DEMO-A203", "DEMO-A202", "DEMO-A201", "DEMO-A200", "DEMO-A199", "DEMO-A198"];
+      const getClearedAlertIds = () => new Set(JSON.parse(localStorage.getItem("omni-cleared-alerts") || "[]"));
+      const hasActiveAlerts = () => {
+        const rows = [...document.querySelectorAll("tr[data-id][data-severity]")];
+        const clearedIds = getClearedAlertIds();
+        return rows.length
+          ? rows.some(row => !clearedIds.has(row.dataset.id))
+          : knownAlertIds.some(id => !clearedIds.has(id));
+      };
+      const hasOfflineDevices = () => {
+        const rows = [...document.querySelectorAll("tr[data-device][data-status]")];
+        return rows.length ? rows.some(row => row.dataset.status === "Offline") : true;
+      };
+      function updateUnreadCount() {
+        unreadCount = Math.max(0, Number.parseInt(localStorage.getItem(unreadStorageKey) || "0", 10));
+        if (count) {
+          count.textContent = unreadCount;
+          count.hidden = unreadCount === 0;
+        }
+        notification.setAttribute("aria-label", `Notifications, ${unreadCount} unread`);
+      }
+
+      function renderNotifications() {
+        if (unreadCount === 0) {
+          popup.innerHTML = "<strong>No new notifications</strong>";
+          return;
+        }
+        const links = [];
+        if (hasActiveAlerts()) links.push('<li><a href="alerts.html" role="menuitem">Alerts</a></li>');
+        if (hasOfflineDevices()) links.push('<li><a href="device_monitoring.html?status=Offline" role="menuitem">Offline</a></li>');
+        const footer = hasActiveAlerts()
+          ? '<a class="notification-all" href="alerts.html" role="menuitem">View all alerts</a>'
+          : "";
+        popup.innerHTML = links.length
+          ? `<strong>Notifications</strong><ul>${links.join("")}</ul>${footer}`
+          : "<strong>No notifications</strong>";
+        popup.querySelectorAll("a").forEach(link => {
+          link.addEventListener("click", () => {
+            if (unreadCount === 0) return;
+            unreadCount -= 1;
+            localStorage.setItem(unreadStorageKey, String(unreadCount));
+            updateUnreadCount();
+          });
+        });
+      }
+
+      notification.__omniRefreshNotifications = () => {
+        updateUnreadCount();
+        renderNotifications();
+      };
 
       function positionPopup() {
         const bounds = notification.getBoundingClientRect();
         popup.style.top = `${bounds.bottom + 8}px`;
-        popup.style.left = `${Math.max(8, bounds.right - 250)}px`;
+        popup.style.left = `${Math.max(8, bounds.right - 290)}px`;
       }
+
+      window.addEventListener("omni-unread-updated", () => {
+        for (const notification of document.querySelectorAll(".notification-link")) {
+          const count = notification.querySelector(".notification-count");
+          const currentCount = Math.max(0, Number.parseInt(localStorage.getItem(unreadStorageKey) || "0", 10));
+          if (count) {
+            count.textContent = currentCount;
+            count.hidden = currentCount === 0;
+          }
+          notification.setAttribute("aria-label", `Notifications, ${currentCount} unread`);
+        }
+        renderNotifications();
+      });
 
       notification.addEventListener("click", event => {
         if (event.target.closest(".notification-popup")) return;
@@ -128,6 +195,9 @@
         popup.hidden = isOpen;
         notification.setAttribute("aria-expanded", String(!isOpen));
       });
+
+      updateUnreadCount();
+      renderNotifications();
 
       notification.addEventListener("keydown", event => {
         if (event.key !== "Enter" && event.key !== " ") return;
@@ -157,58 +227,14 @@
       }
     });
 
-    function closeMenu(menu, returnFocus = false) {
-      const toggle = menu.querySelector(".theme-toggle");
-      menu.querySelector(".theme-options").hidden = true;
-      toggle.setAttribute("aria-expanded", "false");
-      if (returnFocus) toggle.focus();
-    }
-
-    function openMenu(menu) {
-      const toggle = menu.querySelector(".theme-toggle");
-      menu.querySelector(".theme-options").hidden = false;
-      toggle.setAttribute("aria-expanded", "true");
-    }
-
     for (const menu of menus) {
       const toggle = menu.querySelector(".theme-toggle");
-      const options = menu.querySelector(".theme-options");
-      const option = menu.querySelector(".theme-option");
-
+      toggle.removeAttribute("aria-haspopup");
+      toggle.removeAttribute("aria-expanded");
       toggle.addEventListener("click", () => {
-        if (options.hidden) openMenu(menu);
-        else closeMenu(menu);
-      });
-
-      toggle.addEventListener("keydown", event => {
-        if (event.key === "ArrowDown") {
-          event.preventDefault();
-          openMenu(menu);
-          option.focus();
-        }
-      });
-
-      option.addEventListener("click", () => {
-        applyTheme(option.dataset.themeOption);
-        closeMenu(menu, true);
+        applyTheme(root.dataset.theme === "dark" ? "light" : "dark");
       });
     }
-
-    document.addEventListener("pointerdown", event => {
-      for (const menu of menus) {
-        if (!menu.contains(event.target)) closeMenu(menu);
-      }
-    });
-
-    document.addEventListener("keydown", event => {
-      if (event.key !== "Escape") return;
-      for (const menu of menus) {
-        if (!menu.querySelector(".theme-options").hidden) {
-          event.preventDefault();
-          closeMenu(menu, true);
-        }
-      }
-    });
 
     applyTheme(root.dataset.theme === "dark" ? "dark" : "light");
   });
@@ -216,6 +242,11 @@
   window.addEventListener("storage", event => {
     if (event.key === "omni-theme") {
       applyTheme(event.newValue === "dark" ? "dark" : "light", false);
+    }
+    if (event.key === "omni-unread-notifications" || event.key === "omni-cleared-alerts") {
+      for (const notification of document.querySelectorAll(".notification-link")) {
+        notification.__omniRefreshNotifications?.();
+      }
     }
   });
 })();

@@ -14,7 +14,7 @@
       --line: #dedede;
       --text: #333333;
       --muted: #666666;
-      --accent: #ffa500;
+      --accent: #b45309;
     }
 
     * { box-sizing: border-box; }
@@ -121,7 +121,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
 
     .queue-summary h2 { margin: 0; font-size: 18px; }
@@ -216,7 +216,7 @@
     .severity::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
     .severity-critical { background: #fff1f0; color: #a32922; }
     .severity-warning { background: #fff9e9; color: #765000; }
-    .severity-info { background: #eff6fd; color: #245b8e; }
+    .severity-info { background: transparent; color: var(--muted); }
     .alert-state { color: #65438f; }
 
     .empty-state {
@@ -397,8 +397,12 @@
     const emptyState = document.getElementById("empty-state");
     const requestedSeverity = new URLSearchParams(window.location.search).get("severity");
     const alertRows = [...alertRowsContainer.querySelectorAll("tr[data-severity]")];
+    const clearedAlerts = new Set(JSON.parse(localStorage.getItem("omni-cleared-alerts") || "[]"));
 
     for (const row of alertRows) {
+      if (clearedAlerts.has(row.dataset.id)) {
+        row.querySelector(".alert-state").textContent = "Cleared";
+      }
       row.tabIndex = 0;
       row.setAttribute("aria-label", `View details for alert ${row.dataset.id}`);
       const openDetails = () => {

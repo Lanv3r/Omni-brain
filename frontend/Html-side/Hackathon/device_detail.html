@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Device details in OmniCommand">
+  <title>Device details | OmniCommand</title>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #b45309; }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    a { color: inherit; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+    header { border-bottom: 1px solid var(--line); background: #ffffff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--text); font-size: 19px; font-weight: 750; text-decoration: none; }
+    .mark img, .partner-brand { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { max-width: min(160px, 35vw); }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: flex; overflow-x: auto; }
+    .section-nav a { flex: 1 0 auto; padding: 12px 8px; color: var(--accent); font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    main { padding-block: 12px 24px; }
+    .back-link { display: inline-block; margin-bottom: 14px; color: var(--muted); font-weight: 650; text-decoration: none; }
+    .back-link:hover { color: var(--accent); text-decoration: underline; }
+    .page-heading { margin-bottom: 18px; text-align: center; }
+    .page-heading h1 { margin: 0; color: var(--accent); font-size: clamp(34px, 5vw, 48px); }
+    .device-name { margin: 6px 0 0; color: var(--muted); font-size: 18px; font-weight: 650; }
+    .device-panel { padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .device-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
+    .device-facts dt { margin-bottom: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .device-facts dd { margin: 0; font-weight: 650; }
+    .status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 650; }
+    .status::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .status.online { background: #eff8f2; color: #24633d; }
+    .status.offline { background: #fff1f0; color: #a32922; }
+    html[data-theme="dark"] .status.online { background: rgb(95 185 125 / 12%); border-color: #34705e; color: #99efba; }
+    html[data-theme="dark"] .status.offline { background: rgb(255 119 119 / 10%); border-color: #70404a; color: #ff9a9a; }
+    @media (max-width: 560px) { .shell { width: min(100% - 32px, 1160px); } .device-facts { grid-template-columns: 1fr; } }
+  </style>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html"><span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand</a>
+      <div class="header-tools">
+        <div class="theme-menu">
+          <button class="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false">
+            <svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg>
+            <svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 1 1 8.6 3.8 8.5 8.5 0 0 0 20.2 15.4Z"></path></svg>
+          </button>
+        </div>
+        <img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro">
+      </div>
+    </div>
+    <nav class="section-nav" aria-label="Main navigation">
+      <div class="section-nav-inner shell">
+        <a href="index.html">Command Center</a><a href="tickets.html">Tickets</a><a href="tasks.html">Tasks</a><a href="alerts.html">Alerts</a><a href="device_monitoring.html" aria-current="page">Devices</a><a href="knowledge_base.html">Knowledge Base</a>
+        <a class="notification-link" href="alerts.html" aria-label="Notifications, 3 unread">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg>
+          <span class="notification-count" aria-hidden="true">3</span>
+        </a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell">
+    <a class="back-link" id="back-link" href="device_monitoring.html">← Back to devices</a>
+    <section class="page-heading">
+      <h1 id="device-id-heading">Device details</h1>
+      <p class="device-name" id="device-name"></p>
+    </section>
+    <section class="device-panel" id="device-panel" hidden>
+      <dl class="device-facts">
+        <div><dt>Device ID</dt><dd id="device-id"></dd></div>
+        <div><dt>Status</dt><dd><span class="status" id="device-status"></span></dd></div>
+        <div><dt>Company</dt><dd id="device-company"></dd></div>
+        <div><dt>Type</dt><dd id="device-type"></dd></div>
+        <div><dt>Platform</dt><dd id="device-platform"></dd></div>
+        <div><dt>Last check-in</dt><dd id="device-check-in"></dd></div>
+      </dl>
+    </section>
+  </main>
+  <script>
+    const devices = {
+      "HQ-FILE-01": ["Brightside Studio", "Server", "Windows Server 2022", "Online", "4 min ago"],
+      "BACKUP-02": ["Willow Accounting", "Server", "Windows Server 2022", "Online", "12 min ago"],
+      "DESIGN-WS-14": ["Northstar Design", "Workstation", "Windows 11 Pro", "Online", "19 min ago"],
+      "BRIGHT-HQ-01": ["Brightside Studio", "Server", "Windows Server 2022", "Online", "2 min ago"],
+      "WILLOW-WS-07": ["Willow Accounting", "Workstation", "Windows 11 Pro", "Offline", "43 min ago"],
+      "NORTHSTAR-NAS-01": ["Northstar Design", "Storage", "Synology DSM", "Online", "4 min ago"],
+      "HARBOR-FW-01": ["Harbor & Pine", "Firewall", "FortiGate 80F", "Online", "1 min ago"],
+      "CEDAR-LT-08": ["Cedar Works", "Laptop", "Windows 11 Pro", "Offline", "1 hr ago"],
+      "WILLOW-SQL-01": ["Willow Accounting", "Server", "Windows Server 2022", "Online", "3 min ago"],
+      "BRIGHT-WS-14": ["Brightside Studio", "Workstation", "Windows 11 Pro", "Online", "5 min ago"],
+      "HARBOR-WS-03": ["Harbor & Pine", "Workstation", "Windows 11 Pro", "Online", "52 min ago"]
+    };
+    const id = new URLSearchParams(window.location.search).get("id");
+    const from = new URLSearchParams(window.location.search).get("from");
+    const device = devices[id];
+    if (from === "alerts") {
+      const backLink = document.getElementById("back-link");
+      backLink.href = "alerts.html";
+      backLink.textContent = "← Back to alerts";
+    }
+    if (device) {
+      document.title = `${id} | OmniCommand`;
+      document.getElementById("device-id-heading").textContent = id;
+      document.getElementById("device-name").textContent = device[0];
+      document.getElementById("device-id").textContent = id;
+      document.getElementById("device-company").textContent = device[0];
+      document.getElementById("device-type").textContent = device[1];
+      document.getElementById("device-platform").textContent = device[2];
+      document.getElementById("device-check-in").textContent = device[4];
+      const status = document.getElementById("device-status");
+      status.textContent = device[3];
+      status.classList.add(device[3].toLowerCase());
+      document.getElementById("device-panel").hidden = false;
+    }
+  </script>
+</body>
+</html>
