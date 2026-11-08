@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Notifications in OmniCommand">
+  <title>Notifications | OmniCommand</title>
+  <link rel="stylesheet" href="assets/theme.css">
+  <script src="assets/theme.js"></script>
+  <style>
+    :root { color-scheme: light; --bg: #f6f6f6; --panel: #ffffff; --line: #dedede; --text: #333333; --muted: #666666; --accent: #b45309; }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+    .shell { width: min(1160px, 100% - 40px); margin-inline: auto; }
+    header { border-bottom: 1px solid var(--line); background: #ffffff; }
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 75px; padding-block: 14px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--text); font-size: 19px; font-weight: 750; text-decoration: none; }
+    .mark img, .partner-brand { display: block; width: auto; height: 48px; object-fit: contain; }
+    .partner-brand { max-width: min(160px, 35vw); }
+    .section-nav { border-top: 1px solid var(--line); background: #fafafa; }
+    .section-nav-inner { display: flex; overflow-x: auto; }
+    .section-nav a { flex: 0 0 auto; padding: 12px 8px; color: var(--accent); font-weight: 650; text-align: center; text-decoration: none; white-space: nowrap; }
+    main { padding-block: 28px 48px; }
+    h1 { margin: 0; color: var(--accent); text-align: center; }
+    .description { margin: 8px 0 22px; color: var(--muted); text-align: center; }
+    .notifications-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .notifications-list { display: grid; margin: 0; padding: 0; list-style: none; }
+    .notifications-list a { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; }
+    .notifications-list a:hover { background: var(--panel-raised, #f5f5f5); }
+    .notification-type { color: var(--accent); font-size: 12px; font-weight: 750; text-transform: uppercase; }
+    .empty-notifications { padding: 28px; color: var(--muted); text-align: center; }
+    html[data-theme="dark"] header { background: var(--panel); }
+    html[data-theme="dark"] .section-nav { background: var(--panel-raised); }
+    html[data-theme="dark"] .notifications-list a { border-color: var(--line); }
+    @media (max-width: 560px) { .shell { width: min(100% - 32px, 1160px); } .notifications-list a { grid-template-columns: 1fr; gap: 3px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar shell">
+      <a class="brand" href="index.html"><span class="mark" aria-hidden="true"><img src="assets/omnitechpro-fireball-transparent.png" alt=""></span>OmniCommand</a>
+      <div class="header-tools"><div class="theme-menu"><button class="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false"><svg class="theme-icon" data-theme-icon="light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42M19.07 19.07l-1.42-1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m14.14 0-1.42-1.42"></path></svg><svg class="theme-icon" data-theme-icon="dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.4A8.5 8.5 0 1 1 8.6 3.8 8.5 8.5 0 0 0 20.2 15.4Z"></path></svg></button></div><img class="partner-brand" src="assets/omnitechpro-logo.png" data-light-src="assets/omnitechpro-logo.png" data-dark-src="assets/omnitechpro-logo-yellow.png" alt="OmniTechPro"></div>
+    </div>
+    <nav class="section-nav" aria-label="Main navigation"><div class="section-nav-inner shell">
+      <a href="index.html">Command Center</a><a href="tickets.html">Tickets</a><a href="tasks.html">Tasks</a><a href="alerts.html">Alerts</a><a href="device_monitoring.html">Devices</a><a href="knowledge_base.html">Knowledge Base</a>
+      <a class="notification-link" href="notifications.html" aria-label="Notifications, 3 unread"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 12h5"></path></svg><span class="notification-count" aria-hidden="true">3</span></a>
+    </div></nav>
+  </header>
+  <main class="shell">
+    <h1>Notifications</h1>
+    <p class="description">Recent alerts and offline devices.</p>
+    <section class="notifications-panel" aria-label="All notifications"><ul class="notifications-list" id="notifications-list"></ul></section>
+  </main>
+  <script>
+    const alertNotifications = [["DEMO-A203", "Server not responding", "alert_detail.html?id=DEMO-A203"], ["DEMO-A202", "Backup job failed", "alert_detail.html?id=DEMO-A202"], ["DEMO-A201", "Disk space below 15%", "alert_detail.html?id=DEMO-A201"], ["DEMO-A200", "Endpoint protection needs attention", "alert_detail.html?id=DEMO-A200"], ["DEMO-A199", "Device has pending updates", "alert_detail.html?id=DEMO-A199"], ["DEMO-A198", "Scheduled maintenance completed", "alert_detail.html?id=DEMO-A198"]];
+    const offlineNotifications = [["WILLOW-WS-07", "Willow Accounting"], ["CEDAR-LT-08", "Cedar Works"]];
+    function renderNotificationPage() {
+      const cleared = new Set(JSON.parse(localStorage.getItem("omni-cleared-alerts") || "[]"));
+      const items = [...alertNotifications.filter(([id]) => !cleared.has(id)).map(([, title, href]) => ["Alerts", title, href]), ...offlineNotifications.map(([id, company]) => ["Offline", `${id} · ${company}`, `device_detail.html?id=${id}&from=notifications`])];
+      document.getElementById("notifications-list").innerHTML = items.length ? items.map(([type, title, href]) => `<li><a href="${href}"><span class="notification-type">${type}</span><span>${title}</span></a></li>`).join("") : '<li class="empty-notifications">No new notifications</li>';
+    }
+    renderNotificationPage();
+    window.addEventListener("storage", renderNotificationPage);
+  </script>
+</body>
+</html>

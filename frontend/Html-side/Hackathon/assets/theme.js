@@ -117,18 +117,31 @@
       notification.setAttribute("aria-expanded", "false");
 
       const count = notification.querySelector(".notification-count");
-      const knownAlertIds = ["DEMO-A203", "DEMO-A202", "DEMO-A201", "DEMO-A200", "DEMO-A199", "DEMO-A198"];
+      const alertNotifications = [
+        ["DEMO-A203", "Server not responding", "alert_detail.html"],
+        ["DEMO-A202", "Backup job failed", "alert_detail.html"],
+        ["DEMO-A201", "Disk space below 15%", "alert_detail.html"],
+        ["DEMO-A200", "Endpoint protection needs attention", "alert_detail.html"],
+        ["DEMO-A199", "Device has pending updates", "alert_detail.html"],
+        ["DEMO-A198", "Scheduled maintenance completed", "alert_detail.html"],
+      ];
+      const offlineNotifications = [
+        ["WILLOW-WS-07", "Willow Accounting"],
+        ["CEDAR-LT-08", "Cedar Works"],
+      ];
       const getClearedAlertIds = () => new Set(JSON.parse(localStorage.getItem("omni-cleared-alerts") || "[]"));
-      const hasActiveAlerts = () => {
-        const rows = [...document.querySelectorAll("tr[data-id][data-severity]")];
+      const getNotificationItems = () => {
         const clearedIds = getClearedAlertIds();
-        return rows.length
-          ? rows.some(row => !clearedIds.has(row.dataset.id))
-          : knownAlertIds.some(id => !clearedIds.has(id));
-      };
-      const hasOfflineDevices = () => {
-        const rows = [...document.querySelectorAll("tr[data-device][data-status]")];
-        return rows.length ? rows.some(row => row.dataset.status === "Offline") : true;
+        return [
+          ...alertNotifications
+            .filter(([id]) => !clearedIds.has(id))
+            .map(([id, title, href]) => ({ label: "Alerts", title, href: `${href}?id=${id}` })),
+          ...offlineNotifications.map(([id, company]) => ({
+            label: "Offline",
+            title: `${id} · ${company}`,
+            href: `device_detail.html?id=${id}&from=devices`,
+          })),
+        ];
       };
       function updateUnreadCount() {
         unreadCount = Math.max(0, Number.parseInt(localStorage.getItem(unreadStorageKey) || "0", 10));
@@ -144,17 +157,19 @@
           popup.innerHTML = "<strong>No new notifications</strong>";
           return;
         }
-        const links = [];
-        if (hasActiveAlerts()) links.push('<li><a href="alerts.html" role="menuitem">Alerts</a></li>');
-        if (hasOfflineDevices()) links.push('<li><a href="device_monitoring.html?status=Offline" role="menuitem">Offline</a></li>');
-        const footer = hasActiveAlerts()
-          ? '<a class="notification-all" href="alerts.html" role="menuitem">View all alerts</a>'
+        const items = getNotificationItems();
+        const visibleItems = items.slice(0, 3);
+        const links = visibleItems.map(item =>
+          `<li><a href="${item.href}" role="menuitem"><span class="notification-type">${item.label}</span>${item.title}</a></li>`);
+        const footer = items.length > 3
+          ? '<a class="notification-all" href="notifications.html" role="menuitem">Show more</a>'
           : "";
-        popup.innerHTML = links.length
+        popup.innerHTML = items.length
           ? `<strong>Notifications</strong><ul>${links.join("")}</ul>${footer}`
           : "<strong>No notifications</strong>";
         popup.querySelectorAll("a").forEach(link => {
           link.addEventListener("click", () => {
+            if (link.classList.contains("notification-all")) return;
             if (unreadCount === 0) return;
             unreadCount -= 1;
             localStorage.setItem(unreadStorageKey, String(unreadCount));
