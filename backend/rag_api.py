@@ -20,7 +20,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from backend.ai_client import make_client, model_name
-from backend.live_data import LiveDataError, answer_live_question
+from backend.live_data import LiveDataError, TICKET_PRIORITIES, answer_live_question, clients_with_overdue_tasks
 from backend.semantic_search import search_documents
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -279,10 +279,91 @@ def build_context(primary_results: list[dict]) -> tuple[str, list[Source]]:
     return "\n\n---\n\n".join(parts), sources
 
 
+def live_question_context(question: str) -> str:
+    text = question.casefold()
+    if re.search(r"\b(tickets?|issues?)\b", text):
+        priority = next((value for value in TICKET_PRIORITIES if re.search(rf"\b{value}\b", text)), None)
+        return f"{priority}-priority tickets" if priority else "tickets"
+    if re.search(r"\balerts?\b", text):
+        severity = next((value for value in ("critical", "warning", "info") if re.search(rf"\b{value}\b", text)), None)
+        return f"{severity} alerts" if severity else "alerts"
+    if re.search(r"\btasks?\b", text):
+        return "onboarding tasks" if re.search(r"\bonboard", text) else "tasks"
+    if re.search(r"\bwarrant", text):
+        return "expired device warranties"
+    if re.search(r"\bdevices?\b|\bservers?\b", text):
+        return "offline devices" if re.search(r"\boffline\b", text) else "devices"
+    return ""
+
+
+def hybrid_parts(question: str) -> tuple[str, str] | None:
+    for match in re.finditer(r"\band\s+(?=(?:what(?:'s| is| are)?|how|when|which|do we)\b)", question, re.IGNORECASE):
+        documentation = question[match.end():].strip()
+        if not re.search(r"\b(escalat\w*|procedur\w*|polic\w*|playbook\w*|steps?|guidelin\w*|handle|respond)\b",
+                         documentation, re.IGNORECASE):
+            continue
+        live_question = question[:match.start()].strip(" ,?;\t\n")
+        live_answer = answer_live_question(live_question)
+        if live_answer is None:
+            continue
+        context = live_question_context(live_question)
+        if context and not re.search(r"\b(tickets?|issues?|alerts?|tasks?|devices?|warrant\w*|servers?)\b",
+                                     documentation, re.IGNORECASE):
+            documentation = documentation.rstrip(" ?.!") + f" for {context}?"
+        return live_answer, documentation
+    return None
+
+
+def asks_documented_overdue_tasks(question: str) -> bool:
+    text = question.casefold()
+    return bool(
+        re.search(r"\b(clients?|companies|customers?)\b", text)
+        and re.search(r"\btasks?\b", text)
+        and re.search(r"\b(overdue|past[ -]?due|late)\b", text)
+        and re.search(r"\b(documentation|documents?|docs|procedur\w*|process plans?|sops?)\b", text)
+    )
+
+
+def combine_answers(question: str, live_answer: str, documented: AskResponse) -> AskResponse:
+    return AskResponse(
+        question=question,
+        answer=live_answer + "\n\nDocumentation context:\n" + documented.answer
+               + "\n\nClient-specific due dates and completion states come from the sandbox task records.",
+        sources=documented.sources,
+        related_references=documented.related_references,
+        status="hybrid" if documented.status == "answered" else "partial",
+        model=documented.model,
+        process_plan=documented.process_plan,
+    )
+
+
 def answer_question(request: AskRequest) -> AskResponse:
     question = request.question.strip()
     if len(question) < 3:
         raise ValueError("Question must contain at least 3 non-space characters")
+
+    if asks_documented_overdue_tasks(question):
+        live_answer = clients_with_overdue_tasks(only_onboarding=True)
+        documented = answer_document_question(request.model_copy(update={
+            "question": "What does the standard new-client procedure require for task due dates, "
+                        "kickoff, monitoring deployment, backup setup, restore testing, and the "
+                        "30-day review? Does it specify exact client dates?",
+        }))
+        return combine_answers(question, live_answer, documented)
+
+    hybrid = hybrid_parts(question)
+    if hybrid:
+        live_answer, documentation_question = hybrid
+        documented = answer_document_question(request.model_copy(update={"question": documentation_question}))
+        return AskResponse(
+            question=question,
+            answer=live_answer + "\n\nFrom documentation:\n" + documented.answer,
+            sources=documented.sources,
+            related_references=documented.related_references,
+            status="hybrid" if documented.status == "answered" else "partial",
+            model=documented.model,
+            process_plan=documented.process_plan,
+        )
 
     live_answer = answer_live_question(question)
     if live_answer is not None:
@@ -293,6 +374,12 @@ def answer_question(request: AskRequest) -> AskResponse:
             related_references=[],
             status="live_data",
         )
+
+    return answer_document_question(request)
+
+
+def answer_document_question(request: AskRequest) -> AskResponse:
+    question = request.question.strip()
 
     # Semantic search already separates primary and Related chunks.
     hits = search_documents(

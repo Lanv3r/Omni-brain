@@ -77,8 +77,10 @@ def ncentral_pages(url, filters=None):
     raise LiveDataError("The sandbox returned too many N-central pages.")
 
 
-def unresolved_tickets():
-    return accelo_pages(ISSUES_URL, {"status": "open"}) + accelo_pages(ISSUES_URL, {"status": "inprogress"})
+def unresolved_tickets(priority=None):
+    filters = {"priority": priority} if priority else {}
+    return (accelo_pages(ISSUES_URL, {**filters, "status": "open"})
+            + accelo_pages(ISSUES_URL, {**filters, "status": "inprogress"}))
 
 
 def numbered_answer(intro, lines, total=None):
@@ -119,6 +121,21 @@ def clients_with_unresolved_tickets():
     lines = [f"{names.get(company_id, 'Company #' + company_id)} — {count} unresolved tickets"
              for company_id, count in ranked[:5]]
     return numbered_answer("Clients with the most unresolved tickets (open + in progress):", lines, len(ranked))
+
+
+def clients_with_unresolved_priority_tickets(priority):
+    issues = unresolved_tickets(priority)
+    counts = Counter(str(issue["company_id"]) for issue in issues if issue.get("company_id") is not None)
+    if not counts:
+        return f"No clients currently have unresolved {priority}-priority tickets in the sandbox."
+    names = {str(company["id"]): company["name"] for company in accelo_pages(COMPANIES_URL)}
+    ranked = sorted(counts.items(), key=lambda item: (-item[1], names.get(item[0], item[0]).casefold()))
+    lines = [f"{names.get(company_id, 'Company #' + company_id)} — {count} ticket{'s' if count != 1 else ''}"
+             for company_id, count in ranked]
+    return numbered_answer(
+        f"{len(ranked)} clients have {len(issues)} unresolved {priority}-priority tickets "
+        "(open + in progress) in the sandbox:", lines,
+    )
 
 
 def technicians_with_assigned_tickets():
@@ -214,6 +231,58 @@ def overdue_onboarding_tasks():
     return numbered_answer(f"Yes. There are {len(items)} overdue onboarding tasks:", lines, len(items))
 
 
+def clients_with_overdue_tasks(only_onboarding=False):
+    today = date.today().isoformat()
+    tasks = [task for task in accelo_pages(TASKS_URL, {"overdue": "true"})
+             if task.get("status") != "complete" and str(task.get("date_due") or "")[:10] < today
+             and task.get("date_due")]
+    if not tasks:
+        return f"No client has an incomplete task past its Accelo due date as of {today}."
+
+    names = {str(company["id"]): company["name"] for company in accelo_pages(COMPANIES_URL)}
+    jobs = {str(job["id"]): job.get("title", "") for job in accelo_pages(JOBS_URL)}
+    grouped = {}
+    onboarding = {}
+    for task in tasks:
+        company_id = str(task.get("company_id") or "")
+        grouped.setdefault(company_id, []).append(task)
+        if str(jobs.get(str(task.get("job_id")), "")).casefold() == "new client onboarding":
+            onboarding.setdefault(company_id, []).append(task)
+
+    selected = onboarding if only_onboarding else grouped
+    ranked = sorted(selected, key=lambda company_id: (-len(selected[company_id]),
+                                                    names.get(company_id, company_id).casefold()))
+    lines = []
+    for company_id in ranked:
+        client_tasks = sorted(selected[company_id], key=lambda task: (str(task.get("date_due")),
+                                                                      str(task.get("title", ""))))
+        examples = "; ".join(f"{task.get('title') or 'Untitled task'} (due {str(task['date_due'])[:10]})"
+                             for task in client_tasks[:2])
+        remainder = f"; {len(client_tasks) - 2} more" if len(client_tasks) > 2 else ""
+        count = len(client_tasks)
+        lines.append(f"{names.get(company_id, 'Company #' + company_id)} — {count} task{'s' if count != 1 else ''}: "
+                     f"{examples}{remainder}")
+
+    if only_onboarding:
+        onboarding_count = sum(map(len, onboarding.values()))
+        answer = numbered_answer(
+            f"Yes. As of {today}, {onboarding_count} incomplete tasks in New Client Onboarding jobs "
+            f"are past their Accelo due dates across {len(onboarding)} clients:" if onboarding_count else
+            f"No incomplete tasks in New Client Onboarding jobs are past their Accelo due dates as of {today}.",
+            lines,
+        )
+        other_count = len(tasks) - onboarding_count
+        if other_count:
+            answer += (f"\n\nThe sandbox also has {other_count} overdue tasks in other job types; "
+                       "they are outside the onboarding procedure checked here.")
+    else:
+        answer = numbered_answer(
+            f"Yes. As of {today}, the sandbox has {len(tasks)} incomplete tasks past their Accelo due dates "
+            f"across {len(grouped)} clients:", lines,
+        )
+    return answer
+
+
 def devices_with_expired_warranties():
     today = date.today().isoformat()
     expired = []
@@ -241,6 +310,13 @@ def answer_live_question(question):
     mentions_tickets = bool(re.search(r"\b(tickets?|issues?)\b", text))
 
     if (mentions_tickets and re.search(r"\b(clients?|companies|customers?)\b", text)
+            and re.search(r"\b(unresolved|open|in[ -]?progress)\b", text)
+            and re.search(r"\b(which|list|most|top|highest)\b", text)):
+        priority = next((value for value in TICKET_PRIORITIES if re.search(rf"\b{value}\b", text)), None)
+        if priority:
+            return clients_with_unresolved_priority_tickets(priority)
+
+    if (mentions_tickets and re.search(r"\b(clients?|companies|customers?)\b", text)
             and re.search(r"\b(most|top|highest)\b", text)
             and re.search(r"\b(unresolved|open|in[ -]?progress)\b", text)):
         return clients_with_unresolved_tickets()
@@ -256,6 +332,11 @@ def answer_live_question(question):
     if (re.search(r"\btasks?\b", text) and re.search(r"\boverdue\b", text)
             and re.search(r"\bonboard(?:ing)?\b", text)):
         return overdue_onboarding_tasks()
+
+    if (re.search(r"\b(clients?|companies|customers?)\b", text)
+            and re.search(r"\btasks?\b", text)
+            and re.search(r"\b(overdue|past[ -]?due|late)\b", text)):
+        return clients_with_overdue_tasks()
 
     if (re.search(r"\bdevices?\b", text) and re.search(r"\bwarrant(?:y|ies)\b", text)
             and re.search(r"\bexpired?\b", text)):
